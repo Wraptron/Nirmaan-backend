@@ -4,7 +4,7 @@ dotenv.config();
 const client = new Client({
   host: "localhost",
   user: "postgres",
-  port: "5432",
+  port: "3306",
   password: "1234",
   database: "postgres"
 })
