@@ -126,8 +126,7 @@ app.use('/api/v1/', LoginController);
 app.use('api/v1/', ForgotRequest)
 app.use('api/v1/', FetchStartupDatainNumbers)
 app.get('/profile', (req, res) => {
-    //const {Test} = req.body;
-    console.log(req.body);
+    res.send('Tests');
 })
 app.use('api/v1/', UpdateStatus);
 app.use('api/v1/', FetchStartupData);
