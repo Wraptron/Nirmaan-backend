@@ -11,7 +11,7 @@ const client = new Client({
 client.connect(function(err) {
   if(err) throw err;
   else{
-    console.log("connected test");
+    console.log("connected testt");
   } 
 });
 module.exports = client;
