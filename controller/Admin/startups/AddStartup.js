@@ -266,4 +266,16 @@ const TopStartupsSectorsCont = async(req, res) => {
         res.status(500).json(err)
     }
 }
-module.exports = {AddStartup, FetchStartupDatainNumbers, FetchStartupData, UpdateStatus, IndividualStartups, TopStartupsSectorsCont};
+
+const TeamDocuments = async(req, res) => {
+    try
+    {
+        res.send("Hello")
+        
+    }
+    catch(err)
+    {
+        res.status(500).json(err)
+    }
+}
+module.exports = {AddStartup, FetchStartupDatainNumbers, FetchStartupData, UpdateStatus, IndividualStartups, TopStartupsSectorsCont, TeamDocuments};
