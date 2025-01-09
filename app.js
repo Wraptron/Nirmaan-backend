@@ -52,6 +52,7 @@ const multer = require('multer')
 const upload = multer({dest: 'uploads/'})
 const app = express();
 const ProfilePhoto = require('./routes/route');
+const TeamDocuments = require('./routes/route');
 const http = require('http').createServer(app);
 var io = require('socket.io')(http, {
     cors: {
@@ -165,6 +166,7 @@ app.use('api/v1/', DeleteConnection);
 app.use('api/v1/', DeleteMentorData);
 app.use('api/v1/', IPdataUpload);
 app.use('api/v1/', TopStartupsSectorsCont);
+app.use('api/v1/', TeamDocuments);
 module.exports = app;
 
 
