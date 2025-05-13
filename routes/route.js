@@ -35,6 +35,10 @@ const {
   AddMentorHour,
   FetchDataMentor,
 } = require("../controller/Team/Mentor.js");
+const ScheduleMeeting = require("../controller/Admin/Mentors/ScheduleMeeting.js");
+const {
+  FetchMeetings,
+} = require("../controller/Admin/Mentors/FetchMeetings.js");
 
 
 // Startups
@@ -131,6 +135,8 @@ router.get("/mentor/count", MentorCount);
 router.delete("/delete-mentor/:id", DeleteMentorData);
 router.post("/customer/apply-mentor", AddMentorHour);
 router.get("/customer/fetch-mentor", FetchDataMentor);
+router.post("/schedulemeeting", ScheduleMeeting);
+router.get("/schedulemeeting/:mentor_refernce_id", FetchMeetings);
 
 
 // Startups
