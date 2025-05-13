@@ -34,6 +34,7 @@ const AddJob = require('../controller/Team/AddJob.js');
 const {AddFunding, updateFundingNotif} = require('../controller/Finance/AddFunding.js');
 const {ScheduleMentorMeeting} = require('../controller/Admin/Mentorship/Mentorship.js');
 const IPdataUpload = require('../controller/Office/IPdata.js');
+const ScheduleMeeting = require('../controller/Admin/Mentors/ScheduleMeeting.js');
 router.get('/prof', ProfilePhoto);
 router.put('/update-status', UpdateStatus)
 router.get('/startup/:id',IndividualStartups)
@@ -80,4 +81,5 @@ router.delete('/delete-connection', DeleteConnection);
 router.post('/ipdataupload', upload.single('file'),  IPdataUpload);
 router.get('/st', TopStartupsSectorsCont);
 router.post('/teamdoc-upload', TeamDocuments);
+router.post('/schedulemeeting',ScheduleMeeting)
 module.exports = router;
