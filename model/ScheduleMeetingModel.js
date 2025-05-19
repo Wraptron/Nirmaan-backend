@@ -16,8 +16,7 @@ const ScheduleMeetingModel = (
   return new Promise((resolve, reject) => {
     client.query(
       `
-        INSERT INTO meetings (
-          meet_id,
+        INSERT INTO schedule_meetings (
           mentor_reference_id,
           start_up_name,
           founder_name,
@@ -56,4 +55,22 @@ const ScheduleMeetingModel = (
   });
 };
 
-module.exports = { ScheduleMeetingModel };
+
+const FetchScheduleMeetings = (mentor_reference_id) => {
+  return new Promise((resolve, reject) => {
+    client.query(
+      'SELECT * FROM schedule_meetings WHERE mentor_reference_id = $1',
+      [mentor_reference_id],
+      (err, result) => {
+        if (err) {
+          console.log("SQL SELECT ERROR:", err);
+          reject({ STATUS: err });
+        } else {
+          resolve({ STATUS: result });
+        }
+      }
+    );
+  });
+};
+
+module.exports = { ScheduleMeetingModel,FetchScheduleMeetings };
