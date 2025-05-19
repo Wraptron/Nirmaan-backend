@@ -110,6 +110,8 @@ const Settings = require("../controller/Admin/Settings/Settings.js");
 const {
   ScheduleMentorMeeting,
 } = require("../controller/Admin/Mentorship/Mentorship.js");
+const Testimonial = require("../controller/Admin/Mentors/Testimonials.js");
+const { FetchTestimonial } = require("../controller/Admin/Mentors/FetchTestimonial.js");
 
 // ======== ROUTES ========
 
@@ -136,8 +138,10 @@ router.delete("/delete-mentor/:id", DeleteMentorData);
 router.post("/customer/apply-mentor", AddMentorHour);
 router.get("/customer/fetch-mentor", FetchDataMentor);
 router.post("/schedulemeeting", ScheduleMeeting);
-router.get("/schedulemeeting/:mentor_refernce_id", FetchMeetings);
+router.get("/fetchmeeting/:mentor_reference_id", FetchMeetings);
 
+router.post("/testimonial",Testimonial)
+router.get("/fetchtestimonial/:mentor_ref_id",FetchTestimonial)
 
 // Startups
 router.post("/add-startup", AddStartup);

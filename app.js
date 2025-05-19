@@ -42,7 +42,6 @@ const RequestSpeaker = require('./routes/route');
 const FetchStartupDatainNumbers = require('./routes/route');
 const FetchStartupData = require('./routes/route');
 const AddFunding = require('./routes/route');
-const ScheduleMentorMeeting = require('./routes/route');
 const UpdateStatus = require('./routes/route');
 const IndividualStartups = require('./routes/route');
 const IPdataUpload = require('./routes/route');
@@ -53,6 +52,10 @@ const upload = multer({dest: 'uploads/'})
 const app = express();
 const ProfilePhoto = require('./routes/route');
 const TeamDocuments = require('./routes/route');
+const ScheduleMeeting = require('./routes/route');
+const FetchMeetings = require('./routes/route');
+const Testimonial = require('./routes/route');
+const  FetchTestimonial = require('./routes/route');
 const http = require('http').createServer(app);
 var io = require('socket.io')(http, {
     cors: {
@@ -121,7 +124,11 @@ io.on('connection', function(socket) {
 })
 app.use('api/v1/', IndividualStartups);
 app.use('api/v1/', ProfilePhoto);
-app.use('api/v1/', ScheduleMentorMeeting);
+app.use('api/v1/', ScheduleMeeting);
+app.use('api/v1/', FetchMeetings);
+app.use('api/v1/', Testimonial);
+app.use('api/v1/', FetchTestimonial);
+
 app.use('/api/v1/', AddFunding);
 app.use('/api/v1/', LoginController);
 app.use('api/v1/', ForgotRequest)

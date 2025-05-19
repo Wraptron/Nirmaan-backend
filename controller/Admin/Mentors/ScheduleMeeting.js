@@ -17,7 +17,7 @@ const ScheduleMeeting = async (req, res) => {
   } = req.body;
 
   // Log the request body (for debugging)
-  console.log('Request Body:', req.body);
+  // console.log('Request Body:', req.body);
 
   try {
     // Check if any required field is missing
