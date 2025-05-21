@@ -30,6 +30,7 @@ const {
   FetchMentorData,
   MentorCount,
   DeleteMentorData,
+  UpdateMentorData,
 } = require("../controller/Admin/Mentors/MentorData.js");
 const {
   AddMentorHour,
@@ -135,6 +136,7 @@ router.post("/mentor/add", AddMentor);
 router.get("/get-mentor-details", FetchMentorData);
 router.get("/mentor/count", MentorCount);
 router.delete("/delete-mentor/:id", DeleteMentorData);
+router.put("/mentor/update/:id", UpdateMentorData);
 router.post("/customer/apply-mentor", AddMentorHour);
 router.get("/customer/fetch-mentor", FetchDataMentor);
 router.post("/schedulemeeting", ScheduleMeeting);
