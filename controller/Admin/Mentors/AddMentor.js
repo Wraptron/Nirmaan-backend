@@ -4,10 +4,24 @@ const { ExpressValidator, check, checkExact } = require("express-validator");
 const validator = require("validator");
 const EmailValid = require("../../../validation/EmailValid");
 const PhoneNumberValid = require("../../../validation/PhoneNumberValid");
+const {AwsModel} = require('../../../model/AwsModel')
 const AddMentor = async (req, res) => {
-  const { description, professional, contact } = req.body;
-  const { mentor_name, choose_logo, mentor_description } = description;
+  const choose_logo = req.file;
+  //const { description, professional, contact } = req.body;
+  // const description = JSON.parse(req.body.description);
+  // const professional = JSON.parse(req.body.professional);
+  // const contact = JSON.parse(req.body.contact);
+  
+  let description, professional, contact;
 
+  try {
+    description = JSON.parse(req.body.description);
+    professional = JSON.parse(req.body.professional);
+    contact = JSON.parse(req.body.contact);
+  } catch (err) {
+    return res.status(400).json({ Error: "Invalid JSON format in request body" });
+  }
+  const { mentor_name, mentor_description } = description;
   const {
     years_of_experience,
     area_of_expertise,
@@ -17,7 +31,25 @@ const AddMentor = async (req, res) => {
     year_of_passing_out,
     startup_associated,
   } = professional;
+
   const { contact_number, email_address, linkedIn_ID, password } = contact;
+  //console.log(choose_logo.path);
+  // try
+  // {
+  //   const url = choose_logo ? choose_logo.filename : "";
+  //   //console.log(url)
+  //   console.log(typeof(url))
+  //   // if(url)
+  //   // {
+  //   //   const data = AwsModel(url);
+  //   //    console.log(data)
+  //   // }
+    
+  // }
+  // catch(err)
+  // {
+  //   console.log(err);
+  // }
   if (!mentor_name || !contact_number || !email_address || !password) {
     return res.status(400).send("All fields are required");
   } else if (!EmailValid(email_address)) {
@@ -26,9 +58,12 @@ const AddMentor = async (req, res) => {
     return res.status(402).send("Phone number is not valid");
   } else {
     try {
+      const url = choose_logo ? await AwsModel(choose_logo) : ""
+
       const result = await AddMentorModel(
         mentor_name,
-        choose_logo,
+        url,
+        // choose_logo,
         mentor_description,
         years_of_experience,
         area_of_expertise,
@@ -48,8 +83,6 @@ const AddMentor = async (req, res) => {
       console.log(err);
       if (err.code === "23505") {
         res.status(409).json({ Error: "Contact number already exists" });
-      } else if (err.code === "23505") {
-        console.log("ok");
       } else {
         //console.log(err);
         res.status(500).json({ Error: "Internal Server Error" });

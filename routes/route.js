@@ -132,7 +132,7 @@ router.post("/resume-send", ApprovalRequest);
 router.delete("/delete-resume/:id", DeleteResume);
 
 // Mentors
-router.post("/mentor/add", AddMentor);
+router.post("/mentor/add", upload.single('choose_logo'), AddMentor);
 router.get("/get-mentor-details", FetchMentorData);
 router.get("/mentor/count", MentorCount);
 router.delete("/delete-mentor/:id", DeleteMentorData);
