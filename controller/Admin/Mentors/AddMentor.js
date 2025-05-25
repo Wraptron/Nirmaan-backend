@@ -59,7 +59,6 @@ const AddMentor = async (req, res) => {
   } else {
     try {
       const url = choose_logo ? await AwsModel(choose_logo) : ""
-
       const result = await AddMentorModel(
         mentor_name,
         url,
@@ -77,6 +76,7 @@ const AddMentor = async (req, res) => {
         linkedIn_ID,
         password
       );
+      //console.log(url)
       res.status(200).send(result);
     } catch (err) {
       // res.send(err);
