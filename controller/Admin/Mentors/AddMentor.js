@@ -76,7 +76,7 @@ const AddMentor = async (req, res) => {
         linkedIn_ID,
         password
       );
-      //console.log(url)
+      // console.log(url)
       res.status(200).send(result);
     } catch (err) {
       // res.send(err);

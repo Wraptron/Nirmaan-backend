@@ -1,14 +1,15 @@
 const aws = require('aws-sdk');
 const path = require('path')
-require('dotenv').config({ path: path.resolve(__dirname, '../../.env') });
+require('dotenv').config({ path: path.resolve(__dirname, '../.env') });
 const multer = require('multer');
 const multers3 = require("multer-s3");
 const fs = require('fs');
 aws.config.update({
-    secretAccessKey: process.env.SECRET_ACCESS_KEY,
+    secretAccessKey: process.env.AWS_SECRET_KEY,
     accessKeyId:process.env.AWS_ACCESS_KEY,
-    region:process.env.REGION
+    region:process.env.AWS_REGION
 })
+// console.log(process.env.AWS_SECRET_KEY,process.env.AWS_ACCESS_KEY,process.env.AWS_REGION,process.env.AWS_S3_BUCKET);
 const s3= new aws.S3();
 const AwsModel = async(filename) => 
 {
