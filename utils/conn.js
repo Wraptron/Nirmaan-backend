@@ -4,8 +4,8 @@ dotenv.config();
 const client = new Client({
   host: "localhost",
   user: "postgres",
-  port: "3306",
-  password: "1234",
+  port: "5432",
+  password: "2104",
   database: "postgres"
 })
 client.connect(function(err) {
