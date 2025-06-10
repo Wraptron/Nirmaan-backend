@@ -25,11 +25,8 @@ const ApprovalRequest = require("../controller/Admin/Resume/ApporvalRequest.js")
 const DeleteResume = require("../controller/Admin/Resume/DeleteResume.js");
 
 // Mentor Management
-<<<<<<< HEAD
 const {AddMentor, updateMentorProfile} = require("../controller/Admin/Mentors/AddMentor.js");
-=======
 const AddMentor = require("../controller/Admin/Mentors/AddMentor.js");
->>>>>>> 2432757992f8bd4d5b7f2636eff80c6864a2e141
 const {
   FetchMentorData,
   MentorCount,
