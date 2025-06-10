@@ -301,7 +301,21 @@ const UpdateMentorModel = (
     });
   });
 };
-
+//update mentor profile
+const updateMentorProfileModel = (mentor_logo, mentor_id) => {
+  return new Promise((resolve, reject) => {
+        client.query(`UPDATE add_mentor SET mentor_logo=$1 WHERE mentor_id=$2`,[mentor_logo, mentor_id], (err, result) => {
+              if(err)
+              {
+                  reject(err)
+              }
+              else
+              {
+                  resolve(result)
+              }
+        })
+  })
+}
 module.exports = {
   AddMentorModel,
   FetchMentorDataModel,
@@ -309,4 +323,5 @@ module.exports = {
   MentorDeleteData,
   MentorScheduleModel,
   UpdateMentorModel,
+  updateMentorProfileModel
 };

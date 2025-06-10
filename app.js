@@ -13,6 +13,7 @@ const ForgotRequest = require('./routes/route');
 const Profile = require('./routes/route');
 const DeleteResume = require('./routes/route');
 const AddMentor = require('./routes/route');
+const updateMentorProfile = require('./routes/route');
 const bodyParser = require('body-parser');
 const Settings = require('./routes/route')
 const AddMessage = require('./routes/route');
@@ -174,6 +175,7 @@ app.use('api/v1/', DeleteMentorData);
 app.use('api/v1/', IPdataUpload);
 app.use('api/v1/', TopStartupsSectorsCont);
 app.use('api/v1/', TeamDocuments);
+app.use('api/v1/', updateMentorProfile);
 module.exports = app;
 
 

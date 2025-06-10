@@ -1,5 +1,5 @@
 const md5 = require("md5");
-const { AddMentorModel } = require("../../../model/AddMentorModel");
+const { AddMentorModel, updateMentorProfileModel } = require("../../../model/AddMentorModel");
 const { ExpressValidator, check, checkExact } = require("express-validator");
 const validator = require("validator");
 const EmailValid = require("../../../validation/EmailValid");
@@ -102,4 +102,20 @@ const randomString = (length) => {
   }
   return str;
 };
-module.exports = AddMentor;
+const updateMentorProfile = async(req, res) => {
+      const {mentor_id} = req.params;
+      const mentor_profile = req.file;
+      let mentor_photoo;
+      try
+      {
+          //res.status(200).send("Hello")
+          mentor_photoo = JSON.parse(req.body.mentor_photo);
+          //const respone = await updateMentorProfile()
+      }
+      catch(err)
+      {
+        res.status(400).json("Invalid Format");
+      }
+
+}   
+module.exports = {AddMentor, updateMentorProfile};
