@@ -1,9 +1,6 @@
 const md5 = require("md5");
-<<<<<<< HEAD
 const { AddMentorModel, updateMentorProfileModel } = require("../../../model/AddMentorModel");
-=======
 const { AddMentorModel } = require("../../../model/AddMentorModel");
->>>>>>> 2432757992f8bd4d5b7f2636eff80c6864a2e141
 const { ExpressValidator, check, checkExact } = require("express-validator");
 const validator = require("validator");
 const EmailValid = require("../../../validation/EmailValid");
@@ -106,7 +103,6 @@ const randomString = (length) => {
   }
   return str;
 };
-<<<<<<< HEAD
 const updateMentorProfile = async(req, res) => {
       const {mentor_id} = req.params;
       const mentor_profile = req.file;
@@ -124,6 +120,3 @@ const updateMentorProfile = async(req, res) => {
 
 }   
 module.exports = {AddMentor, updateMentorProfile};
-=======
-module.exports = AddMentor;
->>>>>>> 2432757992f8bd4d5b7f2636eff80c6864a2e141
