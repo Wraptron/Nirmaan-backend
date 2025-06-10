@@ -25,7 +25,11 @@ const ApprovalRequest = require("../controller/Admin/Resume/ApporvalRequest.js")
 const DeleteResume = require("../controller/Admin/Resume/DeleteResume.js");
 
 // Mentor Management
+<<<<<<< HEAD
 const {AddMentor, updateMentorProfile} = require("../controller/Admin/Mentors/AddMentor.js");
+=======
+const AddMentor = require("../controller/Admin/Mentors/AddMentor.js");
+>>>>>>> 2432757992f8bd4d5b7f2636eff80c6864a2e141
 const {
   FetchMentorData,
   MentorCount,
@@ -144,7 +148,11 @@ router.get("/fetchmeeting/:mentor_reference_id", FetchMeetings);
 
 router.post("/testimonial",Testimonial)
 router.get("/fetchtestimonial/:mentor_ref_id",FetchTestimonial)
+<<<<<<< HEAD
 router.put("/updateprofilephoto/:mentor_id", upload.single('mentor_logo'), updateMentorProfile)
+=======
+
+>>>>>>> 2432757992f8bd4d5b7f2636eff80c6864a2e141
 // Startups
 router.post("/add-startup", AddStartup);
 router.get("/startup/:id", IndividualStartups);
