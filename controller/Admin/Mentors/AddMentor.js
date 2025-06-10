@@ -105,12 +105,12 @@ const randomString = (length) => {
 const updateMentorProfile = async(req, res) => {
       const {mentor_id} = req.params;
       const mentor_profile = req.file;
-      let mentor_photoo;
+      //let mentor_photoo;
       try
       {
-          //res.status(200).send("Hello")
-          mentor_photoo = JSON.parse(req.body.mentor_photo);
-          //const respone = await updateMentorProfile()
+        const url = mentor_profile ? await AwsModel(mentor_profile) : "";
+        const result = await updateMentorProfileModel(url, mentor_id)
+        res.status(200).json(result);
       }
       catch(err)
       {

@@ -144,7 +144,7 @@ router.get("/fetchmeeting/:mentor_reference_id", FetchMeetings);
 
 router.post("/testimonial",Testimonial)
 router.get("/fetchtestimonial/:mentor_ref_id",FetchTestimonial)
-router.put("/updateprofilephoto/:mentor_id", updateMentorProfile)
+router.put("/updateprofilephoto/:mentor_id", upload.single('mentor_logo'), updateMentorProfile)
 // Startups
 router.post("/add-startup", AddStartup);
 router.get("/startup/:id", IndividualStartups);
