@@ -148,11 +148,7 @@ router.get("/fetchmeeting/:mentor_reference_id", FetchMeetings);
 
 router.post("/testimonial",Testimonial)
 router.get("/fetchtestimonial/:mentor_ref_id",FetchTestimonial)
-<<<<<<< HEAD
 router.put("/updateprofilephoto/:mentor_id", upload.single('mentor_logo'), updateMentorProfile)
-=======
-
->>>>>>> 2432757992f8bd4d5b7f2636eff80c6864a2e141
 // Startups
 router.post("/add-startup", AddStartup);
 router.get("/startup/:id", IndividualStartups);

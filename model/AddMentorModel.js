@@ -301,7 +301,6 @@ const UpdateMentorModel = (
     });
   });
 };
-<<<<<<< HEAD
 //update mentor profile
 const updateMentorProfileModel = (mentor_logo, mentor_id) => {
   return new Promise((resolve, reject) => {
@@ -317,9 +316,6 @@ const updateMentorProfileModel = (mentor_logo, mentor_id) => {
         })
   })
 }
-=======
-
->>>>>>> 2432757992f8bd4d5b7f2636eff80c6864a2e141
 module.exports = {
   AddMentorModel,
   FetchMentorDataModel,
@@ -327,8 +323,5 @@ module.exports = {
   MentorDeleteData,
   MentorScheduleModel,
   UpdateMentorModel,
-<<<<<<< HEAD
   updateMentorProfileModel
-=======
->>>>>>> 2432757992f8bd4d5b7f2636eff80c6864a2e141
 };
