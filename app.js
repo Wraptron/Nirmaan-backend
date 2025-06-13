@@ -78,7 +78,11 @@ app.post('/imagess', upload.single('image'), async(req, res) => {
     //const description = req.body.description
     res.send({imagePath : `/images/${result.Key}`})
 } )
-app.use(cors({ origin: true }));
+const corsOption = {
+    origin : "https://nirmaan-staging.wraptron.com",
+    credentials: true,
+}
+app.use(cors(corsOption));
 app.use(cookieParser());
 // app.use(RateLimitMiddleware);
 app.use(responseTime());
