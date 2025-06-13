@@ -26,7 +26,7 @@ const DeleteResume = require("../controller/Admin/Resume/DeleteResume.js");
 
 // Mentor Management
 const {AddMentor, updateMentorProfile} = require("../controller/Admin/Mentors/AddMentor.js");
-const AddMentor = require("../controller/Admin/Mentors/AddMentor.js");
+// const AddMentor = require("../controller/Admin/Mentors/AddMentor.js");
 const {
   FetchMentorData,
   MentorCount,

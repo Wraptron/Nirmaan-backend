@@ -1,6 +1,5 @@
 const md5 = require("md5");
 const { AddMentorModel, updateMentorProfileModel } = require("../../../model/AddMentorModel");
-const { AddMentorModel } = require("../../../model/AddMentorModel");
 const { ExpressValidator, check, checkExact } = require("express-validator");
 const validator = require("validator");
 const EmailValid = require("../../../validation/EmailValid");

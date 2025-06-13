@@ -175,10 +175,7 @@ app.use('api/v1/', DeleteMentorData);
 app.use('api/v1/', IPdataUpload);
 app.use('api/v1/', TopStartupsSectorsCont);
 app.use('api/v1/', TeamDocuments);
-<<<<<<< HEAD
 app.use('api/v1/', updateMentorProfile);
-=======
->>>>>>> 2432757992f8bd4d5b7f2636eff80c6864a2e141
 module.exports = app;
 
 
