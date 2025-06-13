@@ -78,11 +78,31 @@ app.post('/imagess', upload.single('image'), async(req, res) => {
     //const description = req.body.description
     res.send({imagePath : `/images/${result.Key}`})
 } )
-const corsOption = {
-    origin : "https://nirmaan-staging.wraptron.com",
-    credentials: true,
-}
-app.use(cors(corsOption));
+// const corsOption = {
+//     origin : "https://nirmaan-staging.wraptron.com",
+//     credentials: true,
+// }
+// app.use(cors(corsOption));
+//const cors = require('cors');
+
+const allowedOrigins = [
+  'https://nirmaan-staging.wraptron.com'
+];
+
+const corsOptions = {
+  origin: function (origin, callback) {
+    // Allow REST tools or Postman (no origin)
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true,
+  optionsSuccessStatus: 200
+};
+
+app.use(cors(corsOptions));
 app.use(cookieParser());
 // app.use(RateLimitMiddleware);
 app.use(responseTime());
