@@ -36,7 +36,7 @@ const CreateTeamUser = (founder_email, founder_number, official_email_address) =
 const StartupDataModel = async() => {
     return new Promise((resolve, reject) => {
             const TotalCountStartups = new Promise((resolveQuery1, rejectQuery1) => {
-                    client.query("SELECT COUNT(basic::json->'startup_name') AS startup_total FROM test_startup", (err, result) => {
+                    client.query("SELECT COUNT(basic::json->'startup_name,program') AS startup_total FROM test_startup", (err, result) => {
                         if(err)
                         {
                             rejectQuery1(err)
