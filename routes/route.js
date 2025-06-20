@@ -15,7 +15,7 @@ const {Profile, ProfilePhoto} = require('../controller/Admin/Profile/Profile.js'
 const DeleteResume = require('../controller/Admin/Resume/DeleteResume.js');
 const AddMentor = require('../controller/Admin/Mentors/AddMentor.js');
 const Settings = require('../controller/Admin/Settings/Settings.js');
-const {AddStartup, FetchStartupDatainNumbers, FetchStartupData, UpdateStatus, IndividualStartups, TopStartupsSectorsCont, TeamDocuments} = require('../controller/Admin/startups/AddStartup.js');
+const {AddStartup, FetchStartupDatainNumbers, FetchStartupData, UpdateStatus, IndividualStartups, TopStartupsSectorsCont, TeamDocuments, DeleteStartupData} = require('../controller/Admin/startups/AddStartup.js');
 const {AddMessage, ViewMessage} = require('../controller/Admin/Messages/Messages.js');
 const {AddConnections, ViewConnections, EstablishConnection} = require("../controller/Admin/Connections/Connection.js");
 const Report = require('../controller/Admin/Reports/Report.js');
@@ -76,6 +76,7 @@ router.get('/customer/fetch-mentor', FetchDataMentor);
 router.post('/customer/add-job', AddJob);
 router.get('/notification', updateFundingNotif);
 router.delete('/delete-mentor/:id', DeleteMentorData);
+router.delete('/delete-startup/:email', DeleteStartupData);
 router.delete('/delete-connection', DeleteConnection);
 router.post('/ipdataupload', upload.single('file'),  IPdataUpload);
 router.get('/st', TopStartupsSectorsCont);

@@ -1229,4 +1229,18 @@ const TopStartupsSectors = (id) => {
         })
     })
 }
-module.exports = {AddStartupModel, StartupDataModel, FetchStartupsModel, UpdateStartupStatusModel, IndividualStarupModel, CreateTeamUser, TopStartupsSectors};
+const StartupDeleteData = (email) => {
+    return new Promise((resolve, reject) => {
+        client.query(`DELETE FROM test_startup  WHERE founder->>'founder_email'=$1`, [email], (err, result) => {
+            if(err)
+            {
+                reject(err);
+            }
+            else
+            {
+                resolve(result);
+            }
+        })
+    })
+} 
+module.exports = {AddStartupModel, StartupDataModel, FetchStartupsModel, UpdateStartupStatusModel, IndividualStarupModel, CreateTeamUser, TopStartupsSectors,StartupDeleteData};

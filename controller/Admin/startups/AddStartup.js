@@ -1,4 +1,4 @@
-const {AddStartupModel, StartupDataModel, FetchStartupsModel, UpdateStartupStatusModel, IndividualStarupModel, CreateTeamUser, TopStartupsSectors} = require('../../../model/StartupModel');
+const {AddStartupModel, StartupDataModel, FetchStartupsModel, UpdateStartupStatusModel, IndividualStarupModel, CreateTeamUser, TopStartupsSectors, StartupDeleteData} = require('../../../model/StartupModel');
 const EmailValid = require('../../../validation/EmailValid');
 const PhoneNumberValid = require('../../../validation/PhoneNumberValid');
 const AddStartup = async(req, res) => {
@@ -278,4 +278,22 @@ const TeamDocuments = async(req, res) => {
         res.status(500).json(err)
     }
 }
-module.exports = {AddStartup, FetchStartupDatainNumbers, FetchStartupData, UpdateStatus, IndividualStartups, TopStartupsSectorsCont, TeamDocuments};
+
+const DeleteStartupData = async (req, res) => {
+    const email = req.params.email;
+    console.log("Deleting startup with email:", email);
+
+    if (email) {
+        try {
+            const result = await StartupDeleteData(email);
+            res.status(200).json(result);
+        } catch (err) {
+            console.error("Delete error:", err);
+            res.status(500).send(err);
+        }
+    } else {
+        res.status(400).send("Params missing");
+    }
+};
+
+module.exports = {AddStartup, FetchStartupDatainNumbers, FetchStartupData, UpdateStatus, IndividualStartups, TopStartupsSectorsCont, TeamDocuments,DeleteStartupData};
