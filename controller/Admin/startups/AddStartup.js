@@ -1,6 +1,11 @@
 const {AddStartupModel, StartupDataModel, FetchStartupsModel, UpdateStartupStatusModel, IndividualStarupModel, CreateTeamUser, TopStartupsSectors, StartupDeleteData} = require('../../../model/StartupModel');
 const EmailValid = require('../../../validation/EmailValid');
 const PhoneNumberValid = require('../../../validation/PhoneNumberValid');
+const generatePassword = require('../../../utils/GeneratePassword');
+const sendStartupCredentials = require('../../../components/SendStartupCredentials');
+const { v4: uuidv4 } = require('uuid');
+const md5 = require('md5');
+
 const AddStartup = async(req, res) => {
     const {basic, official, founder, description} = req.body;
 
@@ -24,24 +29,25 @@ const AddStartup = async(req, res) => {
     {
         try
         {
+            // 1. Add startup
             const result = await AddStartupModel(basic, official, founder, description, official_email_address);
-            // if(result)
-            // {
-            //     try 
-            //     {
-            //         let response = await CreateTeamUser(founder_email, founder_number, official_email_address); 
-            //         res.status(200).send(response);     
-            //     }
-            //     catch(err)
-            //     {
-            //         res.status(501).send(err)
-            //     }
-            // }
-            res.status(200).send(result);
+
+            // 2. Generate password
+            const password = generatePassword();
+
+            // 3. Create user in user_data
+            const userId = uuidv4();
+            await CreateTeamUser(official_email_address, password, founder_name, founder_number, founder_email, userId);
+
+            // 4. Send credentials email
+            await sendStartupCredentials(official_email_address, password);
+
+            res.status(200).json({status: "Startup created and credentials sent"});
         }
         catch(err)
         {
-                res.status(500).send(err);
+            console.error("Error in AddStartup:", err); // Add this line
+            res.status(500).json({ error: err.message || err });
         }
     }
 }

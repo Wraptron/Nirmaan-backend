@@ -1,6 +1,7 @@
 const client = require('../utils/conn');
 const generatePassword = require('../utils/GeneratePassword');
 var md5 = require('md5');
+const { v4: uuidv4 } = require('uuid');
 
 const AddStartupModel = async(basic, official, founder, description, official_email_address) => {
     return new Promise((resolve, reject)=> {
@@ -18,21 +19,18 @@ const AddStartupModel = async(basic, official, founder, description, official_em
         )
     })
 }
-const CreateTeamUser = (founder_email, founder_number, official_email_address) => {
+const CreateTeamUser = (user_mail, user_password, user_name, user_contact, personal_email) => {
+    const userId = uuidv4();
     return new Promise((resolve, reject) => {
-        client.query("INSERT INTO user_data(user_mail, user_password, user_hash, user_department, user_role, user_name, user_contact, personal_email) VALUES($1, $2, $3, $4, $5, $6, $7, $8)", [founder_email, generatePassword, md5(founder_email), 'student', '5', founder_number, official_contact_number, official_email_address], 
+        client.query(
+            "INSERT INTO user_data(user_mail, user_password, user_hash, user_department, user_role, user_name, user_contact, personal_email) VALUES($1, $2, $3, $4, $5, $6, $7, $8)",
+            [user_mail, user_password, md5(user_mail), 'student', '5', user_name, user_contact, personal_email],
             (err, result) => {
-                if(err)
-                {
-                    reject(err)
-                }
-                else
-                {
-                    resolve(result)
-                }
+                if (err) reject(err);
+                else resolve(result);
             }
-        )
-    })
+        );
+    });
 }
 const StartupDataModel = async() => {
     return new Promise((resolve, reject) => {
@@ -196,16 +194,18 @@ const TopStartupsSectors = (id) => {
 }
 const StartupDeleteData = (email) => {
     return new Promise((resolve, reject) => {
-        client.query(`DELETE FROM test_startup  WHERE founder->>'founder_email'=$1`, [email], (err, result) => {
-            if(err)
-            {
-                reject(err);
+        client.query(
+          `DELETE FROM test_startup 
+            WHERE TRIM(LOWER(official_email_address)) = TRIM(LOWER($1))`,
+          [email.trim().toLowerCase()],
+          (err, result) => {
+            if (err) {
+              reject(err);
+            } else {
+              resolve(result);
             }
-            else
-            {
-                resolve(result);
-            }
-        })
+          }
+        );
     })
 } 
 module.exports = {AddStartupModel, StartupDataModel, FetchStartupsModel, UpdateStartupStatusModel, IndividualStarupModel, CreateTeamUser, TopStartupsSectors,StartupDeleteData};
