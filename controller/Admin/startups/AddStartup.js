@@ -55,23 +55,26 @@ const AddStartup = async(req, res) => {
 const FetchStartupDatainNumbers = async (req, res) => {
   try {
     const result = await StartupDataModel();
-    const startupData = {
-      startup_total: result.TotalCountStartups.rows[0].startup_total,
-      active_startups: result.ActiveStartups.rows[0].active,
-      dropped_startups: result.DroppedStartups.rows[0].dropped_status,
-      graduated_startups: result.GraduatedStartups.rows[0].graduated_status,
+      const startupData = {
+      startup_total: result?.TotalCountStartups?.rows?.[0]?.startup_total || 0,
+      active_startups: result?.ActiveStartups?.rows?.[0]?.active || 0,
+      dropped_startups: result?.DroppedStartups?.rows?.[0]?.dropped_status || 0,
+      graduated_startups: result?.GraduatedStartups?.rows?.[0]?.program_count || 0,
+      akshar: result?. AksharStartups?.rows?.[0]?.program_count || 0,
+      pratham: result?. PrathamStartups?.rows?.[0]?.program_count || 0,
       Mentors: {
         Session_Total: parseInt(
-          result.TotalMentoringSessions.rows[0].session_total
+          result?.TotalMentoringSessions?.rows?.[0]?.session_total || 0
         ),
       },
     };
-    res.status(200).json(startupData); // ✅ This was missing
-  } catch (err) {
-    res.status(500).json(err);
-  }
-};
 
+    res.status(200).json(startupData);
+  } catch (err) {
+    console.error("Error in FetchStartupDatainNumbers:", err.stack || err);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
 const FetchStartupData = async(req,res) => {
     try 
     {

@@ -32,78 +32,114 @@ const CreateTeamUser = (user_mail, user_password, user_name, user_contact, perso
         );
     });
 }
-const StartupDataModel = async() => {
-    return new Promise((resolve, reject) => {
-            const TotalCountStartups = new Promise((resolveQuery1, rejectQuery1) => {
-                    client.query("SELECT COUNT(basic::json->'startup_name,program') AS startup_total FROM test_startup", (err, result) => {
-                        if(err)
-                        {
-                            rejectQuery1(err)
-                        }
-                        else
-                        {
-                            resolveQuery1(result)
-                        }
-                    })
-            })
-            const ActiveStartups = new Promise((resolveQuery2, rejectQuery2) => {
-                client.query("SELECT COUNT(startup_status) AS active FROM test_startup WHERE startup_status='Active'", (err, result) => {
-                    if(err)
-                    {
-                        rejectQuery2(err)
-                    }
-                    else
-                    {
-                        resolveQuery2(result)
-                    }
-                }) 
-            })
-            const DroppedStartups = new Promise((resolveQuery3, rejectQuery3) => {
-                client.query("SELECT COUNT(startup_status) AS Dropped_status FROM test_startup WHERE startup_status='Dropped'", (err, result) => {
-                    if(err)
-                    {
-                        rejectQuery3(err);
-                    }
-                    else
-                    {
-                        resolveQuery3(result)
-                    }
-                })
-            })
+const StartupDataModel = async () => {
+  return new Promise((resolve, reject) => {
+    const TotalCountStartups = new Promise((resolveQuery1, rejectQuery1) => {
+      client.query(
+        "SELECT COUNT(basic::json->'startup_name,program') AS startup_total FROM test_startup",
+        (err, result) => {
+          if (err) {
+            rejectQuery1(err);
+          } else {
+            resolveQuery1(result);
+          }
+        }
+      );
+    });
+    const ActiveStartups = new Promise((resolveQuery2, rejectQuery2) => {
+      client.query(
+        "SELECT COUNT(startup_status) AS active FROM test_startup WHERE startup_status='Active'",
+        (err, result) => {
+          if (err) {
+            rejectQuery2(err);
+          } else {
+            resolveQuery2(result);
+          }
+        }
+      );
+    });
+    const DroppedStartups = new Promise((resolveQuery3, rejectQuery3) => {
+      client.query(
+        "SELECT COUNT(startup_status) AS Dropped_status FROM test_startup WHERE startup_status='Dropped'",
+        (err, result) => {
+          if (err) {
+            rejectQuery3(err);
+          } else {
+            resolveQuery3(result);
+          }
+        }
+      );
+    });
 
-            const GraduatedStartups = new Promise((resolveQuery3, rejectQuery3) => {
-                client.query("SELECT COUNT(startup_status) AS graduated_status FROM test_startup WHERE startup_status='Graduated'", (err, result) => {
-                    if(err)
-                    {
-                        rejectQuery3(err);
-                    }
-                    else
-                    {
-                        resolveQuery3(result)
-                    }
-                })
-            })
+    const GraduatedStartups = new Promise((resolveQuery3, rejectQuery3) => {
+      client.query(
+        "SELECT COUNT(*) AS program_count FROM test_startup WHERE basic->>'program' = 'Graduated'",
+        (err, result) => {
+          if (err) {
+            rejectQuery3(err);
+          } else {
+            resolveQuery3(result);
+          }
+        }
+      );
+    });
+    const AksharStartups = new Promise((resolveQuery3, rejectQuery3) => {
+      client.query(
+        "SELECT COUNT(*) AS program_count FROM test_startup WHERE basic->>'program' = 'Akshar'",
+        (err, result) => {
+          if (err) {
+            rejectQuery3(err);
+          } else {
+            resolveQuery3(result);
+          }
+        }
+      );
+    });
+    const PrathamStartups = new Promise((resolveQuery3, rejectQuery3) => {
+      client.query(
+        "SELECT COUNT(*) AS program_count FROM test_startup WHERE basic->>'program' = 'Pratham'",
+        (err, result) => {
+          if (err) {
+            rejectQuery3(err);
+          } else {
+            resolveQuery3(result);
+          }
+        }
+      );
+    });
+    Promise.all([
+      TotalCountStartups,
+      ActiveStartups,
+      DroppedStartups,
+      GraduatedStartups,
+      AksharStartups,
+      PrathamStartups,
+    ])
+      .then(
+        ([
+          TotalCountStartups,
+          ActiveStartups,
+          DroppedStartups,
+          GraduatedStartups,
+          AksharStartups,
+          PrathamStartups,
+        ]) => {
+          resolve({
+            TotalCountStartups,
+            ActiveStartups,
+            DroppedStartups,
+            GraduatedStartups,
+            AksharStartups,
+            PrathamStartups,
+          });
+        }
+      )
+      .catch((err) => {
+        reject(err);
+      });
+  });
+};
 
-            Promise.all([TotalCountStartups, ActiveStartups, DroppedStartups, GraduatedStartups, 
-              
-                
-                ])
-            .then(([TotalCountStartups, ActiveStartups, DroppedStartups, GraduatedStartups, 
-                
-            ]) => {
-                resolve({
-                    TotalCountStartups,
-                    ActiveStartups,
-                    DroppedStartups,
-                    GraduatedStartups,
-                    
-                });
-            })
-            .catch((err) => {
-                reject(err)
-            });
-    })  
-}
 const FetchStartupsModel = async() => {
     return new Promise((resolve, reject) => {
         client.query(
