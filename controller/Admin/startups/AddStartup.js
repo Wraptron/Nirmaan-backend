@@ -9,11 +9,11 @@ const md5 = require('md5');
 const AddStartup = async(req, res) => {
     const {basic, official, founder, description} = req.body;
 
-    const{startup_name, startup_program, startup_sector, startup_type, startup_industry, startup_tech, program, Community, cohort} = basic;
+    const{startup_name, startup_program, startup_sector, startup_type, startup_industry, startup_tech, program, community, cohort} = basic;
 
-    const{official_contact_number, official_email_address, website_link, linkedin_id, mentor_associated, registration_number, password} = official;
+    const{official_contact_number, official_email_address, website_link, linkedin_id, role_of_faculty, mentor_associated, registration_number, password} = official;
 
-    const{founder_name, founder_email, founder_number, founder_gender, founder_student_id, linkedInid} = founder;
+    const{founder_name, founder_email, founder_number, founder_gender, founder_student_id, academic_background, linkedInid} = founder;
 
     const{logo_image, startup_description} = description;
 
@@ -176,9 +176,7 @@ const FetchStartupProfile = async (req, res) => {
             status: result.GeneralData.rows[0]?.startup_status || "",
             official_email_address: result.GeneralData.rows[0]?.official_email_address || "",
             phone: result.GeneralData.rows[0]?.official_contact_number || "",
-            project_timeline: {
-                label: "In Progress", // or fetch from DB if available
-            },
+            community: result.GeneralData.rows[0]?.community || "",
             about: result.GeneralData.rows[0]?.startup_description || "",
             startup_type: result.GeneralData.rows[0]?.startup_type || "",
             sector: result.GeneralData.rows[0]?.startup_sector || "",
