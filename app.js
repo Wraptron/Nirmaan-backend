@@ -48,7 +48,10 @@ const UpdateStatus = require('./routes/route');
 const IndividualStartups = require('./routes/route');
 const IPdataUpload = require('./routes/route');
 const TopStartupsSectorsCont = require('./routes/route');
+const UpdateStartupAbout = require('./routes/route');
 // const {uploadFile, getFileStream} = require('./utils/s3');
+const UpdateStartupDetails = require ('./routes/route');
+const UpdateStartupMentorDetails = require ('./routes/route');
 const multer = require('multer')
 const upload = multer({dest: 'uploads/'})
 const app = express();
@@ -121,6 +124,8 @@ io.on('connection', function(socket) {
     });
 })
 app.use('api/v1/', IndividualStartups);
+app.use('api/v1/', UpdateStartupDetails);
+app.use('api/v1/', UpdateStartupMentorDetails);
 app.use('api/v1/', ProfilePhoto);
 app.use('api/v1/', ScheduleMentorMeeting);
 app.use('/api/v1/', AddFunding);
@@ -162,6 +167,7 @@ app.use('api/v1/', TeamMember);
 app.use('api/v1/', RaiseRequest);
 app.use('api/v1/', AddMentorHour)
 app.use('api/v1/', FetchDataMentor);
+app.use('api/v1/', UpdateStartupAbout);
 app.use('api/v1/', ViewNotification);
 app.use('api/v1/', DeleteConnection);
 app.use('api/v1/', DeleteMentorData);

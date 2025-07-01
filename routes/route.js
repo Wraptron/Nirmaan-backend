@@ -15,7 +15,7 @@ const {Profile, ProfilePhoto} = require('../controller/Admin/Profile/Profile.js'
 const DeleteResume = require('../controller/Admin/Resume/DeleteResume.js');
 const AddMentor = require('../controller/Admin/Mentors/AddMentor.js');
 const Settings = require('../controller/Admin/Settings/Settings.js');
-const {AddStartup, FetchStartupDatainNumbers, FetchStartupData, UpdateStatus, IndividualStartups, TopStartupsSectorsCont, TeamDocuments, DeleteStartupData} = require('../controller/Admin/startups/AddStartup.js');
+const {AddStartup, FetchStartupDatainNumbers, FetchStartupData, UpdateStatus, IndividualStartups, UpdateStartupAbout, UpdateStartupMentorDetails,  TopStartupsSectorsCont, TeamDocuments, DeleteStartupData, UpdateStartupDetails} = require('../controller/Admin/startups/AddStartup.js');
 const {AddMessage, ViewMessage} = require('../controller/Admin/Messages/Messages.js');
 const {AddConnections, ViewConnections, EstablishConnection} = require("../controller/Admin/Connections/Connection.js");
 const Report = require('../controller/Admin/Reports/Report.js');
@@ -34,9 +34,12 @@ const AddJob = require('../controller/Team/AddJob.js');
 const {AddFunding, updateFundingNotif} = require('../controller/Finance/AddFunding.js');
 const {ScheduleMentorMeeting} = require('../controller/Admin/Mentorship/Mentorship.js');
 const IPdataUpload = require('../controller/Office/IPdata.js');
+
 router.get('/prof', ProfilePhoto);
 router.put('/update-status', UpdateStatus)
-router.get('/startup/:id',IndividualStartups)
+router.get('/startup/:id',IndividualStartups);
+router.put('/edit-startup/about',UpdateStartupAbout);
+router.put('/edit-startup/mentordetails',UpdateStartupMentorDetails);
 router.post('/schedule-meeting', ScheduleMentorMeeting);
 router.post('/finance/funding-update', AddFunding);
 router.get('/fetch-startup', FetchStartupData);
@@ -55,6 +58,7 @@ router.get('/get-mentor-details', FetchMentorData);
 router.get('/resume-fetch/:page_data/:page_number', Resumedata);
 router.post('/resume-send', ApprovalRequest);
 router.get('/profile/:mail', Profile);
+router.put('/edit-startupdata/personal-info', UpdateStartupDetails);
 router.delete('/delete-resume/:id', DeleteResume);
 router.post('/mentor/add', AddMentor);
 router.post('/create-events',CreateEvents);

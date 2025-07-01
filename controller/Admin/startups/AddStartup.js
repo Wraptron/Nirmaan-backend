@@ -1,4 +1,4 @@
-const {AddStartupModel, StartupDataModel, FetchStartupsModel, UpdateStartupStatusModel, IndividualStarupModel, CreateTeamUser, TopStartupsSectors, StartupDeleteData} = require('../../../model/StartupModel');
+const {AddStartupModel, StartupDataModel, FetchStartupsModel, UpdateStartupPersonalInfoModel, UpdateStartupAboutModel, UpdateStartupStatusModel, IndividualStarupModel, CreateTeamUser, TopStartupsSectors, StartupDeleteData , UpdateStartupMentorDetailsModel} = require('../../../model/StartupModel');
 const EmailValid = require('../../../validation/EmailValid');
 const PhoneNumberValid = require('../../../validation/PhoneNumberValid');
 const generatePassword = require('../../../utils/GeneratePassword');
@@ -202,4 +202,173 @@ const FetchStartupProfile = async (req, res) => {
     }
 };
 
-module.exports = {AddStartup, FetchStartupDatainNumbers, FetchStartupData, UpdateStatus, IndividualStartups, TopStartupsSectorsCont, TeamDocuments,DeleteStartupData, FetchStartupProfile};
+
+const UpdateStartupDetails = async (req, res) => {
+  try {
+   const {
+      startup_name,
+      status,
+      contact_number,
+      email_address,
+      linkedin,
+      website_link
+    } = req.body;
+
+    const basic = {
+      startup_name,
+      status: status || ""  
+    };
+    const official = {
+      official_contact_number:contact_number || "",
+      linkedin_id: linkedin|| "",
+      website_link: website_link || "",
+      official_email_address:email_address
+    }
+    const result = await UpdateStartupPersonalInfoModel({ basic, official });
+    console.log("req.body:", req.body);
+    res.status(200).json({
+      message: "Startup details updated successfully",
+      result
+    });
+  } catch (err) {
+    console.error("Update failed:", err);
+    res.status(500).json({ error: "Failed to update startup details" });
+  }
+};
+
+
+
+const UpdateStartupAbout = async (req, res) => {
+  try {
+    const {
+      sector,
+      program,
+      startup_type,
+      email_address
+    } = req.body;
+
+    if (!email_address) {
+      return res.status(400).json({ error: "Missing email_address" });
+    }
+
+    const basic = {
+      startup_type,
+      startup_sector: sector || "",
+      program
+    };
+
+    const result = await UpdateStartupAboutModel({ basic, email_address });
+
+    res.status(200).json({
+      message: "Startup details updated successfully",
+      result
+    });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to update startup details" });
+  }
+};
+
+
+// const UpdateStartupMentorDetailsModel = async (req, res) => {
+//   try {
+//     const {
+//     startup_yog,
+//     graduated_to,
+//     startup_cohort,
+//     startup_industry,
+//     startup_technology,
+//     scheme,
+//     pia_state,
+//     dpiit_number,
+//     role_of_faculty,
+//     mentor_associated,
+//     official_registered,
+//     cin_registration_number,
+//     official_email_address
+//     } = req.body;
+
+//     if (!email_address) {
+//       return res.status(400).json({ error: "Missing email_address" });
+//     }
+
+//     const basic = {
+//     startup_yog,
+//     graduated_to,
+//     startup_cohort,
+//     startup_industry,
+//     startup_technology,
+//     scheme,
+//     pia_state,
+//     dpiit_number,
+//     role_of_faculty,
+//     mentor_associated,
+//     official_registered,
+//     cin_registration_number,
+//     official_email_address
+//     };
+
+//     const result = await UpdateStartupMentorDetailsModel({ basic, official });
+
+//     res.status(200).json({
+//       message: "Startup details updated successfully",
+//       result
+//     });
+//   } catch (err) {
+//     res.status(500).json({ error: "Failed to update startup details" });
+//   }
+// };
+
+const UpdateStartupMentorDetails = async (req, res) => {
+  try {
+    const {
+      mentors,
+      role_of_faculty,
+      cin_registration_number,
+      year_of_graduation,
+      funding_stage,
+      industry,
+      graduated_to,
+      officially_registered,
+      cohort,
+      technology,
+      dpiit_number,
+      pia,
+      email_address
+    } = req.body;
+
+       if (!email_address || email_address.trim() === "") {
+      return res.status(400).json({ error: "Email address is required for update" });
+    }
+
+
+    const basic = {
+      startup_yog: year_of_graduation || "",
+      graduated_to: graduated_to || "",
+      startup_cohort: cohort || "",
+      startup_industry: industry || "",
+      startup_technology: technology || "",
+    };
+
+    const official = {
+      scheme: "Default Scheme", 
+      pia_state: pia || "",
+      dpiit_number: dpiit_number || "",
+      role_of_faculty,
+       funding_stage: funding_stage || "",
+      mentor_associated: mentors || "",
+      official_registered: officially_registered || "",
+      cin_registration_number: cin_registration_number || "",
+      official_email_address: email_address,
+    };
+
+    const result = await UpdateStartupMentorDetailsModel({ basic, official });
+     console.log("req.body:", req.body);
+    console.log("Received email_address:", email_address);
+    res.status(200).json({ message: "Startup details updated successfully", result });
+  } catch (err) {
+    console.error("Update failed:", err);
+    res.status(500).json({ error: "Failed to update startup details" });
+  }
+};
+
+module.exports = {AddStartup, UpdateStartupMentorDetails, UpdateStartupAbout, UpdateStartupDetails, FetchStartupDatainNumbers, FetchStartupData, UpdateStatus, IndividualStartups, TopStartupsSectorsCont, TeamDocuments,DeleteStartupData, FetchStartupProfile};

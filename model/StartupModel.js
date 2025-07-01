@@ -32,6 +32,10 @@ const CreateTeamUser = (user_mail, user_password, user_name, user_contact, perso
         );
     });
 }
+
+
+
+
 const StartupDataModel = async () => {
   return new Promise((resolve, reject) => {
     const TotalCountStartups = new Promise((resolveQuery1, rejectQuery1) => {
@@ -143,7 +147,7 @@ const StartupDataModel = async () => {
 const FetchStartupsModel = async() => {
     return new Promise((resolve, reject) => {
         client.query(
-"SELECT basic::jsonb->>'startup_name' AS startup_name, startup_status AS status, basic::jsonb->>'startup_industry' AS startup_industry, basic::jsonb->>'startup_sector' AS startup_sector, basic::jsonb->>'startup_Community' AS startup_Community, basic::jsonb->>'startup_type' AS startup_type, basic::jsonb->>'startup_technology' AS startup_technology, basic::jsonb->>'startup_cohort' AS startup_cohort, basic::jsonb->>'startup_yog' AS startup_yog, basic::jsonb->>'graduated_to' AS graduated_to, basic::jsonb->>'program' AS program, official::jsonb->>'official_email_address' AS email_address, official::jsonb->>'official_contact_number' AS contact_number,  official::jsonb->>'role_of_faculty' AS role_of_faculty,  official::jsonb->>'website_link' AS website, official::jsonb->>'dpiit_number' AS dpiit, official::jsonb->>'official_registered' AS register, official::jsonb->>'linkedin_id' AS linkedin, official::jsonb->>'mentor_associated' AS mentor_associated, official::jsonb->>'pia_state' AS pia_state, official::jsonb->>'scheme' AS scheme, founder::jsonb->>'founder_name' AS founder_name, founder::jsonb->>'founder_email' AS founder_email, founder::jsonb->>'founder_number' AS founder_number, founder::jsonb->>'academic_background' AS academic_background,  founder::jsonb->>'founder_gender' AS founder_gender, description::jsonb->>'startup_description' AS startup_description FROM test_startup;",
+"SELECT basic::jsonb->>'startup_name' AS startup_name, startup_status AS status, basic::jsonb->>'startup_industry' AS startup_industry, basic::jsonb->>'startup_sector' AS startup_sector, basic::jsonb->>'startup_Community' AS startup_Community, basic::jsonb->>'startup_type' AS startup_type, basic::jsonb->>'startup_technology' AS startup_technology, basic::jsonb->>'startup_cohort' AS startup_cohort, basic::jsonb->>'startup_yog' AS startup_yog, basic::jsonb->>'graduated_to' AS graduated_to, basic::jsonb->>'program' AS program, official::jsonb->>'official_email_address' AS email_address, official::jsonb->>'official_contact_number' AS contact_number,  official::jsonb->>'role_of_faculty' AS role_of_faculty, official::jsonb->>'cin_registration_number' AS cin_registration_number,official::jsonb->>'funding_stage' AS funding_stage,  official::jsonb->>'website_link' AS website, official::jsonb->>'dpiit_number' AS dpiit, official::jsonb->>'official_registered' AS register, official::jsonb->>'linkedin_id' AS linkedin, official::jsonb->>'mentor_associated' AS mentor_associated, official::jsonb->>'pia_state' AS pia_state, official::jsonb->>'scheme' AS scheme, founder::jsonb->>'founder_name' AS founder_name, founder::jsonb->>'founder_email' AS founder_email, founder::jsonb->>'founder_number' AS founder_number, founder::jsonb->>'academic_background' AS academic_background,  founder::jsonb->>'founder_gender' AS founder_gender, description::jsonb->>'startup_description' AS startup_description FROM test_startup;",
           (err, result) => {
             if (err) {
               reject(err);
@@ -243,5 +247,176 @@ const StartupDeleteData = (email) => {
           }
         );
     })
-} 
-module.exports = {AddStartupModel, StartupDataModel, FetchStartupsModel, UpdateStartupStatusModel, IndividualStarupModel, CreateTeamUser, TopStartupsSectors,StartupDeleteData};
+}
+
+
+const UpdateStartupAboutModel = async (data) => {
+  const { basic, email_address } = data;
+
+  const query = `
+    UPDATE test_startup
+    SET basic = jsonb_set(
+                  jsonb_set(
+                    jsonb_set(
+                      basic,
+                      '{program}', to_jsonb($1::text), true
+                    ),
+                    '{startup_type}', to_jsonb($2::text), true
+                  ),
+                  '{startup_sector}', to_jsonb($3::text), true
+                )
+    WHERE official->>'official_email_address' = $4;
+  `;
+
+  const values = [
+    basic.program || "",
+    basic.startup_type || "",
+    basic.startup_sector || "",
+    email_address
+  ];
+
+  return new Promise((resolve, reject) => {
+    client.query(query, values, (err, result) => {
+      if (err) {
+        reject(err);
+      } else {
+        resolve(result);
+      }
+    });
+  });
+};
+
+
+
+
+const UpdateStartupPersonalInfoModel = async (data) => {
+  const { basic, official } = data;
+  const query = `
+   UPDATE test_startup
+    SET
+      basic = jsonb_set(
+                jsonb_set(
+                  basic,
+                  '{startup_name}', to_jsonb($1::text), true
+                ),
+                '{startup_type}', to_jsonb($2::text), true
+              ),
+      startup_status = $3,
+      official = jsonb_set(
+                   jsonb_set(
+                     jsonb_set(
+                       official,
+                       '{official_contact_number}', to_jsonb($4::text), true
+                     ),
+                     '{linkedin_id}', to_jsonb($5::text), true
+                   ),
+                   '{website_link}', to_jsonb($6::text), true
+                 )
+    WHERE official->>'official_email_address' = $7
+  ;
+`
+ const values = [
+    basic.startup_name || "", 
+    basic.startup_type || "", 
+    basic.status || "", 
+    official.official_contact_number || "",   
+    official.linkedin_id || "",
+    official.website_link || "", 
+    official.official_email_address || "",   
+  ]; 
+
+
+
+  return new Promise((resolve, reject) => {
+    client.query(query, values, (err, result) => {
+      if (err) {
+        console.error("DB Error:", err);
+        reject(err);
+      } else {
+        resolve(result);
+      }
+    });
+  });
+};
+
+
+const UpdateStartupMentorDetailsModel = async (data) => {
+  const { basic, official } = data;
+  const query = `
+   UPDATE test_startup
+SET
+  basic = jsonb_set(
+            jsonb_set(
+              jsonb_set(
+                jsonb_set(
+                  jsonb_set(
+                    basic,
+                    '{startup_yog}', to_jsonb($1::text), true
+                  ),
+                  '{graduated_to}', to_jsonb($2::text), true
+                ),
+                '{startup_cohort}', to_jsonb($3::text), true
+              ),
+              '{startup_industry}', to_jsonb($4::text), true
+            ),
+            '{startup_technology}', to_jsonb($5::text), true
+          ),
+  official = jsonb_set(
+                 jsonb_set(
+                   jsonb_set(
+                     jsonb_set(
+                       jsonb_set(
+                         jsonb_set(
+                           jsonb_set(
+                             jsonb_set(
+                               official,
+                               '{scheme}', to_jsonb($6::text), true
+                             ),
+                             '{pia_state}', to_jsonb($7::text), true
+                           ),
+                           '{dpiit_number}', to_jsonb($8::text), true
+                         ),
+                         '{role_of_faculty}', to_jsonb($9::text), true
+                       ),
+                       '{funding_stage}', to_jsonb($10::text), true
+                     ),
+                     '{mentor_associated}', to_jsonb($11::text), true
+                   ),
+                   '{official_registered}', to_jsonb($12::text), true
+                 ),
+                 '{cin_registration_number}', to_jsonb($13::text), true
+               )
+WHERE official->>'official_email_address' = $14;
+  `;
+
+  const values = [
+    basic.startup_yog,
+    basic.graduated_to,
+    basic.startup_cohort,
+    basic.startup_industry,
+    basic.startup_technology,
+    official.scheme,
+    official.pia_state,
+    official.dpiit_number,
+    official.role_of_faculty,
+    official.funding_stage ,
+    official.mentor_associated,
+    official.official_registered,
+    official.cin_registration_number,
+    official.official_email_address
+  ];
+
+  return new Promise((resolve, reject) => {
+    client.query(query, values, (err, result) => {
+      if (err) {
+        console.error("DB Error:", err);
+        reject(err);
+      } else {
+        resolve(result);
+      }
+    });
+  });
+};
+
+
+module.exports = {AddStartupModel, UpdateStartupAboutModel, UpdateStartupMentorDetailsModel, UpdateStartupPersonalInfoModel, StartupDataModel, FetchStartupsModel, UpdateStartupStatusModel, IndividualStarupModel, CreateTeamUser, TopStartupsSectors,StartupDeleteData};
