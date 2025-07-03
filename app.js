@@ -52,6 +52,8 @@ const UpdateStartupAbout = require('./routes/route');
 // const {uploadFile, getFileStream} = require('./utils/s3');
 const UpdateStartupDetails = require ('./routes/route');
 const UpdateStartupMentorDetails = require ('./routes/route');
+const AddAward = require ('./routes/route');
+const FetchAwardData = require ('./routes/route');
 const multer = require('multer')
 const upload = multer({dest: 'uploads/'})
 const app = express();
@@ -158,6 +160,8 @@ app.use('api/v1/', ViewMessage);
 app.use('api/v1/', AddConnections);
 app.use('api/v1/',AddStartup);
 app.use('api/v1/', ViewConnections);
+app.use('api/v1/', AddAward);
+app.use('api/v1/', FetchAwardData);
 app.use('api/v1/',FetchMentorData);
 app.use('api/v1/', Job);
 app.use('api/v1/', EstablishConnection);

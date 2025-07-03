@@ -1,4 +1,4 @@
-const {AddStartupModel, StartupDataModel, FetchStartupsModel, UpdateStartupPersonalInfoModel, UpdateStartupAboutModel, UpdateStartupStatusModel, IndividualStarupModel, CreateTeamUser, TopStartupsSectors, StartupDeleteData , UpdateStartupMentorDetailsModel} = require('../../../model/StartupModel');
+const {AddStartupModel, StartupDataModel, FetchStartupsModel, UpdateStartupPersonalInfoModel, AddAwardModel, FetchAwardModel,UpdateStartupAboutModel, UpdateStartupStatusModel, IndividualStarupModel, CreateTeamUser, TopStartupsSectors, UpdateStartupFounderModel, StartupDeleteData , UpdateStartupMentorDetailsModel} = require('../../../model/StartupModel');
 const EmailValid = require('../../../validation/EmailValid');
 const PhoneNumberValid = require('../../../validation/PhoneNumberValid');
 const generatePassword = require('../../../utils/GeneratePassword');
@@ -6,51 +6,152 @@ const sendStartupCredentials = require('../../../components/SendStartupCredentia
 const { v4: uuidv4 } = require('uuid');
 const md5 = require('md5');
 
+// const AddStartup = async(req, res) => {
+//     const {basic, official, founder, description} = req.body;
+
+//     const{startup_name, startup_program, startup_sector, startup_type, startup_industry, startup_tech, program, community, cohort} = basic;
+
+//     const{official_contact_number, official_email_address, website_link, linkedin_id, role_of_faculty, mentor_associated, registration_number, password} = official;
+
+//     const{founder_name, founder_email, founder_number, founder_gender, founder_student_id, academic_background, linkedInid} = founder;
+
+//     const{logo, startup_description} = description;
+
+//     if(!startup_name || !official_email_address || !program || !description)
+//     {
+//         res.status(400).json("Please fill necessary fields");
+//     }
+//     else if(!EmailValid(official_email_address))
+//     {
+//         res.status(401).json("Email Not Valid")
+//     }
+//     else
+//     {
+//         try
+//         {
+//             // 1. Add startup
+//             const result = await AddStartupModel(basic, official, founder, description, official_email_address);
+
+//             // 2. Generate password
+//             const password = generatePassword();
+
+//             // 3. Create user in user_data
+//             const userId = uuidv4();
+//             await CreateTeamUser(official_email_address, password, founder_name, founder_number, founder_email, userId);
+
+//             // 4. Send credentials email
+//             await sendStartupCredentials(official_email_address, password);
+
+//             res.status(200).json({status: "Startup created and credentials sent"});
+//         }
+//         catch(err)
+//         {
+//             console.error("Error in AddStartup:", err); // Add this line
+//             res.status(500).json({ error: err.message || err });
+//         }
+//     }
+// }
+
+
+
+
 const AddStartup = async(req, res) => {
-    const {basic, official, founder, description} = req.body;
-
-    const{startup_name, startup_program, startup_sector, startup_type, startup_industry, startup_tech, program, community, cohort} = basic;
-
-    const{official_contact_number, official_email_address, website_link, linkedin_id, role_of_faculty, mentor_associated, registration_number, password} = official;
-
-    const{founder_name, founder_email, founder_number, founder_gender, founder_student_id, academic_background, linkedInid} = founder;
-
-    const{logo_image, startup_description} = description;
-
-    if(!startup_name || !official_email_address || !program || !description)
-    {
-        res.status(400).json("Please fill necessary fields");
-    }
-    else if(!EmailValid(official_email_address))
-    {
-        res.status(401).json("Email Not Valid")
-    }
-    else
-    {
-        try
-        {
-            // 1. Add startup
-            const result = await AddStartupModel(basic, official, founder, description, official_email_address);
-
-            // 2. Generate password
-            const password = generatePassword();
-
-            // 3. Create user in user_data
-            const userId = uuidv4();
-            await CreateTeamUser(official_email_address, password, founder_name, founder_number, founder_email, userId);
-
-            // 4. Send credentials email
-            await sendStartupCredentials(official_email_address, password);
-
-            res.status(200).json({status: "Startup created and credentials sent"});
+    try {
+        const {basic, official, founder, description} = req.body;
+        
+        // Log the received data for debugging
+        console.log('Received data:', { basic, official, founder, description });
+        
+        // Extract fields from basic section
+        const {
+            startup_name, 
+            startup_program, 
+            startup_sector, 
+            startup_type, 
+            startup_industry, 
+            startup_tech,  // Note: frontend sends as startup_technology, but we transform it
+            program, 
+            community,     // Note: frontend sends as startup_Community, but we transform it
+            cohort
+        } = basic;
+        
+        // Extract fields from official section
+        const {
+            official_contact_number, 
+            official_email_address, 
+            website_link, 
+            linkedin_id, 
+            role_of_faculty, 
+            mentor_associated, 
+            registration_number, // Note: frontend sends as cin_registration_number, but we transform it
+            password,
+            // Additional fields that might be needed
+            dpiit_number,
+            funding_stage,
+            official_registered,
+            pia_state,
+            scheme
+        } = official;
+        
+        // Extract fields from founder section
+        const {
+            founder_name, 
+            founder_email, 
+            founder_number, 
+            founder_gender, 
+            founder_student_id, 
+            academic_background, 
+            linkedInid
+        } = founder;
+        
+        // Extract fields from description section
+        const {logo, startup_description} = description;
+        
+        // Validation
+        if(!startup_name || !official_email_address || !program || !startup_description) {
+            return res.status(400).json({
+                error: "Please fill necessary fields",
+                missing_fields: {
+                    startup_name: !startup_name,
+                    official_email_address: !official_email_address,
+                    program: !program,
+                    startup_description: !startup_description
+                }
+            });
         }
-        catch(err)
-        {
-            console.error("Error in AddStartup:", err); // Add this line
-            res.status(500).json({ error: err.message || err });
+        
+        if(!EmailValid(official_email_address)) {
+            return res.status(401).json({error: "Email Not Valid"});
         }
+        
+        // 1. Add startup
+        const result = await AddStartupModel(basic, official, founder, description, official_email_address);
+        
+        // 2. Generate password
+        const generatedPassword = generatePassword();
+        
+        // 3. Create user in user_data
+        const userId = uuidv4();
+        await CreateTeamUser(official_email_address, generatedPassword, founder_name, founder_number, founder_email, userId);
+        
+        // 4. Send credentials email
+        await sendStartupCredentials(official_email_address, generatedPassword);
+        
+        res.status(200).json({
+            status: "Startup created and credentials sent",
+            result: result
+        });
+        
+    } catch(err) {
+        console.error("Error in AddStartup:", err);
+        res.status(500).json({ 
+            error: err.message || err,
+            details: "Server Error: Something went wrong. Please try again."
+        });
     }
 }
+
+
 
 const FetchStartupDatainNumbers = async (req, res) => {
   try {
@@ -171,11 +272,11 @@ const FetchStartupProfile = async (req, res) => {
 
         // Map your DB result to the frontend structure
         const profile = {
-            image: result.GeneralData.rows[0]?.logo_image || "", // adjust as per your DB
+            image: result.GeneralData.rows[0]?.logo || "", // adjust as per your DB
             name: result.GeneralData.rows[0]?.startup_name || "",
             status: result.GeneralData.rows[0]?.startup_status || "",
             official_email_address: result.GeneralData.rows[0]?.official_email_address || "",
-            phone: result.GeneralData.rows[0]?.official_contact_number || "",
+            contact_number: result.GeneralData.rows[0]?.official_contact_number || "",
             community: result.GeneralData.rows[0]?.community || "",
             about: result.GeneralData.rows[0]?.startup_description || "",
             startup_type: result.GeneralData.rows[0]?.startup_type || "",
@@ -208,7 +309,7 @@ const UpdateStartupDetails = async (req, res) => {
    const {
       startup_name,
       status,
-      contact_number,
+      official_contact_number,
       email_address,
       linkedin,
       website_link
@@ -219,7 +320,7 @@ const UpdateStartupDetails = async (req, res) => {
       status: status || ""  
     };
     const official = {
-      official_contact_number:contact_number || "",
+      official_contact_number:official_contact_number || "",
       linkedin_id: linkedin|| "",
       website_link: website_link || "",
       official_email_address:email_address
@@ -238,35 +339,35 @@ const UpdateStartupDetails = async (req, res) => {
 
 
 
-const UpdateStartupAbout = async (req, res) => {
-  try {
-    const {
-      sector,
-      program,
-      startup_type,
-      email_address
-    } = req.body;
+// const UpdateStartupAbout = async (req, res) => {
+//   try {
+//     const {
+//       sector,
+//       program,
+//       startup_type,
+//       email_address
+//     } = req.body;
 
-    if (!email_address) {
-      return res.status(400).json({ error: "Missing email_address" });
-    }
+//     if (!email_address) {
+//       return res.status(400).json({ error: "Missing email_address" });
+//     }
 
-    const basic = {
-      startup_type,
-      startup_sector: sector || "",
-      program
-    };
+//     const basic = {
+//       startup_type,
+//       startup_sector: sector || "",
+//       program
+//     };
 
-    const result = await UpdateStartupAboutModel({ basic, email_address });
+//     const result = await UpdateStartupAboutModel({ basic, email_address });
 
-    res.status(200).json({
-      message: "Startup details updated successfully",
-      result
-    });
-  } catch (err) {
-    res.status(500).json({ error: "Failed to update startup details" });
-  }
-};
+//     res.status(200).json({
+//       message: "Startup details updated successfully",
+//       result
+//     });
+//   } catch (err) {
+//     res.status(500).json({ error: "Failed to update startup details" });
+//   }
+// };
 
 
 // const UpdateStartupMentorDetailsModel = async (req, res) => {
@@ -317,6 +418,43 @@ const UpdateStartupAbout = async (req, res) => {
 //     res.status(500).json({ error: "Failed to update startup details" });
 //   }
 // };
+
+
+
+const UpdateStartupAbout = async (req, res) => {
+  try {
+    const {
+      sector,
+      program,
+      startup_type,
+      about,
+      email_address
+    } = req.body;
+
+    if (!email_address) {
+      return res.status(400).json({ error: "Missing email_address" });
+    }
+
+    const basic = {
+      startup_type,
+      startup_sector: sector || "",
+      program
+    };
+    const description ={
+      startup_description:about || ""
+    }
+
+    const result = await UpdateStartupAboutModel({ basic, email_address,description });
+
+    res.status(200).json({
+      message: "Startup details updated successfully",
+      result
+    });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to update startup details" });
+  }
+};
+
 
 const UpdateStartupMentorDetails = async (req, res) => {
   try {
@@ -371,4 +509,80 @@ const UpdateStartupMentorDetails = async (req, res) => {
   }
 };
 
-module.exports = {AddStartup, UpdateStartupMentorDetails, UpdateStartupAbout, UpdateStartupDetails, FetchStartupDatainNumbers, FetchStartupData, UpdateStatus, IndividualStartups, TopStartupsSectorsCont, TeamDocuments,DeleteStartupData, FetchStartupProfile};
+
+
+
+
+
+
+const UpdateStartupFounder = async (req, res) => {
+  console.log(req.body)
+  try {
+    const {
+      founder_name,
+      founder_email,
+      founder_number,
+       email_address
+    } = req.body;
+
+    if (!email_address) {
+      return res.status(400).json({ error: "Missing email_address" });
+    }
+
+    const founder = {
+      founder_name,
+      founder_email,
+      founder_number
+    };
+  const result = await UpdateStartupFounderModel({ founder,email_address});
+    res.status(200).json({
+      message: "Startup details updated successfully",
+      result
+    });
+  } catch (err) {
+  console.error("Backend Error:", err); // this will show SQL or JSON issues
+  res.status(500).json({ error: "Failed to update startup details" });
+}
+};
+
+
+const AddAward = async (req, res) => {
+  try {
+    const {
+      award_name,
+      award_org,
+      prize_money,
+      awarded_date,
+      description,
+      official_email_address
+    } = req.body;
+
+
+    const result = await AddAwardModel(
+      official_email_address,
+      award_name,
+      award_org,
+      prize_money,
+      awarded_date,
+      description
+    );
+
+    res.status(201).json({ message: "Award added successfully", result });
+  } catch (err) {
+    res.status(500).json({ error: err.message || "Something went wrong" });
+  }
+};
+
+const FetchAwardData = async(req, res) => {
+    try
+    {
+        const result = await FetchAwardModel();
+        res.status(200).json(result);
+    }
+    catch(error)
+    {
+        res.send(error)
+    }
+}
+
+module.exports = {AddStartup, UpdateStartupMentorDetails, FetchAwardData, AddAward, UpdateStartupFounder, UpdateStartupAbout, UpdateStartupDetails, FetchStartupDatainNumbers, FetchStartupData, UpdateStatus, IndividualStartups, TopStartupsSectorsCont, TeamDocuments,DeleteStartupData, FetchStartupProfile};

@@ -15,8 +15,7 @@ const {Profile, ProfilePhoto} = require('../controller/Admin/Profile/Profile.js'
 const DeleteResume = require('../controller/Admin/Resume/DeleteResume.js');
 const AddMentor = require('../controller/Admin/Mentors/AddMentor.js');
 const Settings = require('../controller/Admin/Settings/Settings.js');
-const {AddStartup, FetchStartupDatainNumbers, FetchStartupData, UpdateStatus, IndividualStartups, UpdateStartupAbout, UpdateStartupMentorDetails,  TopStartupsSectorsCont, TeamDocuments, DeleteStartupData, UpdateStartupDetails} = require('../controller/Admin/startups/AddStartup.js');
-const {AddMessage, ViewMessage} = require('../controller/Admin/Messages/Messages.js');
+const {AddStartup, FetchStartupDatainNumbers, FetchStartupData, UpdateStatus, IndividualStartups, TopStartupsSectorsCont, TeamDocuments, DeleteStartupData,UpdateStartupDetails,UpdateStartupAbout, UpdateStartupMentorDetails, UpdateStartupFounder, AddAward, FetchAwardData} = require('../controller/Admin/startups/AddStartup.js');const {AddMessage, ViewMessage} = require('../controller/Admin/Messages/Messages.js');
 const {AddConnections, ViewConnections, EstablishConnection} = require("../controller/Admin/Connections/Connection.js");
 const Report = require('../controller/Admin/Reports/Report.js');
 const Founder = require('../controller/Team/Founder.js');
@@ -38,8 +37,13 @@ const IPdataUpload = require('../controller/Office/IPdata.js');
 router.get('/prof', ProfilePhoto);
 router.put('/update-status', UpdateStatus)
 router.get('/startup/:id',IndividualStartups);
-router.put('/edit-startup/about',UpdateStartupAbout);
+router.put('/edit-startupdata/personal-info', 
+    upload.fields([
+    { name: "profile_image", maxCount: 1 },
+    { name: "background_image", maxCount: 1 },
+  ]),UpdateStartupDetails);
 router.put('/edit-startup/mentordetails',UpdateStartupMentorDetails);
+router.put('/edit-startup/about',UpdateStartupAbout);
 router.post('/schedule-meeting', ScheduleMentorMeeting);
 router.post('/finance/funding-update', AddFunding);
 router.get('/fetch-startup', FetchStartupData);
@@ -59,7 +63,10 @@ router.get('/resume-fetch/:page_data/:page_number', Resumedata);
 router.post('/resume-send', ApprovalRequest);
 router.get('/profile/:mail', Profile);
 router.put('/edit-startupdata/personal-info', UpdateStartupDetails);
+router.post('/addstartup/award', AddAward);
+router.get('/fetchaward',FetchAwardData);
 router.delete('/delete-resume/:id', DeleteResume);
+router.put('/edit-startup/founder',UpdateStartupFounder)
 router.post('/mentor/add', AddMentor);
 router.post('/create-events',CreateEvents);
 router.get('/profile-data/:mail', Authenticate, Profile);

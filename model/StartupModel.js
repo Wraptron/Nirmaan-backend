@@ -19,6 +19,46 @@ const AddStartupModel = async(basic, official, founder, description, official_em
         )
     })
 }
+
+
+
+// const AddStartupModel = async(basic, official, founder, description, official_email_address) => {
+//     return new Promise((resolve, reject) => {
+//         // First check if startup already exists
+//         client.query(
+//             "SELECT * FROM test_startup WHERE official_email_address = $1 OR (basic->>'startup_name') = $2",
+//             [official_email_address, basic.startup_name],
+//             (err, existingResult) => {
+//                 if(err) {
+//                     console.error("Error checking existing startup:", err);
+//                     reject(err);
+//                     return;
+//                 }
+                
+//                 if(existingResult.rows.length > 0) {
+//                     reject(new Error("Startup with this email or name already exists"));
+//                     return;
+//                 }
+                
+//                 // If no existing startup, insert new one
+//                 client.query(
+//                     "INSERT INTO test_startup(basic, official, founder, description, official_email_address, startup_status) VALUES($1, $2, $3, $4, $5, $6) RETURNING *",
+//                     [basic, official, founder, description, official_email_address, 'Active'],
+//                     (insertErr, insertResult) => {
+//                         if(insertErr) {
+//                             console.error("Error inserting startup:", insertErr);
+//                             reject(insertErr);
+//                         } else {
+//                             resolve(insertResult.rows[0]);
+//                         }
+//                     }
+//                 );
+//             }
+//         );
+//     });
+// }
+
+
 const CreateTeamUser = (user_mail, user_password, user_name, user_contact, personal_email) => {
     const userId = uuidv4();
     return new Promise((resolve, reject) => {
@@ -147,7 +187,7 @@ const StartupDataModel = async () => {
 const FetchStartupsModel = async() => {
     return new Promise((resolve, reject) => {
         client.query(
-"SELECT basic::jsonb->>'startup_name' AS startup_name, startup_status AS status, basic::jsonb->>'startup_industry' AS startup_industry, basic::jsonb->>'startup_sector' AS startup_sector, basic::jsonb->>'startup_Community' AS startup_Community, basic::jsonb->>'startup_type' AS startup_type, basic::jsonb->>'startup_technology' AS startup_technology, basic::jsonb->>'startup_cohort' AS startup_cohort, basic::jsonb->>'startup_yog' AS startup_yog, basic::jsonb->>'graduated_to' AS graduated_to, basic::jsonb->>'program' AS program, official::jsonb->>'official_email_address' AS email_address, official::jsonb->>'official_contact_number' AS contact_number,  official::jsonb->>'role_of_faculty' AS role_of_faculty, official::jsonb->>'cin_registration_number' AS cin_registration_number,official::jsonb->>'funding_stage' AS funding_stage,  official::jsonb->>'website_link' AS website, official::jsonb->>'dpiit_number' AS dpiit, official::jsonb->>'official_registered' AS register, official::jsonb->>'linkedin_id' AS linkedin, official::jsonb->>'mentor_associated' AS mentor_associated, official::jsonb->>'pia_state' AS pia_state, official::jsonb->>'scheme' AS scheme, founder::jsonb->>'founder_name' AS founder_name, founder::jsonb->>'founder_email' AS founder_email, founder::jsonb->>'founder_number' AS founder_number, founder::jsonb->>'academic_background' AS academic_background,  founder::jsonb->>'founder_gender' AS founder_gender, description::jsonb->>'startup_description' AS startup_description FROM test_startup;",
+"SELECT basic::jsonb->>'startup_name' AS startup_name, startup_status AS status, basic::jsonb->>'startup_industry' AS startup_industry, basic::jsonb->>'startup_sector' AS startup_sector, basic::jsonb->>'community' AS community, basic::jsonb->>'startup_type' AS startup_type, basic::jsonb->>'startup_tech' AS startup_technology, basic::jsonb->>'cohort' AS startup_cohort, basic::jsonb->>'startup_yog' AS startup_yog, basic::jsonb->>'graduated_to' AS graduated_to, basic::jsonb->>'program' AS program, official::jsonb->>'official_email_address' AS email_address, official::jsonb->>'official_contact_number' AS official_contact_number,  official::jsonb->>'role_of_faculty' AS role_of_faculty, official::jsonb->>'cin_registration_number' AS cin_registration_number,official::jsonb->>'funding_stage' AS funding_stage,  official::jsonb->>'website_link' AS website_link, official::jsonb->>'dpiit_number' AS dpiit, official::jsonb->>'official_registered' AS register, official::jsonb->>'linkedin_id' AS linkedin, official::jsonb->>'mentor_associated' AS mentor_associated, official::jsonb->>'pia_state' AS pia_state, official::jsonb->>'scheme' AS scheme, founder::jsonb->>'founder_name' AS founder_name, founder::jsonb->>'founder_email' AS founder_email, founder::jsonb->>'founder_number' AS founder_number, founder::jsonb->>'academic_background' AS academic_background,  founder::jsonb->>'founder_gender' AS founder_gender, description::jsonb->>'logo' AS logo, description::jsonb->>'startup_description' AS startup_description FROM test_startup;",
           (err, result) => {
             if (err) {
               reject(err);
@@ -250,12 +290,48 @@ const StartupDeleteData = (email) => {
 }
 
 
+// const UpdateStartupAboutModel = async (data) => {
+//   const { basic, email_address } = data;
+
+//   const query = `
+//     UPDATE test_startup
+//     SET basic = jsonb_set(
+//                   jsonb_set(
+//                     jsonb_set(
+//                       basic,
+//                       '{program}', to_jsonb($1::text), true
+//                     ),
+//                     '{startup_type}', to_jsonb($2::text), true
+//                   ),
+//                   '{startup_sector}', to_jsonb($3::text), true
+//                 )
+//     WHERE official->>'official_email_address' = $4;
+//   `;
+
+//   const values = [
+//     basic.program || "",
+//     basic.startup_type || "",
+//     basic.startup_sector || "",
+//     email_address
+//   ];
+
+//   return new Promise((resolve, reject) => {
+//     client.query(query, values, (err, result) => {
+//       if (err) {
+//         reject(err);
+//       } else {
+//         resolve(result);
+//       }
+//     });
+//   });
+// };
+
 const UpdateStartupAboutModel = async (data) => {
-  const { basic, email_address } = data;
+  const { basic, email_address,description } = data;
 
   const query = `
     UPDATE test_startup
-    SET basic = jsonb_set(
+    SET basic =jsonb_set(
                   jsonb_set(
                     jsonb_set(
                       basic,
@@ -264,14 +340,19 @@ const UpdateStartupAboutModel = async (data) => {
                     '{startup_type}', to_jsonb($2::text), true
                   ),
                   '{startup_sector}', to_jsonb($3::text), true
-                )
-    WHERE official->>'official_email_address' = $4;
+                ),
+                description = jsonb_set(
+                        description,
+                        '{startup_description}', to_jsonb($4::text), true
+                      )
+    WHERE official->>'official_email_address' = $5;
   `;
 
   const values = [
     basic.program || "",
     basic.startup_type || "",
     basic.startup_sector || "",
+    description.startup_description|| "",
     email_address
   ];
 
@@ -285,8 +366,6 @@ const UpdateStartupAboutModel = async (data) => {
     });
   });
 };
-
-
 
 
 const UpdateStartupPersonalInfoModel = async (data) => {
@@ -419,4 +498,97 @@ WHERE official->>'official_email_address' = $14;
 };
 
 
-module.exports = {AddStartupModel, UpdateStartupAboutModel, UpdateStartupMentorDetailsModel, UpdateStartupPersonalInfoModel, StartupDataModel, FetchStartupsModel, UpdateStartupStatusModel, IndividualStarupModel, CreateTeamUser, TopStartupsSectors,StartupDeleteData};
+
+
+
+
+const UpdateStartupFounderModel =async(data)=>{
+  const {founder,email_address}=data
+  const query =`
+  UPDATE test_startup
+  SET  founder=jsonb_set(
+             jsonb_set(
+          jsonb_set(
+          founder,
+          '{founder_name}', to_jsonb($1::text), true
+          ), '{founder_email}', to_jsonb($2::text), true
+          ),'{founder_number}', to_jsonb($3::text), true
+          )
+           WHERE official->>'official_email_address' = $4;
+           `;
+            const values = [
+    founder.founder_name || "",
+    founder.founder_email || "",
+    founder.founder_number || "",
+    email_address
+  ];
+  return new Promise((resolve,reject)=>{
+    client.query(query,values,(err,result)=>{
+      if(err){
+        reject(err)
+      }
+      else{
+        resolve(result)
+      }
+    })
+  })
+}
+
+
+const AddAwardModel = async (
+  official_email_address,
+  award_name,
+  award_org,
+  prize_money,
+  awarded_date,
+  document_url,
+  description
+) => {
+  return new Promise((resolve, reject) => {
+    client.query(
+      `INSERT INTO startup_awards (
+        official_email_address,
+        award_name,
+        award_org,
+        prize_money,
+        awarded_date,
+        document_url,
+        description
+      ) VALUES (
+        $1, $2, $3, $4, $5, $6, $7
+      )`,
+      [
+        official_email_address,
+        award_name,
+        award_org,
+        prize_money,
+        awarded_date,
+        document_url,
+        description
+      ],
+      (err, result) => {
+        if (err) {
+          reject({ err });
+        } else {
+          resolve(result);
+        }
+      }
+    );
+  });
+};
+
+const FetchAwardModel=()=>{
+return new Promise((resolve,reject)=>{
+  client.query('select * from startup_awards',(err,result)=>{
+    if(err){
+      reject(err)
+    }
+    else{
+      resolve(result)
+    }
+  })
+})
+}
+
+
+module.exports = {AddStartupModel, UpdateStartupAboutModel, AddAwardModel, FetchAwardModel, UpdateStartupFounderModel, UpdateStartupMentorDetailsModel, UpdateStartupPersonalInfoModel, StartupDataModel, FetchStartupsModel, UpdateStartupStatusModel, IndividualStarupModel, CreateTeamUser, TopStartupsSectors,StartupDeleteData};
