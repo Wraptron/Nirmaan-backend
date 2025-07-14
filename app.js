@@ -80,7 +80,12 @@ app.post('/imagess', upload.single('image'), async(req, res) => {
     //const description = req.body.description
     res.send({imagePath : `/images/${result.Key}`})
 } )
-app.use(cors({ origin: true }));
+app.use(
+  cors({
+    origin: "http://localhost:3000", // your frontend
+    credentials: true, // allow cookies / headers
+  })
+);
 app.use(cookieParser());
 // app.use(RateLimitMiddleware);
 app.use(responseTime());
