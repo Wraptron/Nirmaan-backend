@@ -35,7 +35,7 @@ app.use(limiter);
 // ==================== CORS CONFIGURATION ====================
 const corsOptions = {
   origin: [
-    "https://10252b81.nirmaan-frontend.pages.dev",
+    "https://nirmaan-frontend.pages.dev",
     "http://localhost:3000",
     "http://localhost:3001",
     "http://localhost:3002",
