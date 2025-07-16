@@ -82,7 +82,7 @@ const upload = multer({ dest: "uploads/" });
 const allowedOrigins = [
   "http://localhost:3000",
   "http://localhost:3001",
-  "https://10252b81.nirmaan-frontend.pages.dev",
+  "https://866a157c.nirmaan-frontend.pages.dev/",
 ];
 
 const corsOptions = {
