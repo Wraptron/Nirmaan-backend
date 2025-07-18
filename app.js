@@ -79,11 +79,11 @@ const io = new Server(server, {
 // Middleware Configuration
 const upload = multer({ dest: "uploads/" });
 
-const allowedOrigins = [
-  "http://localhost:3000",
-  "http://localhost:3001",
+// const allowedOrigins = [
+//   "http://localhost:3000",
+//   "http://localhost:3001",
   
-];
+// ];
 
 const corsOptions = {
   origin: function (origin, callback) {
