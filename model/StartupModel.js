@@ -326,33 +326,79 @@ const StartupDeleteData = (email) => {
 //   });
 // };
 
+// const UpdateStartupAboutModel = async (data) => {
+//   const { basic, email_address,description } = data;
+
+//   const query = `
+//     UPDATE test_startup
+//     SET basic =jsonb_set(
+//                   jsonb_set(
+//                     jsonb_set(
+//                       basic,
+//                       '{program}', to_jsonb($1::text), true
+//                     ),
+//                     '{startup_domain}', to_jsonb($2::text), true
+//                   ),
+//                   '{startup_sector}', to_jsonb($3::text), true
+//                 ),
+//                 description = jsonb_set(
+//                         description,
+//                         '{startup_description}', to_jsonb($4::text), true
+//                       )
+//     WHERE official->>'official_email_address' = $5;
+//   `;
+
+//   const values = [
+//     basic.program || "",
+//     basic.startup_domain || "",
+//     basic.startup_sector || "",
+//     description.startup_description|| "",
+//     email_address
+//   ];
+
+//   return new Promise((resolve, reject) => {
+//     client.query(query, values, (err, result) => {
+//       if (err) {
+//         reject(err);
+//       } else {
+//         resolve(result);
+//       }
+//     });
+//   });
+// };
+
+
 const UpdateStartupAboutModel = async (data) => {
-  const { basic, email_address,description } = data;
+  const { basic, email_address, description } = data;
 
   const query = `
     UPDATE test_startup
-    SET basic =jsonb_set(
+    SET basic = jsonb_set(
                   jsonb_set(
                     jsonb_set(
-                      basic,
-                      '{program}', to_jsonb($1::text), true
+                      jsonb_set(
+                        basic,
+                        '{program}', to_jsonb($1::text), true
+                      ),
+                      '{startup_domain}', to_jsonb($2::text), true
                     ),
-                    '{startup_domain}', to_jsonb($2::text), true
+                    '{startup_sector}', to_jsonb($3::text), true
                   ),
-                  '{startup_sector}', to_jsonb($3::text), true
+                  '{startup_type}', to_jsonb($4::text), true
                 ),
-                description = jsonb_set(
+        description = jsonb_set(
                         description,
-                        '{startup_description}', to_jsonb($4::text), true
+                        '{startup_description}', to_jsonb($5::text), true
                       )
-    WHERE official->>'official_email_address' = $5;
+    WHERE official->>'official_email_address' = $6;
   `;
 
   const values = [
     basic.program || "",
     basic.startup_domain || "",
     basic.startup_sector || "",
-    description.startup_description|| "",
+    basic.startup_type || "",        // ✅ Added startup_type
+    description.startup_description || "",
     email_address
   ];
 
@@ -363,9 +409,10 @@ const UpdateStartupAboutModel = async (data) => {
       } else {
         resolve(result);
       }
-    });
-  });
+    });
+  });
 };
+
 
 
 const UpdateStartupPersonalInfoModel = async (data) => {

@@ -280,6 +280,7 @@ const FetchStartupProfile = async (req, res) => {
             community: result.GeneralData.rows[0]?.community || "",
             about: result.GeneralData.rows[0]?.startup_description || "",
             startup_type: result.GeneralData.rows[0]?.startup_type || "",
+            startup_domain: result.GeneralData.rows[0]?.startup_domain || "",
             sector: result.GeneralData.rows[0]?.startup_sector || "",
             program: result.GeneralData.rows[0]?.startup_program || "",
             awards: [], // Fill this if you have awards data
@@ -427,6 +428,7 @@ const UpdateStartupAbout = async (req, res) => {
       sector,
       program,
       startup_type,
+      startup_domain,
       about,
       email_address
     } = req.body;
@@ -437,6 +439,7 @@ const UpdateStartupAbout = async (req, res) => {
 
     const basic = {
       startup_type,
+      startup_domain,
       startup_sector: sector || "",
       program
     };
