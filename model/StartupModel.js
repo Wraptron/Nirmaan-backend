@@ -187,7 +187,7 @@ const StartupDataModel = async () => {
 const FetchStartupsModel = async() => {
     return new Promise((resolve, reject) => {
         client.query(
-          "SELECT basic::jsonb->>'startup_name' AS startup_name, startup_status AS startup_status, basic::jsonb->>'startup_industry' AS startup_industry, basic::jsonb->>'startup_domain' AS startup_domain, basic::jsonb->>'startup_sector' AS startup_sector, basic::jsonb->>'startup_Community' AS startup_Community, basic::jsonb->>'startup_type' AS startup_type, basic::jsonb->>'startup_technology' AS startup_technology, basic::jsonb->>'startup_cohort' AS startup_cohort, basic::jsonb->>'startup_yog' AS startup_yog, basic::jsonb->>'graduated_to' AS graduated_to, basic::jsonb->>'graduated_to_other' AS graduated_to_other, basic::jsonb->>'program' AS program, official::jsonb->>'official_email_address' AS email_address, official::jsonb->>'official_contact_number' AS official_contact_number,  official::jsonb->>'role_of_faculty' AS role_of_faculty, official::jsonb->>'cin_registration_number' AS cin_registration_number,official::jsonb->>'funding_stage' AS funding_stage,  official::jsonb->>'website_link' AS website_link, official::jsonb->>'dpiit_number' AS dpiit, official::jsonb->>'official_registered' AS register, official::jsonb->>'linkedin_id' AS linkedin, official::jsonb->>'mentor_associated' AS mentor_associated, official::jsonb->>'pia_state' AS pia_state, official::jsonb->>'scheme' AS scheme, founder::jsonb->>'founder_name' AS founder_name, founder::jsonb->>'founder_email' AS founder_email, founder::jsonb->>'founder_number' AS founder_number, founder::jsonb->>'academic_background' AS academic_background,  founder::jsonb->>'founder_gender' AS founder_gender, description::jsonb->>'logo' AS logo, description::jsonb->>'startup_description' AS startup_description FROM test_startup;",
+          "SELECT basic::jsonb->>'startup_name' AS startup_name, startup_status AS startup_status,  basic::jsonb->>'startup_domain' AS startup_domain, basic::jsonb->>'startup_sector' AS startup_sector, basic::jsonb->>'startup_Community' AS startup_Community, basic::jsonb->>'startup_type' AS startup_type, basic::jsonb->>'startup_technology' AS startup_technology, basic::jsonb->>'startup_cohort' AS startup_cohort, basic::jsonb->>'startup_yog' AS startup_yog, basic::jsonb->>'graduated_to' AS graduated_to, basic::jsonb->>'graduated_to_other' AS graduated_to_other, basic::jsonb->>'program' AS program, official::jsonb->>'official_email_address' AS email_address, official::jsonb->>'official_contact_number' AS official_contact_number,  official::jsonb->>'role_of_faculty' AS role_of_faculty, official::jsonb->>'cin_registration_number' AS cin_registration_number,official::jsonb->>'funding_stage' AS funding_stage,  official::jsonb->>'website_link' AS website_link, official::jsonb->>'dpiit_number' AS dpiit, official::jsonb->>'official_registered' AS register, official::jsonb->>'linkedin_id' AS linkedin, official::jsonb->>'mentor_associated' AS mentor_associated, official::jsonb->>'pia_state' AS pia_state, official::jsonb->>'scheme' AS scheme, founder::jsonb->>'founder_name' AS founder_name, founder::jsonb->>'founder_email' AS founder_email, founder::jsonb->>'founder_number' AS founder_number, founder::jsonb->>'academic_background' AS academic_background,  founder::jsonb->>'founder_gender' AS founder_gender, description::jsonb->>'logo' AS logo, description::jsonb->>'startup_description' AS startup_description FROM test_startup;",
           (err, result) => {
             if (err) {
               reject(err);
@@ -337,7 +337,7 @@ const UpdateStartupAboutModel = async (data) => {
                       basic,
                       '{program}', to_jsonb($1::text), true
                     ),
-                    '{startup_type}', to_jsonb($2::text), true
+                    '{startup_domain}', to_jsonb($2::text), true
                   ),
                   '{startup_sector}', to_jsonb($3::text), true
                 ),
@@ -350,7 +350,7 @@ const UpdateStartupAboutModel = async (data) => {
 
   const values = [
     basic.program || "",
-    basic.startup_type || "",
+    basic.startup_domain || "",
     basic.startup_sector || "",
     description.startup_description|| "",
     email_address
@@ -378,7 +378,7 @@ const UpdateStartupPersonalInfoModel = async (data) => {
                   basic,
                   '{startup_name}', to_jsonb($1::text), true
                 ),
-                '{startup_type}', to_jsonb($2::text), true
+                '{startup_domain}', to_jsonb($2::text), true
               ),
       startup_status = $3,
       official = jsonb_set(
@@ -396,7 +396,7 @@ const UpdateStartupPersonalInfoModel = async (data) => {
 `
  const values = [
     basic.startup_name || "", 
-    basic.startup_type || "", 
+    basic.startup_domain || "", 
     basic.status || "", 
     official.official_contact_number || "",   
     official.linkedin_id || "",
