@@ -63,7 +63,7 @@ router.get('/resume-fetch/:page_data/:page_number', Resumedata);
 router.post('/resume-send', ApprovalRequest);
 router.get('/profile/:mail', Profile);
 router.put('/edit-startupdata/personal-info', UpdateStartupDetails);
-router.post('/addstartup/award', AddAward);
+router.post('/addstartup/award',upload.single("document"), AddAward);
 router.get('/fetchaward',FetchAwardData);
 router.delete('/delete-resume/:id', DeleteResume);
 router.put('/edit-startup/founder',UpdateStartupFounder)

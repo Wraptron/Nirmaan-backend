@@ -163,6 +163,8 @@ const FetchStartupDatainNumbers = async (req, res) => {
       graduated_startups: result?.GraduatedStartups?.rows?.[0]?.program_count || 0,
       akshar: result?. AksharStartups?.rows?.[0]?.program_count || 0,
       pratham: result?. PrathamStartups?.rows?.[0]?.program_count || 0,
+      IITMIC: result?. IITMIC?.rows?.[0]?.program_count || 0,
+      PIA: result?. PIA?.rows?.[0]?.program_count || 0,
       Mentors: {
         Session_Total: parseInt(
           result?.TotalMentoringSessions?.rows?.[0]?.session_total || 0
@@ -551,6 +553,7 @@ const UpdateStartupFounder = async (req, res) => {
 
 const AddAward = async (req, res) => {
   try {
+    const document_url = req.file ? req.file.path : null;
     const {
       award_name,
       award_org,
@@ -567,11 +570,13 @@ const AddAward = async (req, res) => {
       award_org,
       prize_money,
       awarded_date,
+      document_url,
       description
     );
 
     res.status(201).json({ message: "Award added successfully", result });
   } catch (err) {
+  
     res.status(500).json({ error: err.message || "Something went wrong" });
   }
 };

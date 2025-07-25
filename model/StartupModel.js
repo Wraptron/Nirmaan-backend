@@ -80,7 +80,7 @@ const StartupDataModel = async () => {
   return new Promise((resolve, reject) => {
     const TotalCountStartups = new Promise((resolveQuery1, rejectQuery1) => {
       client.query(
-        "SELECT COUNT(basic::json->'startup_name,program') AS startup_total FROM test_startup",
+        "SELECT COUNT(*) AS startup_total FROM test_startup",
         (err, result) => {
           if (err) {
             rejectQuery1(err);
@@ -151,6 +151,32 @@ const StartupDataModel = async () => {
         }
       );
     });
+
+    const IITMIC=new Promise((resolveQuery3,rejectQuery3)=>{
+      client.query(
+        "SELECT COUNT(*) AS program_count FROM test_startup WHERE TRIM(both ' ' FROM basic->>'graduated_to') = 'IITM-IC';",
+         (err, result) => {
+          if (err) {
+            rejectQuery3(err);
+          } else {
+            resolveQuery3(result);
+          }
+        }
+      )
+    })
+
+    const PIA=new Promise((resolveQuery3,rejectQuery3)=>{
+      client.query(
+        "SELECT COUNT(*) AS program_count FROM test_startup WHERE TRIM(both ' ' FROM official->>'pia_state') = 'Signed';",
+         (err, result) => {
+          if (err) {
+            rejectQuery3(err);
+          } else {
+            resolveQuery3(result);
+          }
+        }
+      )
+    })
     Promise.all([
       TotalCountStartups,
       ActiveStartups,
@@ -158,6 +184,8 @@ const StartupDataModel = async () => {
       GraduatedStartups,
       AksharStartups,
       PrathamStartups,
+      IITMIC,
+      PIA
     ])
       .then(
         ([
@@ -167,6 +195,8 @@ const StartupDataModel = async () => {
           GraduatedStartups,
           AksharStartups,
           PrathamStartups,
+          IITMIC,
+          PIA
         ]) => {
           resolve({
             TotalCountStartups,
@@ -175,6 +205,8 @@ const StartupDataModel = async () => {
             GraduatedStartups,
             AksharStartups,
             PrathamStartups,
+            IITMIC,
+            PIA
           });
         }
       )
