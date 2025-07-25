@@ -159,7 +159,7 @@ const FetchStartupDatainNumbers = async (req, res) => {
       const startupData = {
       startup_total: result?.TotalCountStartups?.rows?.[0]?.startup_total || 0,
       active_startups: result?.ActiveStartups?.rows?.[0]?.active || 0,
-      dropped_startups: result?.DroppedStartups?.rows?.[0]?.dropped_status || 0,
+      dropped_startups: result?.DroppedStartups?.rows?.[0]?.dropped_count || 0,
       graduated_startups: result?.GraduatedStartups?.rows?.[0]?.program_count || 0,
       akshar: result?. AksharStartups?.rows?.[0]?.program_count || 0,
       pratham: result?. PrathamStartups?.rows?.[0]?.program_count || 0,
