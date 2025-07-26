@@ -159,12 +159,12 @@ const FetchStartupDatainNumbers = async (req, res) => {
       const startupData = {
       startup_total: result?.TotalCountStartups?.rows?.[0]?.startup_total || 0,
       active_startups: result?.ActiveStartups?.rows?.[0]?.active || 0,
-      dropped_startups: result?.DroppedStartups?.rows?.[0]?.dropped_count || 0,
+      dropped_startups: result?.DroppedStartups?.rows?.[0]?.program_count || 0,
       graduated_startups: result?.GraduatedStartups?.rows?.[0]?.program_count || 0,
       akshar: result?. AksharStartups?.rows?.[0]?.program_count || 0,
       pratham: result?. PrathamStartups?.rows?.[0]?.program_count || 0,
       IITMIC: result?. IITMIC?.rows?.[0]?.program_count || 0,
-      PIA: result?. PIA?.rows?.[0]?.program_count || 0,
+      PIA: result?. PIA?.rows?.[0]?.program_count || 0,
       Mentors: {
         Session_Total: parseInt(
           result?.TotalMentoringSessions?.rows?.[0]?.session_total || 0
@@ -175,8 +175,8 @@ const FetchStartupDatainNumbers = async (req, res) => {
     res.status(200).json(startupData);
   } catch (err) {
     console.error("Error in FetchStartupDatainNumbers:", err.stack || err);
-    res.status(500).json({ message: "Internal server error" });
-  }
+    res.status(500).json({ message: "Internal server error" });
+  }
 };
 const FetchStartupData = async(req,res) => {
     try 
@@ -311,16 +311,17 @@ const UpdateStartupDetails = async (req, res) => {
   try {
    const {
       startup_name,
-      status,
+      startup_status,
       official_contact_number,
       email_address,
       linkedin,
-      website_link
+      website_link,
+      startup_domain
     } = req.body;
 
     const basic = {
       startup_name,
-      status: status || ""  
+       startup_domain: startup_domain || "", 
     };
     const official = {
       official_contact_number:official_contact_number || "",
@@ -328,7 +329,7 @@ const UpdateStartupDetails = async (req, res) => {
       website_link: website_link || "",
       official_email_address:email_address
     }
-    const result = await UpdateStartupPersonalInfoModel({ basic, official });
+    const result = await UpdateStartupPersonalInfoModel({ basic, official,startup_status });
     console.log("req.body:", req.body);
     res.status(200).json({
       message: "Startup details updated successfully",
@@ -336,8 +337,8 @@ const UpdateStartupDetails = async (req, res) => {
     });
   } catch (err) {
     console.error("Update failed:", err);
-    res.status(500).json({ error: "Failed to update startup details" });
-  }
+    res.status(500).json({ error: "Failed to update startup details" });
+  }
 };
 
 
@@ -368,8 +369,8 @@ const UpdateStartupDetails = async (req, res) => {
 //       result
 //     });
 //   } catch (err) {
-//     res.status(500).json({ error: "Failed to update startup details" });
-//   }
+//     res.status(500).json({ error: "Failed to update startup details" });
+//   }
 // };
 
 
@@ -418,8 +419,8 @@ const UpdateStartupDetails = async (req, res) => {
 //       result
 //     });
 //   } catch (err) {
-//     res.status(500).json({ error: "Failed to update startup details" });
-//   }
+//     res.status(500).json({ error: "Failed to update startup details" });
+//   }
 // };
 
 
@@ -456,8 +457,8 @@ const UpdateStartupAbout = async (req, res) => {
       result
     });
   } catch (err) {
-    res.status(500).json({ error: "Failed to update startup details" });
-  }
+    res.status(500).json({ error: "Failed to update startup details" });
+  }
 };
 
 
@@ -510,8 +511,8 @@ const UpdateStartupMentorDetails = async (req, res) => {
     res.status(200).json({ message: "Startup details updated successfully", result });
   } catch (err) {
     console.error("Update failed:", err);
-    res.status(500).json({ error: "Failed to update startup details" });
-  }
+    res.status(500).json({ error: "Failed to update startup details" });
+  }
 };
 
 
@@ -546,7 +547,7 @@ const UpdateStartupFounder = async (req, res) => {
     });
   } catch (err) {
   console.error("Backend Error:", err); // this will show SQL or JSON issues
-  res.status(500).json({ error: "Failed to update startup details" });
+  res.status(500).json({ error: "Failed to update startup details" });
 }
 };
 
@@ -590,7 +591,7 @@ const FetchAwardData = async(req, res) => {
     catch(error)
     {
         res.send(error)
-    }
+    }
 }
 
 module.exports = {AddStartup, UpdateStartupMentorDetails, FetchAwardData, AddAward, UpdateStartupFounder, UpdateStartupAbout, UpdateStartupDetails, FetchStartupDatainNumbers, FetchStartupData, UpdateStatus, IndividualStartups, TopStartupsSectorsCont, TeamDocuments,DeleteStartupData, FetchStartupProfile};

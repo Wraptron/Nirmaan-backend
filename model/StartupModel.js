@@ -104,7 +104,7 @@ const StartupDataModel = async () => {
     });
     const DroppedStartups = new Promise((resolveQuery3, rejectQuery3) => {
       client.query(
-        "SELECT COUNT(startup_status) AS Dropped_status FROM test_startup WHERE startup_status='Dropped'",
+        "SELECT COUNT(*) AS program_count FROM test_startup WHERE basic->>'program'='Dropped out'",
         (err, result) => {
           if (err) {
             rejectQuery3(err);
@@ -354,8 +354,8 @@ const StartupDeleteData = (email) => {
 //       } else {
 //         resolve(result);
 //       }
-//     });
-//   });
+//     });
+//   });
 // };
 
 // const UpdateStartupAboutModel = async (data) => {
@@ -395,8 +395,8 @@ const StartupDeleteData = (email) => {
 //       } else {
 //         resolve(result);
 //       }
-//     });
-//   });
+//     });
+//   });
 // };
 
 
@@ -448,7 +448,7 @@ const UpdateStartupAboutModel = async (data) => {
 
 
 const UpdateStartupPersonalInfoModel = async (data) => {
-  const { basic, official } = data;
+  const { basic, official ,startup_status} = data;
   const query = `
    UPDATE test_startup
     SET
@@ -476,16 +476,13 @@ const UpdateStartupPersonalInfoModel = async (data) => {
  const values = [
     basic.startup_name || "", 
     basic.startup_domain || "", 
-    basic.status || "", 
+    startup_status || "", 
     official.official_contact_number || "",   
     official.linkedin_id || "",
     official.website_link || "", 
     official.official_email_address || "",   
   ]; 
-
-
-
-  return new Promise((resolve, reject) => {
+return new Promise((resolve, reject) => {
     client.query(query, values, (err, result) => {
       if (err) {
         console.error("DB Error:", err);
@@ -493,8 +490,8 @@ const UpdateStartupPersonalInfoModel = async (data) => {
       } else {
         resolve(result);
       }
-    });
-  });
+    });
+  });
 };
 
 
@@ -572,8 +569,8 @@ WHERE official->>'official_email_address' = $14;
       } else {
         resolve(result);
       }
-    });
-  });
+    });
+  });
 };
 
 
@@ -608,9 +605,9 @@ const UpdateStartupFounderModel =async(data)=>{
       }
       else{
         resolve(result)
-      }
-    })
-  })
+      }
+    })
+  })
 }
 
 
@@ -664,8 +661,8 @@ return new Promise((resolve,reject)=>{
     }
     else{
       resolve(result)
-    }
-  })
+    }
+  })
 })
 }
 
