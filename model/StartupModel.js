@@ -401,7 +401,7 @@ const StartupDeleteData = (email) => {
 
 
 const UpdateStartupAboutModel = async (data) => {
-  const { basic, email_address, description } = data;
+  const { basic, email_address, description ,startup_status} = data;
 
   const query = `
     UPDATE test_startup
@@ -421,16 +421,18 @@ const UpdateStartupAboutModel = async (data) => {
         description = jsonb_set(
                         description,
                         '{startup_description}', to_jsonb($5::text), true
-                      )
-    WHERE official->>'official_email_address' = $6;
+                      ),
+              startup_status = $6
+    WHERE official->>'official_email_address' = $7;
   `;
 
   const values = [
     basic.program || "",
     basic.startup_domain || "",
     basic.startup_sector || "",
-    basic.startup_type || "",        // ✅ Added startup_type
+    basic.startup_type || "",     
     description.startup_description || "",
+    startup_status || "",
     email_address
   ];
 
@@ -453,29 +455,25 @@ const UpdateStartupPersonalInfoModel = async (data) => {
    UPDATE test_startup
     SET
       basic = jsonb_set(
-                jsonb_set(
                   basic,
                   '{startup_name}', to_jsonb($1::text), true
                 ),
-                '{startup_domain}', to_jsonb($2::text), true
-              ),
-      startup_status = $3,
+        startup_status = $2,
       official = jsonb_set(
                    jsonb_set(
                      jsonb_set(
                        official,
-                       '{official_contact_number}', to_jsonb($4::text), true
+                       '{official_contact_number}', to_jsonb($3::text), true
                      ),
-                     '{linkedin_id}', to_jsonb($5::text), true
+                     '{linkedin_id}', to_jsonb($4::text), true
                    ),
-                   '{website_link}', to_jsonb($6::text), true
+                   '{website_link}', to_jsonb($5::text), true
                  )
-    WHERE official->>'official_email_address' = $7
+    WHERE official->>'official_email_address' = $6
   ;
 `
  const values = [
     basic.startup_name || "", 
-    basic.startup_domain || "", 
     startup_status || "", 
     official.official_contact_number || "",   
     official.linkedin_id || "",

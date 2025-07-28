@@ -316,12 +316,10 @@ const UpdateStartupDetails = async (req, res) => {
       email_address,
       linkedin,
       website_link,
-      startup_domain
     } = req.body;
 
     const basic = {
       startup_name,
-       startup_domain: startup_domain || "", 
     };
     const official = {
       official_contact_number:official_contact_number || "",
@@ -330,13 +328,13 @@ const UpdateStartupDetails = async (req, res) => {
       official_email_address:email_address
     }
     const result = await UpdateStartupPersonalInfoModel({ basic, official,startup_status });
-    console.log("req.body:", req.body);
+    // console.log("req.body:", req.body);
     res.status(200).json({
       message: "Startup details updated successfully",
       result
     });
   } catch (err) {
-    console.error("Update failed:", err);
+    // console.error("Update failed:", err);
     res.status(500).json({ error: "Failed to update startup details" });
   }
 };
@@ -433,6 +431,7 @@ const UpdateStartupAbout = async (req, res) => {
       startup_type,
       startup_domain,
       about,
+      startup_status,
       email_address
     } = req.body;
 
@@ -450,8 +449,8 @@ const UpdateStartupAbout = async (req, res) => {
       startup_description:about || ""
     }
 
-    const result = await UpdateStartupAboutModel({ basic, email_address,description });
-
+    const result = await UpdateStartupAboutModel({ basic, email_address,description,startup_status });
+console.log(req.body)
     res.status(200).json({
       message: "Startup details updated successfully",
       result
@@ -460,7 +459,6 @@ const UpdateStartupAbout = async (req, res) => {
     res.status(500).json({ error: "Failed to update startup details" });
   }
 };
-
 
 const UpdateStartupMentorDetails = async (req, res) => {
   try {
