@@ -30,7 +30,11 @@ const {ViewNotification} = require('../controller/Admin/Notification/Notificatio
 const {CreateEvents, FetchEvents, RequestSpeaker} = require('../controller/Admin/Events/Events.js');
 const {FetchMentorData, MentorCount, DeleteMentorData} = require('../controller/Admin/Mentors/MentorData.js')
 const AddJob = require('../controller/Team/AddJob.js');
-const {AddFunding, updateFundingNotif} = require('../controller/Finance/AddFunding.js');
+const {
+  AddFunding,
+  updateFundingNotif,
+  FetchFundingAmount,
+} = require("../controller/Finance/AddFunding.js");
 const {ScheduleMentorMeeting} = require('../controller/Admin/Mentorship/Mentorship.js');
 const IPdataUpload = require('../controller/Office/IPdata.js');
 
@@ -45,7 +49,8 @@ router.put('/edit-startupdata/personal-info',
 router.put('/edit-startup/mentordetails',UpdateStartupMentorDetails);
 router.put('/edit-startup/about',UpdateStartupAbout);
 router.post('/schedule-meeting', ScheduleMentorMeeting);
-router.post('/finance/funding-update', AddFunding);
+router.post("/finance/addfunding", upload.none(), AddFunding);
+router.get("/finance/funding_amount", FetchFundingAmount);
 router.get('/fetch-startup', FetchStartupData);
 router.get('/fetchevents', FetchEvents);
 router.get('/count-startupdata', FetchStartupDatainNumbers);
@@ -87,7 +92,7 @@ router.get('/customer/fetch-mentor', FetchDataMentor);
 router.post('/customer/add-job', AddJob);
 router.get('/notification', updateFundingNotif);
 router.delete('/delete-mentor/:id', DeleteMentorData);
-router.delete('/delete-startup/:email', DeleteStartupData);
+router.delete('/delete-startup/:id', DeleteStartupData);
 router.delete('/delete-connection', DeleteConnection);
 router.post('/ipdataupload', upload.single('file'),  IPdataUpload);
 router.get('/st', TopStartupsSectorsCont);

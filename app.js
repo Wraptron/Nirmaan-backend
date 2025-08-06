@@ -362,6 +362,7 @@ const RequestSpeaker = require("./routes/route");
 const FetchStartupDatainNumbers = require("./routes/route");
 const FetchStartupData = require("./routes/route");
 const AddFunding = require("./routes/route");
+const FetchFundingAmount = require("./routes/route");
 const ScheduleMentorMeeting = require("./routes/route");
 const UpdateStatus = require("./routes/route");
 const IndividualStartups = require("./routes/route");
@@ -540,7 +541,7 @@ app.use("/api/v1/", AddAward);
 app.use("/api/v1/", FetchAwardData);
 app.use("/api/v1/", ProfilePhoto);
 app.use("/api/v1/", TeamDocuments);
-
+app.use("/api/v1/", FetchFundingAmount);
 // Resume related routes
 app.use("/api/v1/work", WorkRequestController);
 app.use("/api/v1/resume", ResumeController);

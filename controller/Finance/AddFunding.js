@@ -1,38 +1,86 @@
-const { AddFundingModel, DataViewModel, FundingNotificationModel } = require('../../model/Finance/AddFuningModel');
+const { AddFundingModel, DataViewModel, FundingNotificationModel,FetchFundingDetailsModel } = require('../../model/Finance/AddFuningModel');
 const AddFunding = async (req, res) => {
-    const { startup_name, funding_type, amount, purpose, funding_date, reference_number, document, description } = req.body;
-    if (!startup_name || !funding_type || !amount || !purpose || !funding_date || !reference_number) {
-        return res.status(400).json({ message: "Please fill all necessary fields" });
+  console.log(req.body);
+  const {
+    startup_name,
+    funding_type,
+    amount,
+    purpose,
+    funding_date,
+    reference_number,
+    document,
+    status,
+    official_email_address,
+  } = req.body;
+  if (
+    !startup_name ||
+    !funding_type ||
+    !amount ||
+    !purpose ||
+    !funding_date ||
+    !reference_number
+  ) {
+    return res
+      .status(400)
+      .json({ message: "Please fill all necessary fields" });
+  } else {
+    try {
+      const result1 = await DataViewModel(startup_name);
+      // console.log("DataViewModel Result: ", result1);
+      if (funding_type === "Funding Utilized") {
+        // Allow Utilized only if Disbursed exists
+        if (result1.rowCount > 0) {
+          const result = await AddFundingModel(
+            startup_name,
+            funding_type,
+            amount,
+            purpose,
+            funding_date,
+            reference_number,
+            document,
+            status,
+            official_email_address
+          );
+          return res.status(200).send(result);
+        } else {
+          return res
+            .status(401)
+            .send("Team hasn't received any disbursed funds yet.");
+        }
+      } else if (
+        funding_type === "Funding Disbursed" ||
+        funding_type === "External Funding"
+      ) {
+        // Always allow Disbursed or External Funding
+        const result = await AddFundingModel(
+          startup_name,
+          funding_type,
+          amount,
+          purpose,
+          funding_date,
+          reference_number,
+          document,
+          status,
+          official_email_address
+        );
+        return res.status(200).send(result);
+      } else {
+        return res.status(400).send("Invalid funding type.");
+      }
+    } catch (err) {
+      return res.status(500).json({ error: err });
     }
-    else
-    {
-            try 
-            {
-                const result1 = await DataViewModel(startup_name);
-                //console.log(result1);
-                if(result1.rowCount > 0)
-                {
-                    if(funding_type=="Funding Utilized")
-                    {
-                        const result = await AddFundingModel(startup_name, funding_type, amount, purpose, funding_date, reference_number, document, description);
-                        res.status(200).send(result);
-                    }
-                }
-                else if(funding_type=="Funding Distributed")
-                {
-                        const result = await AddFundingModel(startup_name, funding_type, amount, purpose, funding_date, reference_number, document, description);
-                        res.status(200).send(result);   
-                }
-                else
-                {
-                    res.status(401).send("Team has'nt got funds");
-                }
-            } 
-            catch (err) 
-            {
-                return res.status(500).json({ error: err });
-            }
-    }
+  }
+};
+
+const FetchFundingAmount = async (req, res) => {
+  try {
+    const allFundingData = await FetchFundingDetailsModel();
+    res.status(200).json(allFundingData);
+  } catch (err) {
+    console.error("Error in FetchFundingAmount:", err.stack || err);
+    res.status(500).json({ message: "Internal server error" });
+  }
 };
 const updateFundingNotif = async(req, res) => {
     try
@@ -45,4 +93,4 @@ const updateFundingNotif = async(req, res) => {
         res.status(500).json(err)
     }       
 }
-module.exports = {AddFunding, updateFundingNotif};
+module.exports = { AddFunding, updateFundingNotif, FetchFundingAmount };
