@@ -1,7 +1,7 @@
 const client = require('../../utils/conn');
-const DataViewModel = async(startup_name) => {
+const DataViewModel = async(startup_id) => {
     return new Promise((resolve, reject) => {
-        client.query(`SELECT * FROM update_funding WHERE startup_name = $1 AND funding_type=$2`, [startup_name, 'Funding Disbursed'], (err, result) => {
+        client.query(`SELECT * FROM update_funding WHERE startup_id = $1 AND funding_type=$2`, [startup_id, 'Funding Disbursed'], (err, result) => {
             if(err)
             {
                   console.error("Error in DataViewModel:", err);
@@ -14,11 +14,11 @@ const DataViewModel = async(startup_name) => {
         })
     })
 }
-const AddFundingModel = async (startup_name, funding_type, amount, purpose, funding_date, reference_number, document,status, official_email_address) => {    
+const AddFundingModel = async (startup_id,startup_name, funding_type, amount, purpose, funding_date, reference_number, document,status) => {    
     return new Promise((resolve, reject) => {
         client.query(
-            "INSERT INTO update_funding(startup_name, funding_type, amount, purpose, funding_date, reference_number, document, status, official_email_address) VALUES($1, $2, $3, $4, $5, $6, $7, $8,$9)", 
-            [startup_name, funding_type, amount, purpose, funding_date, reference_number, document,status, official_email_address], 
+            "INSERT INTO update_funding(startup_id,startup_name, funding_type, amount, purpose, funding_date, reference_number, document, status) VALUES($1, $2, $3, $4, $5, $6, $7, $8,$9)", 
+            [startup_id,startup_name, funding_type, amount, purpose, funding_date, reference_number, document,status ], 
             (err, result) => {
                 if (err) {
                     reject({ err });
@@ -49,7 +49,7 @@ const FundingNotificationModel = async() => {
 const FetchFundingDetailsModel = async () => {
   return new Promise((resolve, reject) => {
     const query = `
-      SELECT startup_name,
+      SELECT startup_id,
               SUM(CASE WHEN funding_type = 'Funding Disbursed' THEN amount ELSE 0 END) AS funding_disbursed,
     SUM(CASE WHEN funding_type = 'Funding Utilized' THEN amount ELSE 0 END) AS funding_utilized,
     SUM(CASE WHEN funding_type = 'Funding Disbursed' THEN amount ELSE 0 END) -
@@ -57,7 +57,7 @@ const FetchFundingDetailsModel = async () => {
      SUM(CASE WHEN funding_type = 'External Funding' THEN amount ELSE 0 END) AS  external_funding
 
       FROM update_funding
-      GROUP BY startup_name
+      GROUP BY startup_id
     `;
 
     client.query(query, (err, result) => {
@@ -67,11 +67,11 @@ const FetchFundingDetailsModel = async () => {
       } else {
         const formattedData = {};
         result.rows.forEach(row => {
-          formattedData[row.startup_name] = {
-            funding_disbursed: parseFloat(row.funding_disbursed),
-            funding_utilized: parseFloat(row.funding_utilized),
-           balance: parseFloat(row.balance),
-            external_funding: parseFloat(row.external_funding)
+          formattedData[row.startup_id] = {
+            funding_disbursed: parseFloat(row.funding_disbursed) || 0,
+            funding_utilized: parseFloat(row.funding_utilized) || 0 ,
+           balance: parseFloat(row.balance) || 0,
+            external_funding: parseFloat(row.external_funding) || 0
           };
         });
         resolve(formattedData);

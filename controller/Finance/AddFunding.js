@@ -1,7 +1,13 @@
-const { AddFundingModel, DataViewModel, FundingNotificationModel,FetchFundingDetailsModel } = require('../../model/Finance/AddFuningModel');
+const {
+  AddFundingModel,
+  DataViewModel,
+  FundingNotificationModel,
+  FetchFundingDetailsModel,
+} = require("../../model/Finance/AddFuningModel");
 const AddFunding = async (req, res) => {
   console.log(req.body);
   const {
+    startup_id,
     startup_name,
     funding_type,
     amount,
@@ -10,9 +16,10 @@ const AddFunding = async (req, res) => {
     reference_number,
     document,
     status,
-    official_email_address,
+    
   } = req.body;
   if (
+    !startup_id ||
     !startup_name ||
     !funding_type ||
     !amount ||
@@ -25,12 +32,13 @@ const AddFunding = async (req, res) => {
       .json({ message: "Please fill all necessary fields" });
   } else {
     try {
-      const result1 = await DataViewModel(startup_name);
+      const result1 = await DataViewModel(startup_id);
       // console.log("DataViewModel Result: ", result1);
       if (funding_type === "Funding Utilized") {
         // Allow Utilized only if Disbursed exists
         if (result1.rowCount > 0) {
           const result = await AddFundingModel(
+            startup_id,
             startup_name,
             funding_type,
             amount,
@@ -39,7 +47,7 @@ const AddFunding = async (req, res) => {
             reference_number,
             document,
             status,
-            official_email_address
+            
           );
           return res.status(200).send(result);
         } else {
@@ -53,6 +61,7 @@ const AddFunding = async (req, res) => {
       ) {
         // Always allow Disbursed or External Funding
         const result = await AddFundingModel(
+          startup_id,
           startup_name,
           funding_type,
           amount,
@@ -61,13 +70,14 @@ const AddFunding = async (req, res) => {
           reference_number,
           document,
           status,
-          official_email_address
+          
         );
         return res.status(200).send(result);
       } else {
         return res.status(400).send("Invalid funding type.");
       }
     } catch (err) {
+      console.log("Error in AddFunding:", err.stack || err);
       return res.status(500).json({ error: err });
     }
   }
@@ -82,15 +92,12 @@ const FetchFundingAmount = async (req, res) => {
     res.status(500).json({ message: "Internal server error" });
   }
 };
-const updateFundingNotif = async(req, res) => {
-    try
-    {
-        const result = await FundingNotificationModel()
-        res.status(200).json(result);
-    }
-    catch(err)
-    {   
-        res.status(500).json(err)
-    }       
-}
+const updateFundingNotif = async (req, res) => {
+  try {
+    const result = await FundingNotificationModel();
+    res.status(200).json(result);
+  } catch (err) {
+    res.status(500).json(err);
+  }
+};
 module.exports = { AddFunding, updateFundingNotif, FetchFundingAmount };
