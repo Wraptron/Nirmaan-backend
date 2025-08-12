@@ -34,6 +34,7 @@ const {
   AddFunding,
   updateFundingNotif,
   FetchFundingAmount,
+  FetchFundingData,
 } = require("../controller/Finance/AddFunding.js");
 const {ScheduleMentorMeeting} = require('../controller/Admin/Mentorship/Mentorship.js');
 const IPdataUpload = require('../controller/Office/IPdata.js');
@@ -51,6 +52,7 @@ router.put('/edit-startup/about',UpdateStartupAbout);
 router.post('/schedule-meeting', ScheduleMentorMeeting);
 router.post("/finance/addfunding", upload.none(), AddFunding);
 router.get("/finance/funding_amount", FetchFundingAmount);
+router.get("/finance/funding", FetchFundingData);
 router.get('/fetch-startup', FetchStartupData);
 router.get('/fetchevents', FetchEvents);
 router.get('/count-startupdata', FetchStartupDatainNumbers);

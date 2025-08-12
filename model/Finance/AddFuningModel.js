@@ -80,4 +80,25 @@ const FetchFundingDetailsModel = async () => {
   });
 };
 
-module.exports = { AddFundingModel, DataViewModel, FundingNotificationModel,FetchFundingDetailsModel};
+
+const FetchFundingModel=()=>{
+  return new Promise((resolve,reject)=>{
+    client.query("select * from update_funding",(err,result)=>{
+      if(err){
+        reject(err)
+      }
+      else{
+        resolve(result)
+      }
+    })
+  })
+}
+
+
+module.exports = {
+  AddFundingModel,
+  DataViewModel,
+  FundingNotificationModel,
+  FetchFundingDetailsModel,
+  FetchFundingModel,
+};
