@@ -598,36 +598,7 @@ WHERE official->>'official_email_address' = $14;
   });
 };
 
-const UpdateStartupFounderModel = async (data) => {
-  const { founder, email_address } = data;
-  const query = `
-  UPDATE test_startup
-  SET  founder=jsonb_set(
-             jsonb_set(
-          jsonb_set(
-          founder,
-          '{founder_name}', to_jsonb($1::text), true
-          ), '{founder_email}', to_jsonb($2::text), true
-          ),'{founder_number}', to_jsonb($3::text), true
-          )
-           WHERE official->>'official_email_address' = $4;
-           `;
-  const values = [
-    founder.founder_name || "",
-    founder.founder_email || "",
-    founder.founder_number || "",
-    email_address,
-  ];
-  return new Promise((resolve, reject) => {
-    client.query(query, values, (err, result) => {
-      if (err) {
-        reject(err);
-      } else {
-        resolve(result);
-      }
-    });
-  });
-};
+
 
 const AddAwardModel = async (
   official_email_address,
@@ -686,45 +657,151 @@ const FetchAwardModel = () => {
   });
 };
 
-const AddFounderModel = async (
-  official_email_address,
-  founder_name,
-  founder_designation,
-  founder_email,
-  founder_number
+const UpdateAwardModel = async (
+  award_name,
+  award_org,
+  prize_money,
+  awarded_date,
+  document_url,
+  description,
+  id
 ) => {
-  const newFounder = {
-    founder_name,
-    founder_designation,
-    founder_email,
-    founder_number,
-  };
+  return new Promise((resolve, reject) => {
+    client.query(
+      `UPDATE startup_awards 
+       SET award_name=$1, award_org=$2, prize_money=$3, awarded_date=$4, 
+           document_url=$5, description=$6
+       WHERE id=$7 RETURNING *`,
+      [
+        award_name,
+        award_org,
+        prize_money,
+        awarded_date,
+        document_url,
+        description,
+        id,
+      ],
+      (err, result) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(result.rows[0]);
+        }
+      }
+    );
+  });
+};
+const DeleteAwardModal = (id) => {
+  return new Promise((resolve, reject) => {
+    client.query(
+      "DELETE from startup_awards where id=$1",
+      [id],
+      (err, result) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(result);
+        }
+      }
+    );
+  });
+};
 
+const AddFounderModel = async (startup_id, foundersArray) => {
   return new Promise((resolve, reject) => {
     client.query(
       `UPDATE test_startup
        SET founder = 
          CASE 
            WHEN jsonb_typeof(founder) = 'array' THEN founder || $1::jsonb
-           WHEN founder IS NULL THEN jsonb_build_array($1::jsonb)
+           WHEN founder IS NULL THEN $1::jsonb
            ELSE jsonb_build_array(founder) || $1::jsonb
          END
-       WHERE official_email_address = $2`,
-      [JSON.stringify(newFounder), official_email_address],
+       WHERE user_id = $2
+       RETURNING founder`,
+      [JSON.stringify(foundersArray), startup_id],
       (err, result) => {
-        if (err) reject({ err });
-        else resolve(result);
+        if (err) {
+          console.error("Error in AddFounderModel:", err);
+          reject(err);
+        } else {
+          resolve(result.rows[0]);
+        }
       }
     );
   });
 };
 
-const FetchFounderModel = () => {
+const FetchFounderModel = (userId) => {
   return new Promise((resolve, reject) => {
-    client.query("SELECT founder FROM test_startup WHERE official_email_address = $1", (err, result) => {
+    const query = `
+     SELECT 
+  ts.user_id, 
+  jsonb_build_object(
+    'founder_name', f.value->>'founder_name',
+    'founder_email', f.value->>'founder_email',
+    'founder_number', f.value->>'founder_number',
+    'founder_designation', f.value->>'founder_designation',
+    'founder_id', f.value->>'founder_id'
+  ) AS founder
+FROM test_startup ts,
+     jsonb_array_elements(ts.founder) AS f(value)
+WHERE ts.user_id = $1;
+`;
+
+    client.query(query, [userId], (err, result) => {
       if (err) {
+        console.error("Database query failed:", err); // log for debugging
+        reject(new Error("Database query failed"));
+      } else {
+        resolve(result.rows);
+      }
+    });
+  });
+};
+
+const UpdateStartupFounderModel = async (data) => {
+  const { founder } = data;
+  const query = `
+UPDATE test_startup
+SET founder = (
+  SELECT jsonb_agg(
+    CASE
+      WHEN elem->>'founder_id' = $5
+      THEN jsonb_set(
+              jsonb_set(
+              jsonb_set(
+                jsonb_set(elem,
+                  '{founder_name}', to_jsonb($1::text), true
+                ),
+                '{founder_number}', to_jsonb($2::text), true
+              ),
+              '{founder_designation}', to_jsonb($3::text), true
+           ), 
+           '{founder_email}', to_jsonb($4::text), true
+)
+      ELSE elem
+    END
+  )
+  FROM jsonb_array_elements(founder) elem
+)
+WHERE founder::text ILIKE concat('%', $5::text, '%')
+`;
+  const values = [
+    founder.founder_name || "",
+    founder.founder_number || "",
+    founder.founder_designation || "",
+    founder.founder_email || "",
+    founder.founder_id || "",
+  ];
+  return new Promise((resolve, reject) => {
+    console.log("VALUES SENT TO DB:", values);
+    client.query(query, values, (err, result) => {
+      if (err) {
+        console.log(err);
         reject(err);
       } else {
+        console.log(result);
         resolve(result);
       }
     });
@@ -748,4 +825,8 @@ module.exports = {
   TopStartupsSectors,
   StartupDeleteData,
   AddFounderModel,
+  FetchFounderModel,
+  UpdateAwardModel,
+  DeleteAwardModal,
+  
 };

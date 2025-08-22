@@ -15,7 +15,7 @@ const {Profile, ProfilePhoto} = require('../controller/Admin/Profile/Profile.js'
 const DeleteResume = require('../controller/Admin/Resume/DeleteResume.js');
 const AddMentor = require('../controller/Admin/Mentors/AddMentor.js');
 const Settings = require('../controller/Admin/Settings/Settings.js');
-const {AddStartup, FetchStartupDatainNumbers, FetchStartupData, UpdateStatus, IndividualStartups, TopStartupsSectorsCont, TeamDocuments, DeleteStartupData,UpdateStartupDetails,UpdateStartupAbout, UpdateStartupMentorDetails, UpdateStartupFounder, AddAward, FetchAwardData} = require('../controller/Admin/startups/AddStartup.js');const {AddMessage, ViewMessage} = require('../controller/Admin/Messages/Messages.js');
+const {AddStartup,AddFounder,FetchFounder, UpdateAward,DeleteAward, FetchStartupDatainNumbers, FetchStartupData, UpdateStatus, IndividualStartups, TopStartupsSectorsCont, TeamDocuments, DeleteStartupData,UpdateStartupDetails,UpdateStartupAbout, UpdateStartupMentorDetails, UpdateStartupFounder, AddAward, FetchAwardData} = require('../controller/Admin/startups/AddStartup.js');const {AddMessage, ViewMessage} = require('../controller/Admin/Messages/Messages.js');
 const {AddConnections, ViewConnections, EstablishConnection} = require("../controller/Admin/Connections/Connection.js");
 const Report = require('../controller/Admin/Reports/Report.js');
 const Founder = require('../controller/Team/Founder.js');
@@ -35,6 +35,7 @@ const {
   updateFundingNotif,
   FetchFundingAmount,
   FetchFundingData,
+  UpdateFundingData,
 } = require("../controller/Finance/AddFunding.js");
 const {ScheduleMentorMeeting} = require('../controller/Admin/Mentorship/Mentorship.js');
 const IPdataUpload = require('../controller/Office/IPdata.js');
@@ -53,6 +54,7 @@ router.post('/schedule-meeting', ScheduleMentorMeeting);
 router.post("/finance/addfunding", upload.none(), AddFunding);
 router.get("/finance/funding_amount", FetchFundingAmount);
 router.get("/finance/funding", FetchFundingData);
+router.put("/funding/edit", UpdateFundingData);
 router.get('/fetch-startup', FetchStartupData);
 router.get('/fetchevents', FetchEvents);
 router.get('/count-startupdata', FetchStartupDatainNumbers);
@@ -72,8 +74,12 @@ router.get('/profile/:mail', Profile);
 router.put('/edit-startupdata/personal-info', UpdateStartupDetails);
 router.post('/addstartup/award',upload.single("document"), AddAward);
 router.get('/fetchaward',FetchAwardData);
+router.delete("/delete-award/:id", DeleteAward);
+router.put("/updateaward", UpdateAward);
 router.delete('/delete-resume/:id', DeleteResume);
 router.put('/edit-startup/founder',UpdateStartupFounder)
+router.post("/addfounder", AddFounder);
+router.get("/fetchfounder/:userId", FetchFounder);
 router.post('/mentor/add', AddMentor);
 router.post('/create-events',CreateEvents);
 router.get('/profile-data/:mail', Authenticate, Profile);

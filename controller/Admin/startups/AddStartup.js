@@ -5,6 +5,8 @@ const {
   UpdateStartupPersonalInfoModel,
   AddAwardModel,
   FetchAwardModel,
+  UpdateAwardModel,
+  DeleteAwardModal,
   UpdateStartupAboutModel,
   UpdateStartupStatusModel,
   IndividualStarupModel,
@@ -14,6 +16,7 @@ const {
   StartupDeleteData,
   UpdateStartupMentorDetailsModel,
   AddFounderModel,
+  FetchFounderModel,
 } = require("../../../model/StartupModel");
 const EmailValid = require("../../../validation/EmailValid");
 const PhoneNumberValid = require("../../../validation/PhoneNumberValid");
@@ -540,31 +543,6 @@ const UpdateStartupMentorDetails = async (req, res) => {
   }
 };
 
-const UpdateStartupFounder = async (req, res) => {
-  console.log(req.body);
-  try {
-    const { founder_name, founder_email, founder_number, email_address } =
-      req.body;
-
-    if (!email_address) {
-      return res.status(400).json({ error: "Missing email_address" });
-    }
-
-    const founder = {
-      founder_name,
-      founder_email,
-      founder_number,
-    };
-    const result = await UpdateStartupFounderModel({ founder, email_address });
-    res.status(200).json({
-      message: "Startup details updated successfully",
-      result,
-    });
-  } catch (err) {
-    console.error("Backend Error:", err); // this will show SQL or JSON issues
-    res.status(500).json({ error: "Failed to update startup details" });
-  }
-};
 
 const AddAward = async (req, res) => {
   console.log(req.body);
@@ -608,28 +586,128 @@ const FetchAwardData = async (req, res) => {
   }
 };
 
+const UpdateAward = async (req, res) => {
+  try {
+    const {
+      award_name,
+      award_org,
+      prize_money,
+      awarded_date,
+      document_url,
+      description,
+      id,
+    } = req.body;
+
+    const result = await UpdateAwardModel(
+      award_name,
+      award_org,
+      prize_money,
+      awarded_date,
+      document_url,
+      description,
+      id
+    );
+
+    res.status(200).json({
+      message: "Award updated successfully",
+      result,
+    });
+  } catch (err) {
+    console.error("Error in UpdateAward:", err);
+    res.status(500).json({ error: "Failed to update award details" });
+  }
+};
+const DeleteAward = async (req, res) => {
+  const id = req.params.id;
+  console.log("deleteing awrad :", id);
+
+  if (id) {
+    try {
+      const result = await DeleteAwardModal(id);
+      res.status(200).send(result);
+    } catch (err) {
+      res.status(500).send(err);
+    }
+  } else {
+    res.status(400).send("params missing");
+  }
+};
+
+
 const AddFounder = async (req, res) => {
   try {
-    console.log(req.body);
+    // console.log('Founder payload:', req.body);
     const {
       founder_name,
       founder_designation,
       founder_email,
       founder_number,
-      official_email_address,
+      startup_id,
     } = req.body;
 
-    const result = await AddFounderModel(
-      official_email_address,
+    const founder = {
       founder_name,
       founder_designation,
       founder_email,
-      founder_number
-    );
+      founder_number,
+    };
 
-    res.status(201).json({ message: "Award added successfully", result });
+    const result = await AddFounderModel(startup_id, founder);
+
+    res
+      .status(201)
+      .json({ message: "Founder added successfully", data: result });
   } catch (err) {
+    // console.error('Error in AddFounder controller:', err);
     res.status(500).json({ error: err.message || "Something went wrong" });
+  }
+};
+
+const FetchFounder = async (req, res) => {
+  const userId = parseInt(req.params.userId);
+
+  if (isNaN(userId)) {
+    return res.status(400).json({ message: "Invalid user ID" });
+  }
+  try {
+    const allFounderData = await FetchFounderModel(userId);
+    res.status(200).json(allFounderData);
+  } catch (err) {
+    // console.error("Error in FetchFundingAmount:", err.stack || err);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+const UpdateStartupFounder = async (req, res) => {
+  console.log(req.body);
+  try {
+    const {
+      founder_name,
+      founder_email,
+      founder_number,
+      founder_designation,
+      founder_id,
+    } = req.body;
+
+    if (!founder_email) {
+      return res.status(400).json({ error: "Missing founder email" });
+    }
+
+    const founder = {
+      founder_name,
+      founder_email,
+      founder_number,
+      founder_designation,
+      founder_id,
+    };
+    const result = await UpdateStartupFounderModel({ founder });
+    res.status(200).json({
+      message: "Startup details updated successfully",
+      result,
+    });
+  } catch (err) {
+    // console.error("Backend Error:", err); // this will show SQL or JSON issues
+    res.status(500).json({ error: "Failed to update startup details" });
   }
 };
 
@@ -638,6 +716,8 @@ module.exports = {
   UpdateStartupMentorDetails,
   FetchAwardData,
   AddAward,
+  UpdateAward,
+  DeleteAward,
   UpdateStartupFounder,
   UpdateStartupAbout,
   UpdateStartupDetails,
@@ -650,4 +730,5 @@ module.exports = {
   DeleteStartupData,
   FetchStartupProfile,
   AddFounder,
+  FetchFounder,
 };

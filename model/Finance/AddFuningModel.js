@@ -1,50 +1,69 @@
-const client = require('../../utils/conn');
-const DataViewModel = async(startup_id) => {
-    return new Promise((resolve, reject) => {
-        client.query(`SELECT * FROM update_funding WHERE startup_id = $1 AND funding_type=$2`, [startup_id, 'Funding Disbursed'], (err, result) => {
-            if(err)
-            {
-                  console.error("Error in DataViewModel:", err);
-                reject(err)
-            }
-            else
-            {
-                resolve(result)
-            }
-        })
-    })
-}
-const AddFundingModel = async (startup_id,startup_name, funding_type, amount, purpose, funding_date, reference_number, document,status) => {    
-    return new Promise((resolve, reject) => {
-        client.query(
-            "INSERT INTO update_funding(startup_id,startup_name, funding_type, amount, purpose, funding_date, reference_number, document, status) VALUES($1, $2, $3, $4, $5, $6, $7, $8,$9)", 
-            [startup_id,startup_name, funding_type, amount, purpose, funding_date, reference_number, document,status ], 
-            (err, result) => {
-                if (err) {
-                    reject({ err });
-                } else {
-                    resolve(result);
-                }
-            }
-        );
-    });
+const client = require("../../utils/conn");
+// const DataViewModel = async(startup_id) => {
+//     return new Promise((resolve, reject) => {
+//         client.query(SELECT * FROM update_funding WHERE startup_id = $1 AND funding_type=$2, [startup_id, 'Funding Disbursed'], (err, result) => {
+//             if(err)
+//             {
+//                   console.error("Error in DataViewModel:", err);
+//                 reject(err)
+//             }
+//             else
+//             {
+//                 resolve(result)
+//             }
+//         })
+//     })
+// }
+const AddFundingModel = async (
+  startup_id,
+  startup_name,
+  funding_type,
+  amount,
+  purpose,
+  funding_date,
+  reference_number,
+  document,
+  status
+) => {
+  return new Promise((resolve, reject) => {
+    client.query(
+      "INSERT INTO update_funding(startup_id,startup_name, funding_type, amount, purpose, funding_date, reference_number, document, status) VALUES($1, $2, $3, $4, $5, $6, $7, $8,$9)",
+      [
+        startup_id,
+        startup_name,
+        funding_type,
+        amount,
+        purpose,
+        funding_date,
+        reference_number,
+        document,
+        status,
+      ],
+      (err, result) => {
+        if (err) {
+          reject({ err });
+        } else {
+          resolve(result);
+        }
+      }
+    );
+  });
 };
 
-const FundingNotificationModel = async() => {
-    return new Promise((resolve, reject) => {
-        client.query("SELECT * FROM update_funding ORDER BY funding_date DESC ", (err, result) => {
-            if(err)
-            {
-                reject(err)
-            }
-            else
-            {
-                resolve(result);
-            }
-        })
-    })
-}
-
+const FundingNotificationModel = async () => {
+  return new Promise((resolve, reject) => {
+    client.query(
+      "SELECT * FROM update_funding ORDER BY funding_date DESC ",
+      (err, result) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(result);
+        }
+      }
+    );
+  });
+};
 
 const FetchFundingDetailsModel = async () => {
   return new Promise((resolve, reject) => {
@@ -66,12 +85,12 @@ const FetchFundingDetailsModel = async () => {
         reject(err);
       } else {
         const formattedData = {};
-        result.rows.forEach(row => {
+        result.rows.forEach((row) => {
           formattedData[row.startup_id] = {
             funding_disbursed: parseFloat(row.funding_disbursed) || 0,
-            funding_utilized: parseFloat(row.funding_utilized) || 0 ,
-           balance: parseFloat(row.balance) || 0,
-            external_funding: parseFloat(row.external_funding) || 0
+            funding_utilized: parseFloat(row.funding_utilized) || 0,
+            balance: parseFloat(row.balance) || 0,
+            external_funding: parseFloat(row.external_funding) || 0,
           };
         });
         resolve(formattedData);
@@ -80,25 +99,80 @@ const FetchFundingDetailsModel = async () => {
   });
 };
 
-
-const FetchFundingModel=()=>{
-  return new Promise((resolve,reject)=>{
-    client.query("select * from update_funding",(err,result)=>{
-      if(err){
-        reject(err)
+const FetchFundingModel = () => {
+  return new Promise((resolve, reject) => {
+    client.query("select * from update_funding", (err, result) => {
+      if (err) {
+        reject(err);
+      } else {
+        resolve(result);
       }
-      else{
-        resolve(result)
+    });
+  });
+};
+
+const FetchFundingRecordModel = async (id) => {
+  return new Promise((resolve, reject) => {
+    client.query(
+      "SELECT * FROM update_funding WHERE id = $1",
+      [id],
+      (err, result) => {
+        if (err) {
+          console.error("Error fetching funding record:", err);
+          reject(err);
+        } else {
+          resolve(result.rows[0] || null);
+        }
       }
-    })
-  })
-}
+    );
+  });
+};
 
-
+const UpdateFundingDataModel = async (
+  startup_name,
+  funding_type,
+  amount,
+  purpose,
+  funding_date,
+  reference_number,
+  document,
+  status,
+  id,
+  startup_id
+) => {
+  return new Promise((resolve, reject) => {
+    client.query(
+      `UPDATE update_funding 
+   SET startup_name=$1, funding_type=$2, amount=$3, purpose=$4, 
+       funding_date=$5, reference_number=$6, document=$7, status=$8 
+   WHERE id=$9 AND startup_id=$10`,
+      [
+        startup_name,
+        funding_type,
+        amount,
+        purpose,
+        funding_date,
+        reference_number,
+        document,
+        status,
+        id,
+        startup_id,
+      ],
+      (err, result) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(result);
+        }
+      }
+    );
+  });
+};
 module.exports = {
   AddFundingModel,
-  DataViewModel,
   FundingNotificationModel,
   FetchFundingDetailsModel,
   FetchFundingModel,
+  UpdateFundingDataModel,
+  FetchFundingRecordModel,
 };
