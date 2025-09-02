@@ -1,10 +1,11 @@
 const {
   AddFundingModel,
   FundingNotificationModel,
-  FetchFundingDetailsModel,
   FetchFundingModel,
   UpdateFundingDataModel,
   FetchFundingRecordModel,
+  FetchFundingIndividualgDetailsModel,
+  FetchFundingTotalNumbers,
 } = require("../../model/Finance/AddFuningModel");
 const AddFunding = async (req, res) => {
   const {
@@ -95,7 +96,7 @@ const AddFunding = async (req, res) => {
 
 const FetchFundingAmount = async (req, res) => {
   try {
-    const allFundingData = await FetchFundingDetailsModel();
+    const allFundingData = await FetchFundingIndividualgDetailsModel();
     res.status(200).json(allFundingData);
   } catch (err) {
     console.error("Error in FetchFundingAmount:", err.stack || err);
@@ -120,86 +121,20 @@ const FetchFundingData = async (req, res) => {
   }
 };
 
-// const UpdateFundingData = async (req, res) => {
-//   console.log(req.body);
-//   try {
-//     const {
-//       startup_name,
-//       funding_type,
-//       amount,
-//       purpose,
-//       funding_date,
-//       reference_number,
-//       document,
-//       status,
-//       id,
-//       startup_id
-//     } = req.body;
-
-//     const fundingDetails = await FetchFundingDetailsModel();
-//     const currentFunding = fundingDetails[startup_id] || {
-//       funding_disbursed: 0,
-//       funding_utilized: 0,
-//       balance: 0,
-//       external_funding: 0,
-//     };
-
-// if (funding_type === "Funding Utilized") {
-//         // Allow only if Disbursed exists
-//         if (currentFunding.funding_disbursed <= 0) {
-//           return res
-//             .status(401)
-//             .send("Team hasn't received any disbursed funds yet.");
-//         }
-
-//         if (
-//           currentFunding.funding_utilized + Number(amount) >
-//           currentFunding.balance
-//         ) {
-//           return res
-//             .status(400)
-//             .send("Not enough funding available to utilize.");
-//         }
-
-//         const result = await UpdateFundingDataModel(
-//           startup_name,
-//           funding_type,
-//           amount,
-//           purpose,
-//           funding_date,
-//           reference_number,
-//           document,
-//           status,
-//           id,
-//            startup_id,
-//         );
-//         return res.status(200).send(result);
-//       } else if (
-//         funding_type === "Funding Disbursed" ||
-//         funding_type === "External Funding"
-//       ) {
-//         // Always allow Disbursed or External Funding
-//         const result = await UpdateFundingDataModel(
-//           startup_name,
-//           funding_type,
-//           amount,
-//           purpose,
-//           funding_date,
-//           reference_number,
-//           document,
-//           status,
-//           id,
-//            startup_id,
-//         );
-//         return res.status(200).send(result);
-//       } else {
-//         return res.status(400).send("Invalid funding type.");
-//       }
-//     } catch (err) {
-//       console.log(err)
-//       return res.status(500).json({ error: err });
-//     }
-//   }
+const FetchFundingDatainNumbers = async (req, res) => {
+  try {
+    const result = await FetchFundingTotalNumbers();
+    const startupData = {
+      funding_disbursed: Number(result.disbursed) || 0,
+      funding_utilized: Number(result.utilized) || 0,
+      external_funding: Number(result.external) || 0
+    };
+    res.status(200).json(startupData);
+  } catch (err) {
+    console.error("Error in FetchFundingDatainNumbers:", err.stack || err);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
 
 const UpdateFundingData = async (req, res) => {
   try {
@@ -220,7 +155,7 @@ const UpdateFundingData = async (req, res) => {
       return res.status(400).send("Funding ID is required for update.");
     }
 
-    const fundingDetails = await FetchFundingDetailsModel();
+    const fundingDetails = await FetchFundingIndividualgDetailsModel();
     const currentFunding = fundingDetails[startup_id] || {
       funding_disbursed: 0,
       funding_utilized: 0,
@@ -314,4 +249,5 @@ module.exports = {
   FetchFundingAmount,
   FetchFundingData,
   UpdateFundingData,
+  FetchFundingDatainNumbers
 };

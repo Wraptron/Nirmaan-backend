@@ -17,6 +17,7 @@ const {
   UpdateStartupMentorDetailsModel,
   AddFounderModel,
   FetchFounderModel,
+  CheckUserByEmail,
 } = require("../../../model/StartupModel");
 const EmailValid = require("../../../validation/EmailValid");
 const PhoneNumberValid = require("../../../validation/PhoneNumberValid");
@@ -74,11 +75,7 @@ const md5 = require("md5");
 const AddStartup = async (req, res) => {
   try {
     const { basic, official, founder, description } = req.body;
-
-    // Log the received data for debugging
-    console.log("Received data:", { basic, official, founder, description });
-
-    // Extract fields from basic section
+  // Extract fields from basic section
     const {
       startup_name,
       startup_program,
@@ -144,7 +141,13 @@ const AddStartup = async (req, res) => {
     if (!EmailValid(official_email_address)) {
       return res.status(401).json({ error: "Email Not Valid" });
     }
+ const existingUser = await CheckUserByEmail(official_email_address);
 
+if (existingUser) {
+  return res.status(400).json({
+    error: "Email is already registered",
+  });
+}
     // 1. Add startup
     const result = await AddStartupModel(
       basic,
@@ -153,6 +156,7 @@ const AddStartup = async (req, res) => {
       description,
       official_email_address
     );
+
 
     // 2. Generate password
     const generatedPassword = generatePassword();
@@ -571,8 +575,7 @@ const AddAward = async (req, res) => {
 
     res.status(201).json({ message: "Award added successfully", result });
   } catch (err) {
-    // res.status(500).json({ error: err.message || "Something went wrong" });
-    console.error("❌ Backend Error (addAward):", err); // ✅ log actual error
+    console.error("Backend Error (addAward):", err);
     res.status(500).json({ error: err.message || "Something went wrong" });
   }
 };
@@ -706,7 +709,7 @@ const UpdateStartupFounder = async (req, res) => {
       result,
     });
   } catch (err) {
-    // console.error("Backend Error:", err); // this will show SQL or JSON issues
+    // console.error("Backend Error:", err); 
     res.status(500).json({ error: "Failed to update startup details" });
   }
 };

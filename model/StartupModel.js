@@ -31,6 +31,12 @@ const AddStartupModel = async (
   });
 };
 
+const CheckUserByEmail = async (email) => {
+  const query = "SELECT * FROM test_startup WHERE official ->>'official_email_address' = $1";
+  const result = await client.query(query, [email]);
+  return result.rows[0] || null;
+};
+
 // const AddStartupModel = async(basic, official, founder, description, official_email_address) => {
 //     return new Promise((resolve, reject) => {
 //         // First check if startup already exists
@@ -735,7 +741,7 @@ const AddFounderModel = async (startup_id, foundersArray) => {
 const FetchFounderModel = (userId) => {
   return new Promise((resolve, reject) => {
     const query = `
-     SELECT 
+    SELECT 
   ts.user_id, 
   jsonb_build_object(
     'founder_name', f.value->>'founder_name',
@@ -745,11 +751,15 @@ const FetchFounderModel = (userId) => {
     'founder_id', f.value->>'founder_id'
   ) AS founder
 FROM test_startup ts,
-     jsonb_array_elements(ts.founder) AS f(value)
-WHERE ts.user_id = $1;
+     jsonb_array_elements(
+       CASE 
+         WHEN jsonb_typeof(ts.founder) = 'array' THEN ts.founder
+         ELSE jsonb_build_array(ts.founder)
+       END
+     ) AS f(value)
+WHERE ts.user_id = $1
 `;
-
-    client.query(query, [userId], (err, result) => {
+      client.query(query, [userId], (err, result) => {
       if (err) {
         console.error("Database query failed:", err); // log for debugging
         reject(new Error("Database query failed"));
@@ -767,25 +777,33 @@ UPDATE test_startup
 SET founder = (
   SELECT jsonb_agg(
     CASE
-      WHEN elem->>'founder_id' = $5
-      THEN jsonb_set(
-              jsonb_set(
-              jsonb_set(
-                jsonb_set(elem,
-                  '{founder_name}', to_jsonb($1::text), true
-                ),
-                '{founder_number}', to_jsonb($2::text), true
-              ),
-              '{founder_designation}', to_jsonb($3::text), true
-           ), 
-           '{founder_email}', to_jsonb($4::text), true
-)
-      ELSE elem
+      WHEN f->>'founder_id' = $5 THEN
+        f || jsonb_build_object(
+               'founder_name', $1::text,
+               'founder_number', $2::text,
+               'founder_designation', $3::text,
+               'founder_email', $4::text
+             )
+      ELSE f
     END
   )
-  FROM jsonb_array_elements(founder) elem
+  FROM jsonb_array_elements(
+         CASE 
+           WHEN jsonb_typeof(founder) = 'array' THEN founder
+           ELSE jsonb_build_array(founder)
+         END
+       ) AS f
 )
-WHERE founder::text ILIKE concat('%', $5::text, '%')
+WHERE EXISTS (
+  SELECT 1
+  FROM jsonb_array_elements(
+         CASE 
+           WHEN jsonb_typeof(founder) = 'array' THEN founder
+           ELSE jsonb_build_array(founder)
+         END
+       ) AS f2
+  WHERE f2->>'founder_id' = $5
+)
 `;
   const values = [
     founder.founder_name || "",
@@ -795,7 +813,6 @@ WHERE founder::text ILIKE concat('%', $5::text, '%')
     founder.founder_id || "",
   ];
   return new Promise((resolve, reject) => {
-    console.log("VALUES SENT TO DB:", values);
     client.query(query, values, (err, result) => {
       if (err) {
         console.log(err);
@@ -811,6 +828,7 @@ WHERE founder::text ILIKE concat('%', $5::text, '%')
 
 module.exports = {
   AddStartupModel,
+  CheckUserByEmail,
   UpdateStartupAboutModel,
   AddAwardModel,
   FetchAwardModel,

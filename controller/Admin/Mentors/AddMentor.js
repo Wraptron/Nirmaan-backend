@@ -5,7 +5,10 @@ const validator = require('validator');
 const EmailValid = require('../../../validation/EmailValid');
 const PhoneNumberValid = require('../../../validation/PhoneNumberValid');
 const AddMentor = async(req, res) => {
-    const { description, professional, contact } = req.body;
+    console.log(req.body)
+ const description = JSON.parse(req.body.description);
+    const professional = JSON.parse(req.body.professional);
+    const contact = JSON.parse(req.body.contact);
     const { mentor_name, mentor_description } = description;
     const { years_of_experience, area_of_expertise, current_designation, institution, qualification, year_of_passing_out, startup_associated } = professional;
     const { contact_number, email_address, linkedIn_ID, password } = contact;
@@ -40,7 +43,7 @@ const AddMentor = async(req, res) => {
                     console.log("ok");
                 }
                 else {
-                    //console.log(err);
+                    console.log(err);
                     res.status(500).json({Error: "Internal Server Error"});
                 }
         }

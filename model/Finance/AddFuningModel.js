@@ -65,7 +65,7 @@ const FundingNotificationModel = async () => {
   });
 };
 
-const FetchFundingDetailsModel = async () => {
+const FetchFundingIndividualgDetailsModel = async () => {
   return new Promise((resolve, reject) => {
     const query = `
       SELECT startup_id,
@@ -168,11 +168,39 @@ const UpdateFundingDataModel = async (
     );
   });
 };
+
+const FetchFundingTotalNumbers = async () => {
+  try {
+    const queries = [
+      client.query(
+        "SELECT COALESCE(SUM(amount), 0)::numeric AS disbursed FROM update_funding WHERE funding_type = 'Funding Disbursed'"
+      ),
+      client.query(
+        "SELECT COALESCE(SUM(amount), 0)::numeric AS utilized FROM update_funding WHERE funding_type = 'Funding Utilized'"
+      ),
+      client.query(
+        "SELECT COALESCE(SUM(amount), 0)::numeric AS external FROM update_funding WHERE funding_type = 'External Funding'"
+      )
+    ];
+
+    const [disbursedResult, utilizedResult, externalResult] = await Promise.all(queries);
+
+    return {
+      disbursed: disbursedResult.rows[0].disbursed,
+      utilized: utilizedResult.rows[0].utilized,
+      external: externalResult.rows[0].external
+    };
+  } catch (err) {
+    throw err;
+  }
+};
+
 module.exports = {
   AddFundingModel,
   FundingNotificationModel,
-  FetchFundingDetailsModel,
+  FetchFundingIndividualgDetailsModel,
   FetchFundingModel,
   UpdateFundingDataModel,
   FetchFundingRecordModel,
+  FetchFundingTotalNumbers
 };

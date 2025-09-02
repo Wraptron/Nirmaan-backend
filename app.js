@@ -355,6 +355,10 @@ const DeleteConnection = require("./routes/route");
 const FetchMentorData = require("./routes/route");
 const MentorCount = require("./routes/route");
 const DeleteMentorData = require("./routes/route");
+const Testimonial = require("./routes/route");
+const FetchTestimonial = require("./routes/route");
+const UpdateTestimonial = require("./routes/route");
+const DeleteTestimonial = require("./routes/route");
 const DeleteStartupData = require("./routes/route");
 const CreateEvents = require("./routes/route");
 const FetchEvents = require("./routes/route");
@@ -381,6 +385,8 @@ const TeamDocuments = require("./routes/route");
 const AddFounder = require("./routes/route");
 const FetchFounder = require("./routes/route");
 const UpdateFundingData = require("./routes/route");
+const FetchFundingDatainNumbers = require("./routes/route");
+
 
 // Import utilities
 const Authenticate = require("./utils/Authenticate");
@@ -530,6 +536,10 @@ app.use("/api/v1/", DeleteConnection);
 app.use("/api/v1/", FetchMentorData);
 app.use("/api/v1/", MentorCount);
 app.use("/api/v1/", DeleteMentorData);
+app.use("/api/v1/", Testimonial);
+app.use("/api/v1/", FetchTestimonial);
+app.use("/api/v1/", UpdateTestimonial);
+app.use("/api/v1/", DeleteTestimonial);
 app.use("/api/v1/", DeleteStartupData);
 app.use("/api/v1/", CreateEvents);
 app.use("/api/v1/", FetchEvents);
@@ -554,6 +564,7 @@ app.use("/api/v1/", UpdateAward);
 app.use("/api/v1/", ProfilePhoto);
 app.use("/api/v1/", TeamDocuments);
 app.use("/api/v1/", FetchFundingAmount);
+app.use("/api/v1/", FetchFundingDatainNumbers);
 // Resume related routes
 app.use("/api/v1/work", WorkRequestController);
 app.use("/api/v1/resume", ResumeController);

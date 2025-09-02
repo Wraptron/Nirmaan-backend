@@ -28,7 +28,7 @@ const {AddMentorHour} = require('../controller/Team/Mentor.js');
 const {DeleteConnection} = require('../controller/Admin/Connections/Connection.js')
 const {ViewNotification} = require('../controller/Admin/Notification/Notification.js');
 const {CreateEvents, FetchEvents, RequestSpeaker} = require('../controller/Admin/Events/Events.js');
-const {FetchMentorData, MentorCount, DeleteMentorData} = require('../controller/Admin/Mentors/MentorData.js')
+const {FetchMentorData, MentorCount, DeleteMentorData,Testimonial, FetchTestimonial, UpdateTestimonial, DeleteTestimonial} = require('../controller/Admin/Mentors/MentorData.js')
 const AddJob = require('../controller/Team/AddJob.js');
 const {
   AddFunding,
@@ -36,6 +36,7 @@ const {
   FetchFundingAmount,
   FetchFundingData,
   UpdateFundingData,
+  FetchFundingDatainNumbers,
 } = require("../controller/Finance/AddFunding.js");
 const {ScheduleMentorMeeting} = require('../controller/Admin/Mentorship/Mentorship.js');
 const IPdataUpload = require('../controller/Office/IPdata.js');
@@ -55,6 +56,7 @@ router.post("/finance/addfunding", upload.none(), AddFunding);
 router.get("/finance/funding_amount", FetchFundingAmount);
 router.get("/finance/funding", FetchFundingData);
 router.put("/funding/edit", UpdateFundingData);
+router.get("/funding", FetchFundingDatainNumbers);
 router.get('/fetch-startup', FetchStartupData);
 router.get('/fetchevents', FetchEvents);
 router.get('/count-startupdata', FetchStartupDatainNumbers);
@@ -80,7 +82,15 @@ router.delete('/delete-resume/:id', DeleteResume);
 router.put('/edit-startup/founder',UpdateStartupFounder)
 router.post("/addfounder", AddFounder);
 router.get("/fetchfounder/:userId", FetchFounder);
-router.post('/mentor/add', AddMentor);
+router.post(
+  "/mentor/add",
+  upload.fields([{ name: "choose_logo", maxCount: 1 }]), 
+  AddMentor
+);
+router.post("/mentor/add-testimonial",Testimonial);
+router.get("/mentor/fetch-testimonial",FetchTestimonial);
+router.put("/mentor/update-testimonial",UpdateTestimonial);
+router.delete("/mentor/delete-testimonial/:id",DeleteTestimonial);
 router.post('/create-events',CreateEvents);
 router.get('/profile-data/:mail', Authenticate, Profile);
 router.post('/add-sector', Settings)
