@@ -94,7 +94,7 @@ const DeleteTestimonial=async (req,res)=>{
       res.status(500).send(err)
     }
   }else{
-    res.status(400).send("params missing")
+    res.status(400).send("id params missing")
   }
 }
 module.exports = {
