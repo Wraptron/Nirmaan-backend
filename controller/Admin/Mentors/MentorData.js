@@ -6,7 +6,30 @@ const {
   FetchTestimonialModel,
   UpdateTestimonialModel,
   DeleteTestimonialModel,
+  UpdateMentorModel,
 } = require("../../../model/AddMentorModel");
+
+const UpdateMentor=async(req,res)=>{
+  try{
+    const {
+       mentor_name,mentor_description, years_of_experience, expertise, designation, institution, qualification, year_of_passing_out, startup_associated, contact_num, email_address, linkedin_iD,mentor_id
+    }=req.body
+
+    const result=await UpdateMentorModel(
+       mentor_name,mentor_description, years_of_experience, expertise, designation, institution, qualification, year_of_passing_out, startup_associated, contact_num, email_address, linkedin_iD,mentor_id
+    )
+  
+    res.status(200).json({
+      message: "Mentor updated successfully",
+      result,
+    });
+  } catch (err) {
+    console.error("Error in UpdateMentor:", err);
+    res.status(500).json({ error: "Failed to update Mentor details" });
+  }
+
+  }
+
 const FetchMentorData = async (req, res) => {
   try {
     const result = await FetchMentorDataModel();
@@ -98,6 +121,7 @@ const DeleteTestimonial=async (req,res)=>{
   }
 }
 module.exports = {
+  UpdateMentor,
   FetchMentorData,
   MentorCount,
   DeleteMentorData,
