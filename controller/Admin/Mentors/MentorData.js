@@ -7,18 +7,44 @@ const {
   UpdateTestimonialModel,
   DeleteTestimonialModel,
   UpdateMentorModel,
+  MentorScheduleModel,
+  FetchMeetingsModel,
 } = require("../../../model/AddMentorModel");
 
-const UpdateMentor=async(req,res)=>{
-  try{
+const UpdateMentor = async (req, res) => {
+  try {
     const {
-       mentor_name,mentor_description, years_of_experience, expertise, designation, institution, qualification, year_of_passing_out, startup_associated, contact_num, email_address, linkedin_iD,mentor_id
-    }=req.body
+      mentor_name,
+      mentor_description,
+      years_of_experience,
+      expertise,
+      designation,
+      institution,
+      qualification,
+      year_of_passing_out,
+      startup_associated,
+      contact_num,
+      email_address,
+      linkedin_iD,
+      mentor_id,
+    } = req.body;
 
-    const result=await UpdateMentorModel(
-       mentor_name,mentor_description, years_of_experience, expertise, designation, institution, qualification, year_of_passing_out, startup_associated, contact_num, email_address, linkedin_iD,mentor_id
-    )
-  
+    const result = await UpdateMentorModel(
+      mentor_name,
+      mentor_description,
+      years_of_experience,
+      expertise,
+      designation,
+      institution,
+      qualification,
+      year_of_passing_out,
+      startup_associated,
+      contact_num,
+      email_address,
+      linkedin_iD,
+      mentor_id
+    );
+
     res.status(200).json({
       message: "Mentor updated successfully",
       result,
@@ -27,8 +53,7 @@ const UpdateMentor=async(req,res)=>{
     console.error("Error in UpdateMentor:", err);
     res.status(500).json({ error: "Failed to update Mentor details" });
   }
-
-  }
+};
 
 const FetchMentorData = async (req, res) => {
   try {
@@ -61,16 +86,76 @@ const DeleteMentorData = async (req, res) => {
   }
 };
 
+const Meetings = async (req, res) => {
+  try {
+    const {
+      mentor_reference_id,
+      startup_name,
+      founder_name,
+      meeting_mode,
+      meeting_link,
+      meeting_location,
+      participants,
+      date,
+      time,
+      meeting_duration,
+      meeting_agenda,
+      startup_id,
+    } = req.body;
+    if (!startup_name || !founder_name || !meeting_mode || !date || !time) {
+      return res.status(400).json({
+        error: "Please fill necessary fields",
+      });
+    }
+
+    const result = await MentorScheduleModel(
+      mentor_reference_id,
+      startup_name,
+      founder_name,
+      meeting_mode,
+      meeting_link,
+      meeting_location,
+      participants,
+      date,
+      time,
+      meeting_duration,
+      meeting_agenda,
+      startup_id
+    );
+    res.status(201).json({ message: "Meeting scheduled successfully", result });
+  } catch (err) {
+    console.error("Backend Error (meeting):", err);
+    res.status(500).json({ error: err.message || "Something went wrong" });
+  }
+};
+
+const FetchMeetings = async (req, res) => {
+  const { mentor_id } = req.params;
+  console.log("mentor_id received:", mentor_id);
+  try {
+    const result = await FetchMeetingsModel(mentor_id);
+    res.status(200).send(result);
+  } catch (err) {
+    console.log(err);
+    res.status(500).send(err);
+  }
+};
+
 const Testimonial = async (req, res) => {
-    try {
-    const {mentor_ref_id, name, role, description } = req.body;
-    const result = await TestimonialModel(mentor_ref_id,name, role, description);
-   res.status(200).json({
+  try {
+    const { mentor_ref_id, name, role, description } = req.body;
+    const result = await TestimonialModel(
+      mentor_ref_id,
+      name,
+      role,
+      description
+    );
+    res.status(200).json({
       message: "Testimonial Updated successfully",
       result,
     });
   } catch (err) {
-       console.error("Error inTestimonial :", err);
+    console.error("Error inTestimonial :", err);
     res.status(500).json({ error: "Failed to update Testimonial details" });
   }
 };
@@ -86,14 +171,10 @@ const FetchTestimonial = async (req, res) => {
 
 const UpdateTestimonial = async (req, res) => {
   try {
-    console.log(req.body)
-    const {
-     name,role, description,id
-    } = req.body;
+    console.log(req.body);
+    const { name, role, description, id } = req.body;
 
-    const result = await UpdateTestimonialModel(
-     name,role, description,id
-    );
+    const result = await UpdateTestimonialModel(name, role, description, id);
 
     res.status(200).json({
       message: "Testimonial  successfully",
@@ -105,21 +186,20 @@ const UpdateTestimonial = async (req, res) => {
   }
 };
 
-const DeleteTestimonial=async (req,res)=>{
-  const id=req.params.id
-  if(id){
-    try{
-      const result=await DeleteTestimonialModel(id)
-      res.status(200).send(result)
+const DeleteTestimonial = async (req, res) => {
+  const id = req.params.id;
+  if (id) {
+    try {
+      const result = await DeleteTestimonialModel(id);
+      res.status(200).send(result);
+    } catch (err) {
+      console.log(err);
+      res.status(500).send(err);
     }
-    catch(err){
-      console.log(err)
-      res.status(500).send(err)
-    }
-  }else{
-    res.status(400).send("id params missing")
+  } else {
+    res.status(400).send("id params missing");
   }
-}
+};
 module.exports = {
   UpdateMentor,
   FetchMentorData,
@@ -128,5 +208,7 @@ module.exports = {
   Testimonial,
   FetchTestimonial,
   UpdateTestimonial,
-  DeleteTestimonial
+  DeleteTestimonial,
+  Meetings,
+  FetchMeetings,
 };

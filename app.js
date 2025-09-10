@@ -356,6 +356,8 @@ const FetchMentorData = require("./routes/route");
 const UpdateMentor = require("./routes/route");
 const MentorCount = require("./routes/route");
 const DeleteMentorData = require("./routes/route");
+const Meetings = require("./routes/route");
+const MeetingsRoutes = require("./routes/route");
 const Testimonial = require("./routes/route");
 const FetchTestimonial = require("./routes/route");
 const UpdateTestimonial = require("./routes/route");
@@ -391,6 +393,7 @@ const FetchFundingDatainNumbers = require("./routes/route");
 
 // Import utilities
 const Authenticate = require("./utils/Authenticate");
+
 
 // Initialize Express app
 const app = express();
@@ -538,6 +541,8 @@ app.use("/api/v1/", FetchMentorData);
 app.use("/api/v1/", UpdateMentor);
 app.use("/api/v1/", MentorCount);
 app.use("/api/v1/", DeleteMentorData);
+app.use("/api/v1/", Meetings);
+app.use("/api/v1/", MeetingsRoutes);
 app.use("/api/v1/", Testimonial);
 app.use("/api/v1/", FetchTestimonial);
 app.use("/api/v1/", UpdateTestimonial);
