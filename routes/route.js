@@ -28,7 +28,7 @@ const {AddMentorHour} = require('../controller/Team/Mentor.js');
 const {DeleteConnection} = require('../controller/Admin/Connections/Connection.js')
 const {ViewNotification} = require('../controller/Admin/Notification/Notification.js');
 const {CreateEvents, FetchEvents, RequestSpeaker} = require('../controller/Admin/Events/Events.js');
-const {FetchMentorData, MentorCount, DeleteMentorData,Testimonial, FetchTestimonial, UpdateTestimonial, DeleteTestimonial, UpdateMentor,Meetings, FetchMeetings} = require('../controller/Admin/Mentors/MentorData.js')
+const {FetchMentorData, MentorCount, DeleteMentorData,Testimonial, FetchTestimonial, UpdateTestimonial, DeleteTestimonial, UpdateMentor,Meetings, FetchMeetings, MeetingFeedback, FetchMeetingFeedback, UpdateFeedback} = require('../controller/Admin/Mentors/MentorData.js')
 const AddJob = require('../controller/Team/AddJob.js');
 const {
   AddFunding,
@@ -84,12 +84,15 @@ router.post("/addfounder", AddFounder);
 router.get("/fetchfounder/:userId", FetchFounder);
 router.post(
   "/mentor/add",
-  upload.fields([{ name: "choose_logo", maxCount: 1 }]), 
+  upload.fields([{ name: "mentor_logo", maxCount: 1 }]), 
   AddMentor
 );
 router.put("/mentor/update",UpdateMentor)
 router.post("/mentor/meeting",Meetings)
 router.get("/mentor/fetch-meeting/:mentor_id",FetchMeetings)
+router.post("/mentor/feedback",MeetingFeedback)
+router.put("/mentor/update-feedback",UpdateFeedback)
+router.get("/mentor/fetch-feedback/:mentor_id/:startup_id",FetchMeetingFeedback)
 router.post("/mentor/add-testimonial",Testimonial);
 router.get("/mentor/fetch-testimonial",FetchTestimonial);
 router.put("/mentor/update-testimonial",UpdateTestimonial);

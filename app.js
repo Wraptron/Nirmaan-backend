@@ -358,6 +358,9 @@ const MentorCount = require("./routes/route");
 const DeleteMentorData = require("./routes/route");
 const Meetings = require("./routes/route");
 const MeetingsRoutes = require("./routes/route");
+const MeetingFeedback = require("./routes/route");
+const UpdateFeedback = require("./routes/route");
+const FetchMeetingFeedback = require("./routes/route");
 const Testimonial = require("./routes/route");
 const FetchTestimonial = require("./routes/route");
 const UpdateTestimonial = require("./routes/route");
@@ -492,26 +495,26 @@ app.use(bodyParser.urlencoded({ extended: true, limit: "50mb" }));
 app.use(responseTime());
 
 // File upload routes (uncomment if using S3)
-/*
-app.get('/images/:key', (req, res) => {
-  const fileKey = req.params.key;
-  const readStream = getFileStream(fileKey);
-  readStream.pipe(res);
-});
 
-app.post('/imagess', upload.single('image'), async (req, res) => {
-  try {
-    const file = req.file;
-    console.log(file);
-    const result = await uploadFile(file);
-    console.log(result);
-    res.send({ imagePath: `/images/${result.Key}` });
-  } catch (error) {
-    console.error('Upload error:', error);
-    res.status(500).send({ error: 'Upload failed' });
-  }
-});
-*/
+// app.get('/images/:key', (req, res) => {
+//   const fileKey = req.params.key;
+//   const readStream = getFileStream(fileKey);
+//   readStream.pipe(res);
+// });
+
+// app.post('/imagess', upload.single('image'), async (req, res) => {
+//   try {
+//     const file = req.file;
+//     console.log(file);
+//     const result = await uploadFile(file);
+//     console.log(result);
+//     res.send({ imagePath: `/images/${result.Key}` });
+//   } catch (error) {
+//     console.error('Upload error:', error);
+//     res.status(500).send({ error: 'Upload failed' });
+//   }
+// });
+
 
 // API Routes
 app.use("/api/v1/", LoginController);
@@ -543,6 +546,9 @@ app.use("/api/v1/", MentorCount);
 app.use("/api/v1/", DeleteMentorData);
 app.use("/api/v1/", Meetings);
 app.use("/api/v1/", MeetingsRoutes);
+app.use("/api/v1/", MeetingFeedback);
+app.use("/api/v1/", UpdateFeedback);
+app.use("/api/v1/", FetchMeetingFeedback);
 app.use("/api/v1/", Testimonial);
 app.use("/api/v1/", FetchTestimonial);
 app.use("/api/v1/", UpdateTestimonial);

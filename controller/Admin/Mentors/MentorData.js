@@ -9,6 +9,9 @@ const {
   UpdateMentorModel,
   MentorScheduleModel,
   FetchMeetingsModel,
+  MeetingFeedbackModel,
+  FetchMeetingFeedbackModel,
+  UpdateFeedbackModel,
 } = require("../../../model/AddMentorModel");
 
 const UpdateMentor = async (req, res) => {
@@ -73,7 +76,6 @@ const MentorCount = async (req, res) => {
 };
 const DeleteMentorData = async (req, res) => {
   const id = req.params.id;
-  console.log(id);
   if (id) {
     try {
       const result = await MentorDeleteData(id);
@@ -131,7 +133,6 @@ const Meetings = async (req, res) => {
 
 const FetchMeetings = async (req, res) => {
   const { mentor_id } = req.params;
-  console.log("mentor_id received:", mentor_id);
   try {
     const result = await FetchMeetingsModel(mentor_id);
     res.status(200).send(result);
@@ -200,6 +201,53 @@ const DeleteTestimonial = async (req, res) => {
     res.status(400).send("id params missing");
   }
 };
+
+const MeetingFeedback = async (req, res) => {
+  try {
+    const { meet_id, mentor_id, startup_id, feedback_text } = req.body;
+
+    const result = await MeetingFeedbackModel(
+      meet_id,
+      mentor_id,
+      startup_id,
+      feedback_text
+    );
+    res.status(200).json({
+      message: "Feedback Saved successfully",
+      result,
+    });
+  } catch (err) {
+    console.error("Error in Feedback :", err);
+    res.status(500).json({ error: "Failed to save Feedback" });
+  }
+};
+const UpdateFeedback = async (req, res) => {
+  try {
+    const {feedback_text,feedback_id} =
+      req.body;
+
+    const result = await UpdateFeedbackModel(
+      feedback_text,
+      feedback_id
+    );
+    res.status(200).json({ message: "Feedback Updated successfully", result });
+  } catch (err) {
+    console.error("Backend Error (feedback update):", err);
+    res.status(500).json({ error: err.message || "Something went wrong" });
+  }
+};
+const FetchMeetingFeedback = async (req, res) => {
+  const { mentor_id } = req.params;
+  const { startup_id } = req.params;
+  try {
+    const result = await FetchMeetingFeedbackModel(mentor_id, startup_id);
+    res.status(200).json(result.rows);
+  } catch (err) {
+    console.log(err);
+    res.status(500).send(err);
+  }
+};
+
 module.exports = {
   UpdateMentor,
   FetchMentorData,
@@ -211,4 +259,7 @@ module.exports = {
   DeleteTestimonial,
   Meetings,
   FetchMeetings,
+  MeetingFeedback,
+  UpdateFeedback,
+  FetchMeetingFeedback,
 };

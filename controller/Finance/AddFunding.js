@@ -32,7 +32,7 @@ const AddFunding = async (req, res) => {
       .json({ message: "Please fill all necessary fields" });
   } else {
     try {
-      const fundingDetails = await FetchFundingDetailsModel();
+      const fundingDetails = await FetchFundingIndividualgDetailsModel();
       const currentFunding = fundingDetails[startup_id] || {
         funding_disbursed: 0,
         funding_utilized: 0,
@@ -89,6 +89,7 @@ const AddFunding = async (req, res) => {
         return res.status(400).send("Invalid funding type.");
       }
     } catch (err) {
+      console.log(err)
       return res.status(500).json({ error: err });
     }
   }

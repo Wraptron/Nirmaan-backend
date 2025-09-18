@@ -1,7 +1,9 @@
+const { resolveContent } = require("nodemailer/lib/shared");
 const client = require("../utils/conn");
 const { v4: uuidv4 } = require("uuid");
 const AddMentorModel = (
   mentor_name,
+  mentor_logo,
   mento_description,
   years_of_experience,
   area_of_expertise,
@@ -22,7 +24,7 @@ const AddMentorModel = (
       [
         mentorId,
         mentor_name,
-        "1",
+        mentor_logo,
         mento_description,
         years_of_experience,
         area_of_expertise,
@@ -134,7 +136,7 @@ const MentorDeleteData = (id) => {
 };
 
 const MentorScheduleModel = (
-    mentor_reference_id,
+  mentor_reference_id,
   startup_name,
   founder_name,
   meeting_mode,
@@ -145,7 +147,7 @@ const MentorScheduleModel = (
   time,
   meeting_duration,
   meeting_agenda,
-   startup_id
+  startup_id
 ) => {
   return new Promise((resolve, reject) => {
     if (meeting_mode === "virtual" && !meeting_link) {
@@ -170,7 +172,7 @@ const MentorScheduleModel = (
         time,
         meeting_duration,
         meeting_agenda,
-         startup_id,
+        startup_id,
       ],
       (err, result) => {
         if (err) {
@@ -183,18 +185,21 @@ const MentorScheduleModel = (
   });
 };
 
-const FetchMeetingsModel=(mentor_id)=>{
-    return new Promise((resolve,reject)=>{
-        client.query("select * from  schedule_meetings WHERE trim(mentor_reference_id) = trim($1)",[mentor_id],(err,result)=>{
-            if(err){
-                reject(err)
-            }
-            else{
-                resolve(result.rows)
-            }
-        })
-    })
-}
+const FetchMeetingsModel = (mentor_id) => {
+  return new Promise((resolve, reject) => {
+    client.query(
+      "select * from  schedule_meetings WHERE trim(mentor_reference_id) = trim($1)",
+      [mentor_id],
+      (err, result) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(result.rows);
+        }
+      }
+    );
+  });
+};
 const TestimonialModel = (mentor_ref_id, name, role, description) => {
   return new Promise((resolve, reject) => {
     client.query(
@@ -256,6 +261,68 @@ const DeleteTestimonialModel = (id) => {
     );
   });
 };
+
+const MeetingFeedbackModel = (
+  meet_id,
+  mentor_id,
+  startup_id,
+  feedback_text
+) => {
+  return new Promise((resolve, reject) => {
+    if (meet_id == null || startup_id == null || !mentor_id || !feedback_text) {
+      return reject(
+        new Error("One or more required fields are undefined or null")
+      );
+    }
+    client.query(
+      "INSERT INTO meeting_feedback (meet_id,mentor_id,startup_id,feedback_text) VALUES ($1,$2,$3,$4)",
+      [meet_id, mentor_id, startup_id, feedback_text],
+      (err, result) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(result);
+        }
+      }
+    );
+  });
+};
+
+const UpdateFeedbackModel = async (
+  feedback_text,
+  feedback_id
+) => {
+  return new Promise((resolve, reject) => {
+    client.query(
+      "UPDATE meeting_feedback SET feedback_text =$1 where feedback_id=$2",
+      [feedback_text,feedback_id],
+      (err, result) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(result);
+        }
+      }
+    );
+  });
+};
+
+const FetchMeetingFeedbackModel = (mentor_id, startup_id) => {
+  return new Promise((resolve, reject) => {
+    client.query(
+      "SELECT * from meeting_feedback where mentor_id = $1 AND startup_id = $2",
+      [mentor_id, startup_id],
+      (err, result) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(result);
+        }
+      }
+    );
+  });
+};
+
 module.exports = {
   AddMentorModel,
   UpdateMentorModel,
@@ -268,4 +335,7 @@ module.exports = {
   FetchTestimonialModel,
   UpdateTestimonialModel,
   DeleteTestimonialModel,
+  MeetingFeedbackModel,
+  UpdateFeedbackModel,
+  FetchMeetingFeedbackModel,
 };
