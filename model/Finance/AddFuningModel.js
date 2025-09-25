@@ -17,6 +17,7 @@ const client = require("../../utils/conn");
 const AddFundingModel = async (
   startup_id,
   startup_name,
+  project_name,
   funding_type,
   amount,
   purpose,
@@ -27,10 +28,11 @@ const AddFundingModel = async (
 ) => {
   return new Promise((resolve, reject) => {
     client.query(
-      "INSERT INTO update_funding(startup_id,startup_name, funding_type, amount, purpose, funding_date, reference_number, document, status) VALUES($1, $2, $3, $4, $5, $6, $7, $8,$9)",
+      "INSERT INTO update_funding(startup_id,startup_name,project_name, funding_type, amount, purpose, funding_date, reference_number, document, status) VALUES($1, $2, $3, $4, $5, $6, $7, $8,$9,$10)",
       [
         startup_id,
         startup_name,
+        project_name,
         funding_type,
         amount,
         purpose,

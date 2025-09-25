@@ -1,3 +1,4 @@
+const { FetchFundingProjectModel } = require("../../model/Finance/AddFundingProjectModel");
 const {
   AddFundingModel,
   FundingNotificationModel,
@@ -7,10 +8,12 @@ const {
   FetchFundingIndividualgDetailsModel,
   FetchFundingTotalNumbers,
 } = require("../../model/Finance/AddFuningModel");
+const { FetchFundingProject } = require("./AddFundingProject");
 const AddFunding = async (req, res) => {
   const {
     startup_id,
     startup_name,
+    project_name,
     funding_type,
     amount,
     purpose,
@@ -30,7 +33,8 @@ const AddFunding = async (req, res) => {
     return res
       .status(400)
       .json({ message: "Please fill all necessary fields" });
-  } else {
+  } 
+  else {
     try {
       const fundingDetails = await FetchFundingIndividualgDetailsModel();
       const currentFunding = fundingDetails[startup_id] || {
@@ -39,7 +43,8 @@ const AddFunding = async (req, res) => {
         balance: 0,
         external_funding: 0,
       };
-      if (funding_type === "Funding Utilized") {
+
+       if (funding_type === "Funding Utilized") {
         // Allow only if Disbursed exists
         if (currentFunding.funding_disbursed <= 0) {
           return res
@@ -59,6 +64,7 @@ const AddFunding = async (req, res) => {
         const result = await AddFundingModel(
           startup_id,
           startup_name,
+          project_name,
           funding_type,
           amount,
           purpose,
@@ -76,6 +82,7 @@ const AddFunding = async (req, res) => {
         const result = await AddFundingModel(
           startup_id,
           startup_name,
+          project_name,
           funding_type,
           amount,
           purpose,
@@ -89,7 +96,7 @@ const AddFunding = async (req, res) => {
         return res.status(400).send("Invalid funding type.");
       }
     } catch (err) {
-      console.log(err)
+      console.log(err);
       return res.status(500).json({ error: err });
     }
   }
@@ -128,7 +135,7 @@ const FetchFundingDatainNumbers = async (req, res) => {
     const startupData = {
       funding_disbursed: Number(result.disbursed) || 0,
       funding_utilized: Number(result.utilized) || 0,
-      external_funding: Number(result.external) || 0
+      external_funding: Number(result.external) || 0,
     };
     res.status(200).json(startupData);
   } catch (err) {
@@ -244,6 +251,8 @@ const UpdateFundingData = async (req, res) => {
     return res.status(500).json({ error: err });
   }
 };
+
+
 module.exports = {
   AddFunding,
   updateFundingNotif,
