@@ -16,7 +16,8 @@ const AddFundingProjectModel = async (
         } else {
           resolve(result);
         }
-      })
+      }
+    );
   });
 };
 
@@ -47,34 +48,75 @@ const FetchFundingProjectModel = async () => {
       client.query(
         "SELECT COALESCE(SUM(amount), 0)::numeric AS apie FROM funding_projects WHERE project_name = 'Amex Program for Innovation & Entrepreneurship'"
       ),
-     
     ];
 
-    const [ NirmaanSeedFunding,
-    ShankarEndownmentFund,
-    NirmaanExternal,
-    AIforHealthcare,
-    UGFIR,
-    PGFIR,
-    NirmaanthePre_Incubator,
-    AmexProgramforInnovationEntrepreneurship] = await Promise.all(queries);
+    const [
+      NirmaanSeedFunding,
+      ShankarEndownmentFund,
+      NirmaanExternal,
+      AIforHealthcare,
+      UGFIR,
+      PGFIR,
+      NirmaanthePre_Incubator,
+      AmexProgramforInnovationEntrepreneurship,
+    ] = await Promise.all(queries);
 
     return {
-      nirmaan_seed_funding:NirmaanSeedFunding.rows[0].nirmaan_seed_funding,
-      shankar_endownment_fund:ShankarEndownmentFund.rows[0].shankar_endownment_fund,
-      nirmaan_external:NirmaanExternal.rows[0].nirmaan_external,
-      ai_for_healthcare:AIforHealthcare.rows[0].ai_for_healthcare,
+      nirmaan_seed_funding: NirmaanSeedFunding.rows[0].nirmaan_seed_funding,
+      shankar_endownment_fund:
+        ShankarEndownmentFund.rows[0].shankar_endownment_fund,
+      nirmaan_external: NirmaanExternal.rows[0].nirmaan_external,
+      ai_for_healthcare: AIforHealthcare.rows[0].ai_for_healthcare,
       ugfir: UGFIR.rows[0].ugfir,
       pgfir: PGFIR.rows[0].pgfir,
-      nirmaan_the_pre_incubator:NirmaanthePre_Incubator.rows[0].nirmaan_the_pre_incubator,
-      apie:AmexProgramforInnovationEntrepreneurship.rows[0].apie
+      nirmaan_the_pre_incubator:
+        NirmaanthePre_Incubator.rows[0].nirmaan_the_pre_incubator,
+      apie: AmexProgramforInnovationEntrepreneurship.rows[0].apie,
     };
   } catch (err) {
     throw err;
   }
 };
 
+const FetchFundingProjectsModel = () => {
+  return new Promise((resolve, reject) => {
+    client.query("select * from funding_projects", (err, result) => {
+      if (err) {
+        reject(err);
+      } else {
+        resolve(result);
+      }
+    });
+  });
+};
+
+const UpdateFundingProjectDataModel = async (
+  project_name,
+  funding_type,
+  amount,
+  date,
+  project_id
+) => {
+  return new Promise((resolve, reject) => {
+    client.query(
+      `UPDATE funding_projects 
+   SET project_name=$1, funding_type=$2, amount=$3, date=$4 
+   WHERE project_id=$5`,
+      [project_name, funding_type, amount, date,  project_id,],
+      (err, result) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(result);
+        }
+      }
+    );
+  });
+};
+
 module.exports = {
   AddFundingProjectModel,
-  FetchFundingProjectModel
+  FetchFundingProjectModel,
+  FetchFundingProjectsModel,
+  UpdateFundingProjectDataModel,
 };

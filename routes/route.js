@@ -94,7 +94,7 @@ const {
   ScheduleMentorMeeting,
 } = require("../controller/Admin/Mentorship/Mentorship.js");
 const IPdataUpload = require("../controller/Office/IPdata.js");
-const { AddFundingProject, FetchFundingProject } = require("../controller/Finance/AddFundingProject.js");
+const { AddFundingProject, FetchFundingProject, FetchFundingProjectData, UpdateFundingProjectData } = require("../controller/Finance/AddFundingProject.js");
 
 router.get("/prof", ProfilePhoto);
 router.put("/update-status", UpdateStatus);
@@ -117,6 +117,8 @@ router.put("/funding/edit", UpdateFundingData);
 router.get("/funding", FetchFundingDatainNumbers);
 router.post("/finance/funding-project",AddFundingProject);
 router.get("/finance/fetch-funding-project",FetchFundingProject);
+router.get("/fetch-funding-project",FetchFundingProjectData);
+router.put("/update-funding-project",UpdateFundingProjectData);
 router.get("/fetch-startup", FetchStartupData);
 router.get("/fetchevents", FetchEvents);
 router.get("/count-startupdata", FetchStartupDatainNumbers);

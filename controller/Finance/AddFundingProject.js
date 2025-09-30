@@ -1,9 +1,14 @@
-const { AddFundingProjectModel, FetchFundingProjectModel } = require("../../model/Finance/AddFundingProjectModel");
+const {
+  AddFundingProjectModel,
+  FetchFundingProjectModel,
+  FetchFundingProjectsModel,
+  UpdateFundingProjectDataModel,
+} = require("../../model/Finance/AddFundingProjectModel");
 
 const AddFundingProject = async (req, res) => {
   const { project_name, funding_type, amount, date } = req.body;
   try {
-    const result = await AddFundingProjectModel (
+    const result = await AddFundingProjectModel(
       project_name,
       funding_type,
       amount,
@@ -14,23 +19,23 @@ const AddFundingProject = async (req, res) => {
       result,
     });
   } catch (err) {
-    console.log(err)
+    console.log(err);
     res.status(500).json({ error: "Failed to Add Project Funding" });
   }
 };
 
-const FetchFundingProject = async(req, res) => {
+const FetchFundingProject = async (req, res) => {
   try {
     const result = await FetchFundingProjectModel();
     const FundingProjectData = {
-      NirmaanSeedFunding:Number(result.nirmaan_seed_funding)||0,
-      ShankarEndownmentFund:Number(result.shankar_endownment_fund)||0,
-      NirmaanExternal:Number(result.nirmaan_external)||0,
-      AIforHealthcare:Number(result.ai_for_healthcare)||0,
-      UGFIR: Number(result.ugfir)||0,
-      PGFIR: Number(result.pgfir)||0,
-      NirmaanthePre_Incubator:Number(result.nirmaan_the_pre_incubator)||0,
-      AmexProgramforInnovationEntrepreneurship:Number(result.apie)||0
+      NirmaanSeedFunding: Number(result.nirmaan_seed_funding) || 0,
+      ShankarEndownmentFund: Number(result.shankar_endownment_fund) || 0,
+      NirmaanExternal: Number(result.nirmaan_external) || 0,
+      AIforHealthcare: Number(result.ai_for_healthcare) || 0,
+      UGFIR: Number(result.ugfir) || 0,
+      PGFIR: Number(result.pgfir) || 0,
+      NirmaanthePre_Incubator: Number(result.nirmaan_the_pre_incubator) || 0,
+      AmexProgramforInnovationEntrepreneurship: Number(result.apie) || 0,
     };
     res.status(200).json(FundingProjectData);
   } catch (err) {
@@ -38,8 +43,37 @@ const FetchFundingProject = async(req, res) => {
     res.status(500).json({ message: "Internal server error" });
   }
 };
+const FetchFundingProjectData = async (req, res) => {
+  try {
+    const result = await FetchFundingProjectsModel();
+    res.status(200).json(result);
+  } catch (error) {
+    res.send(error);
+  }
+};
 
-module.exports={
-    AddFundingProject,
-    FetchFundingProject
-}
+const UpdateFundingProjectData = async (req, res) => {
+  try {
+    console.log(req.body);
+    const { project_name, funding_type, amount, date, project_id } = req.body;
+
+    const result = await UpdateFundingProjectDataModel(
+      project_name,
+      funding_type,
+      amount,
+      date,
+      project_id
+    );
+    res.status(200).json({ message: "Funding Updated successfully", result });
+  } catch (err) {
+    console.error("Backend Error (Funding update):", err);
+    res.status(500).json({ error: err.message || "Something went wrong" });
+  }
+};
+
+module.exports = {
+  AddFundingProject,
+  FetchFundingProject,
+  FetchFundingProjectData,
+  UpdateFundingProjectData,
+};
