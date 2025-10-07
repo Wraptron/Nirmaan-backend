@@ -5,11 +5,10 @@ const validator = require('validator');
 const EmailValid = require('../../../validation/EmailValid');
 const PhoneNumberValid = require('../../../validation/PhoneNumberValid');
 const AddMentor = async(req, res) => {
-    console.log(req.body)
- const description = JSON.parse(req.body.description);
+    const description = JSON.parse(req.body.description);
     const professional = JSON.parse(req.body.professional);
     const contact = JSON.parse(req.body.contact);
-    const { mentor_name, mentor_description } = description;
+    const { mentor_name,mentor_logo, mentor_description } = description;
     const { years_of_experience, area_of_expertise, current_designation, institution, qualification, year_of_passing_out, startup_associated } = professional;
     const { contact_number, email_address, linkedIn_ID, password } = contact;
     if (!mentor_name || !contact_number || !email_address || !password) 
@@ -27,13 +26,11 @@ const AddMentor = async(req, res) => {
     else {
         try
         {
-            const result = await AddMentorModel(mentor_name, mentor_description, years_of_experience, area_of_expertise, current_designation, institution, qualification, year_of_passing_out, startup_associated, contact_number, email_address, linkedIn_ID, password);
+            const result = await AddMentorModel(mentor_name,mentor_logo, mentor_description, years_of_experience, area_of_expertise, current_designation, institution, qualification, year_of_passing_out, startup_associated, contact_number, email_address, linkedIn_ID, password);
             res.status(200).send(result);
         }
         catch(err)
         {
-                //res.send(err);
-                //console.log(err.code)
                 if(err.code==='23505')
                 {
                     res.status(409).json({Error: "Contact number already exists" })
