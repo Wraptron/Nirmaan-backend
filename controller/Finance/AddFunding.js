@@ -1,4 +1,4 @@
-const { FetchFundingProjectModel } = require("../../model/Finance/AddFundingProjectModel");
+
 const {
   AddFundingModel,
   FundingNotificationModel,
@@ -8,7 +8,7 @@ const {
   FetchFundingIndividualgDetailsModel,
   FetchFundingTotalNumbers,
 } = require("../../model/Finance/AddFuningModel");
-const { FetchFundingProject } = require("./AddFundingProject");
+
 const AddFunding = async (req, res) => {
   const {
     startup_id,
@@ -30,12 +30,10 @@ const AddFunding = async (req, res) => {
     !purpose ||
     !funding_date
   ) {
-    return res
-      .status(400)
-      .json({ message: "Please fill all necessary fields" });
-  } 
-  else {
+    return res.status(400).send("Please fill all necessary fields");
+  } else {
     try {
+
       const fundingDetails = await FetchFundingIndividualgDetailsModel();
       const currentFunding = fundingDetails[startup_id] || {
         funding_disbursed: 0,
@@ -44,7 +42,7 @@ const AddFunding = async (req, res) => {
         external_funding: 0,
       };
 
-       if (funding_type === "Funding Utilized") {
+      if (funding_type === "Funding Utilized") {
         // Allow only if Disbursed exists
         if (currentFunding.funding_disbursed <= 0) {
           return res
@@ -252,12 +250,11 @@ const UpdateFundingData = async (req, res) => {
   }
 };
 
-
 module.exports = {
   AddFunding,
   updateFundingNotif,
   FetchFundingAmount,
   FetchFundingData,
   UpdateFundingData,
-  FetchFundingDatainNumbers
+  FetchFundingDatainNumbers,
 };

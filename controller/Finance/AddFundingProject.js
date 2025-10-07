@@ -23,7 +23,6 @@ const AddFundingProject = async (req, res) => {
     res.status(500).json({ error: "Failed to Add Project Funding" });
   }
 };
-
 const FetchFundingProject = async (req, res) => {
   try {
     const result = await FetchFundingProjectModel();
@@ -43,6 +42,7 @@ const FetchFundingProject = async (req, res) => {
     res.status(500).json({ message: "Internal server error" });
   }
 };
+
 const FetchFundingProjectData = async (req, res) => {
   try {
     const result = await FetchFundingProjectsModel();

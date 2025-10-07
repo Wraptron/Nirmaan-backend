@@ -25,28 +25,28 @@ const FetchFundingProjectModel = async () => {
   try {
     const queries = [
       client.query(
-        "SELECT COALESCE(SUM(amount), 0)::numeric AS nirmaan_seed_funding FROM funding_projects WHERE project_name = 'Nirmaan Seed Funding'"
+        "SELECT COALESCE(SUM(amount), 0)::numeric AS nirmaan_seed_funding FROM funding_projects WHERE project_name = 'Nirmaan Seed Funding' AND funding_type = 'Funding Disbursed'"
       ),
       client.query(
-        "SELECT COALESCE(SUM(amount), 0)::numeric AS shankar_endownment_fund FROM funding_projects WHERE project_name = 'Shankar Endownment Fund'"
+        "SELECT COALESCE(SUM(amount), 0)::numeric AS shankar_endownment_fund FROM funding_projects WHERE project_name = 'Shankar Endownment Fund' AND funding_type = 'Funding Disbursed'"
       ),
       client.query(
-        "SELECT COALESCE(SUM(amount), 0)::numeric AS nirmaan_external FROM funding_projects WHERE project_name = 'Nirmaan External'"
+        "SELECT COALESCE(SUM(amount), 0)::numeric AS nirmaan_external FROM funding_projects WHERE project_name = 'Nirmaan External' AND funding_type = 'Funding Disbursed'"
       ),
       client.query(
-        "SELECT COALESCE(SUM(amount), 0)::numeric AS ai_for_healthcare FROM funding_projects WHERE project_name = 'AI for Healthcare'"
+        "SELECT COALESCE(SUM(amount), 0)::numeric AS ai_for_healthcare FROM funding_projects WHERE project_name = 'AI for Healthcare' AND funding_type = 'Funding Disbursed'"
       ),
       client.query(
-        "SELECT COALESCE(SUM(amount), 0)::numeric AS ugfir FROM funding_projects WHERE project_name = 'UGFIR'"
+        "SELECT COALESCE(SUM(amount), 0)::numeric AS ugfir FROM funding_projects WHERE project_name = 'UGFIR' AND funding_type = 'Funding Disbursed'"
       ),
       client.query(
-        "SELECT COALESCE(SUM(amount), 0)::numeric AS pgfir FROM funding_projects WHERE project_name = 'PGFIR'"
+        "SELECT COALESCE(SUM(amount), 0)::numeric AS pgfir FROM funding_projects WHERE project_name = 'PGFIR' AND funding_type = 'Funding Disbursed'"
       ),
       client.query(
-        "SELECT COALESCE(SUM(amount), 0)::numeric AS nirmaan_the_pre_incubator FROM funding_projects WHERE project_name = 'Nirmaan the Pre-Incubator'"
+        "SELECT COALESCE(SUM(amount), 0)::numeric AS nirmaan_the_pre_incubator FROM funding_projects WHERE project_name = 'Nirmaan the Pre-Incubator' AND funding_type = 'Funding Disbursed'"
       ),
       client.query(
-        "SELECT COALESCE(SUM(amount), 0)::numeric AS apie FROM funding_projects WHERE project_name = 'Amex Program for Innovation & Entrepreneurship'"
+        "SELECT COALESCE(SUM(amount), 0)::numeric AS apie FROM funding_projects WHERE project_name = 'Amex Program for Innovation & Entrepreneurship' AND funding_type = 'Funding Disbursed'"
       ),
     ];
 
