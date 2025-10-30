@@ -1,3 +1,9 @@
+const{
+  AddFundingProjectModel,
+   GetTotalUtilizedForProject,
+   FetchFundingProjectModel
+}=require("../../model/Finance/AddFundingProjectModel")
+
 
 const {
   AddFundingModel,
@@ -34,6 +40,46 @@ const AddFunding = async (req, res) => {
   } else {
     try {
 
+        const projectBalances = await FetchFundingProjectModel();
+      const projectKeyMap = {
+        "Nirmaan Seed Funding": "nirmaan_seed_funding",
+        "Shankar Endownment Fund": "shankar_endownment_fund",
+        "Nirmaan External": "nirmaan_external",
+        "AI for Healthcare": "ai_for_healthcare",
+        UGFIR: "ugfir",
+        PGFIR: "pgfir",
+        "Nirmaan the Pre-Incubator": "nirmaan_the_pre_incubator",
+        "Amex Program for Innovation & Entrepreneurship": "apie",
+      };
+
+      const dbKey = projectKeyMap[project_name];
+      if (!dbKey) {
+        return res.status(400).send("Invalid project name.");
+      }
+       if (funding_type === "Funding Disbursed") {
+      const totalAllocated = Number(projectBalances[dbKey]) || 0;
+      const totalUtlized = await  GetTotalUtilizedForProject(project_name); 
+      const totalAvailable = totalAllocated - totalUtlized;
+
+      if (totalAvailable < Number(amount)) {
+        return res
+          .status(400)
+          .send(
+            `Not enough funds available for this project. Available: ${totalAvailable}`
+          );
+      }}
+
+      // Check available funds for "Funding Disbursed"
+      if (funding_type === "Funding Disbursed") {
+        const totalAvailable = Number(projectBalances[dbKey]) || 0;
+        if (totalAvailable < Number(amount)) {
+          return res
+            .status(400)
+            .send(
+              `Not enough funds available for this project. Available: ${totalAvailable}`
+            );
+        }
+      }
       const fundingDetails = await FetchFundingIndividualgDetailsModel();
       const currentFunding = fundingDetails[startup_id] || {
         funding_disbursed: 0,
@@ -89,12 +135,21 @@ const AddFunding = async (req, res) => {
           document,
           status
         );
+
+        if (funding_type === "Funding Disbursed") {
+          await AddFundingProjectModel(
+            project_name,
+            "Funding Utilized",
+            amount,
+            funding_date
+          );
+        }
         return res.status(200).send(result);
       } else {
         return res.status(400).send("Invalid funding type.");
       }
     } catch (err) {
-      console.log(err);
+      // console.log(err);
       return res.status(500).json({ error: err });
     }
   }
@@ -105,7 +160,7 @@ const FetchFundingAmount = async (req, res) => {
     const allFundingData = await FetchFundingIndividualgDetailsModel();
     res.status(200).json(allFundingData);
   } catch (err) {
-    console.error("Error in FetchFundingAmount:", err.stack || err);
+    // console.error("Error in FetchFundingAmount:", err.stack || err);
     res.status(500).json({ message: "Internal server error" });
   }
 };
@@ -137,7 +192,7 @@ const FetchFundingDatainNumbers = async (req, res) => {
     };
     res.status(200).json(startupData);
   } catch (err) {
-    console.error("Error in FetchFundingDatainNumbers:", err.stack || err);
+    // console.error("Error in FetchFundingDatainNumbers:", err.stack || err);
     res.status(500).json({ message: "Internal server error" });
   }
 };
@@ -245,7 +300,7 @@ const UpdateFundingData = async (req, res) => {
       return res.status(400).send("Invalid funding type.");
     }
   } catch (err) {
-    console.log(err);
+    // console.log(err);
     return res.status(500).json({ error: err });
   }
 };

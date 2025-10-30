@@ -18,13 +18,13 @@ const AddStartupModel = async (
         : "Active";
 
     client.query(
-      "INSERT INTO test_startup(basic, official, founder, description, official_email_address, startup_status) VALUES($1, $2, $3, $4, $5, $6)",
+      "INSERT INTO test_startup(basic, official, founder, description, official_email_address, startup_status) VALUES($1, $2, $3, $4, $5, $6) RETURNING user_id",
       [basic, official, founder, description, official_email_address, status],
       (err, result) => {
         if (err) {
-          reject({ err });
+          reject( err );
         } else {
-          resolve(result);
+          resolve(result)
         }
       }
     );
@@ -32,7 +32,8 @@ const AddStartupModel = async (
 };
 
 const CheckUserByEmail = async (email) => {
-  const query = "SELECT * FROM test_startup WHERE official ->>'official_email_address' = $1";
+  const query =
+    "SELECT * FROM test_startup WHERE official ->>'official_email_address' = $1";
   const result = await client.query(query, [email]);
   return result.rows[0] || null;
 };
@@ -338,12 +339,12 @@ const TopStartupsSectors = (id) => {
     );
   });
 };
-const StartupDeleteData = (id ) => {
+const StartupDeleteData = (id) => {
   return new Promise((resolve, reject) => {
     client.query(
       `DELETE FROM test_startup 
             WHERE user_id = $1`,
-    [id],
+      [id],
       (err, result) => {
         if (err) {
           reject(err);
@@ -480,7 +481,7 @@ const UpdateStartupAboutModel = async (data) => {
 };
 
 const UpdateStartupPersonalInfoModel = async (data) => {
-  const { basic, official, startup_status,startup_id} = data;
+  const { basic, official, startup_status, startup_id } = data;
   const query = `
    UPDATE test_startup
     SET
@@ -512,7 +513,7 @@ const UpdateStartupPersonalInfoModel = async (data) => {
     official.linkedin_id || "",
     official.website_link || "",
     official.email_address || "",
-    startup_id
+    startup_id,
   ];
   return new Promise((resolve, reject) => {
     client.query(query, values, (err, result) => {
@@ -603,8 +604,6 @@ WHERE official->>'official_email_address' = $14;
     });
   });
 };
-
-
 
 const AddAwardModel = async (
   official_email_address,
@@ -759,7 +758,7 @@ FROM test_startup ts,
      ) AS f(value)
 WHERE ts.user_id = $1
 `;
-      client.query(query, [userId], (err, result) => {
+    client.query(query, [userId], (err, result) => {
       if (err) {
         console.error("Database query failed:", err); // log for debugging
         reject(new Error("Database query failed"));
@@ -825,7 +824,6 @@ WHERE EXISTS (
   });
 };
 
-
 module.exports = {
   AddStartupModel,
   CheckUserByEmail,
@@ -846,5 +844,4 @@ module.exports = {
   FetchFounderModel,
   UpdateAwardModel,
   DeleteAwardModal,
-  
 };

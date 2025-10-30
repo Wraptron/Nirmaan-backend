@@ -1,7 +1,8 @@
 const express = require("express");
 const router = express.Router();
 const multer = require("multer");
-const upload = multer({ dest: "../uploads/" }); // For parsing multipart form-data
+const storage = multer.memoryStorage(); // important for S3 upload
+const upload = multer({ storage });
 const Authenticate = require("../utils/Authenticate.js");
 const LoginController = require("../controller/Admin/LoginController/LoginController");
 const WorkController = require("../controller/Admin/WorkRequestController/WorkRequestController");

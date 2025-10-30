@@ -114,9 +114,27 @@ const UpdateFundingProjectDataModel = async (
   });
 };
 
+const GetTotalUtilizedForProject = async (project_name) => {
+  try {
+    const query = `
+      SELECT COALESCE(SUM(amount), 0) AS total_utilized
+      FROM funding_projects
+      WHERE LOWER(TRIM(project_name)) = LOWER(TRIM($1))
+        AND funding_type = 'Funding Utilized'
+    `;
+    const result = await client.query(query, [project_name]);
+
+    const totalUtilized = parseFloat(result.rows?.[0]?.total_utilized ?? 0);
+    return totalUtilized;
+  } catch (err) {
+    throw err;
+  }
+};
+
 module.exports = {
   AddFundingProjectModel,
   FetchFundingProjectModel,
   FetchFundingProjectsModel,
   UpdateFundingProjectDataModel,
+  GetTotalUtilizedForProject
 };

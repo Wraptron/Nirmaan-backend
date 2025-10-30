@@ -83,7 +83,7 @@ const FetchFundingIndividualgDetailsModel = async () => {
 
     client.query(query, (err, result) => {
       if (err) {
-        console.error("Error fetching funding details:", err);
+        // console.error("Error fetching funding details:", err);
         reject(err);
       } else {
         const formattedData = {};
@@ -120,7 +120,7 @@ const FetchFundingRecordModel = async (id) => {
       [id],
       (err, result) => {
         if (err) {
-          console.error("Error fetching funding record:", err);
+          // console.error("Error fetching funding record:", err);
           reject(err);
         } else {
           resolve(result.rows[0] || null);
