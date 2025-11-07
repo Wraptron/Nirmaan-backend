@@ -13,6 +13,7 @@ const {
   FetchFundingRecordModel,
   FetchFundingIndividualgDetailsModel,
   FetchFundingTotalNumbers,
+  FetchStartupsDetailModel,
 } = require("../../model/Finance/AddFuningModel");
 
 const AddFunding = async (req, res) => {
@@ -305,6 +306,15 @@ const UpdateFundingData = async (req, res) => {
   }
 };
 
+const FetchStartupDataDetail = async (req, res) => {
+  try {
+    const result = await FetchStartupsDetailModel();
+    res.status(200).json(result);
+  } catch (err) {
+    res.status(500).json(result);
+  }
+};
+
 module.exports = {
   AddFunding,
   updateFundingNotif,
@@ -312,4 +322,5 @@ module.exports = {
   FetchFundingData,
   UpdateFundingData,
   FetchFundingDatainNumbers,
+  FetchStartupDataDetail
 };

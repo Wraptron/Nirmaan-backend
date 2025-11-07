@@ -197,6 +197,20 @@ const FetchFundingTotalNumbers = async () => {
   }
 };
 
+const FetchStartupsDetailModel = async () => {
+  return new Promise((resolve, reject) => {
+    client.query(
+      "SELECT user_id AS startup_id,basic::jsonb->>'startup_name' AS startup_name, startup_status AS startup_status, basic::jsonb->>'startup_type' AS startup_type,basic::jsonb->>'startup_cohort' AS startup_cohort,basic::jsonb->>'program' AS program, official::jsonb->>'official_email_address' AS email_address FROM test_startup;",
+      (err, result) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(result);
+        }
+      }
+    );
+  });
+};
 module.exports = {
   AddFundingModel,
   FundingNotificationModel,
@@ -204,5 +218,6 @@ module.exports = {
   FetchFundingModel,
   UpdateFundingDataModel,
   FetchFundingRecordModel,
-  FetchFundingTotalNumbers
+  FetchFundingTotalNumbers,
+  FetchStartupsDetailModel 
 };

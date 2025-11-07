@@ -90,6 +90,7 @@ const {
   FetchFundingData,
   UpdateFundingData,
   FetchFundingDatainNumbers,
+  FetchStartupDataDetail,
 } = require("../controller/Finance/AddFunding.js");
 const {
   ScheduleMentorMeeting,
@@ -109,6 +110,7 @@ router.put(
   UpdateStartupDetails
 );
 router.put("/edit-startup/mentordetails", UpdateStartupMentorDetails);
+router.delete("delete-startup/:id", DeleteStartupData);
 router.put("/edit-startup/about", UpdateStartupAbout);
 router.post("/schedule-meeting", ScheduleMentorMeeting);
 router.post("/finance/addfunding", upload.none(), AddFunding);
@@ -120,6 +122,7 @@ router.post("/finance/funding-project",AddFundingProject);
 router.get("/finance/fetch-funding-project",FetchFundingProject);
 router.get("/fetch-funding-project",FetchFundingProjectData);
 router.put("/update-funding-project",UpdateFundingProjectData);
+router.get("/finance/startup-data",FetchStartupDataDetail);
 router.get("/fetch-startup", FetchStartupData);
 router.get("/fetchevents", FetchEvents);
 router.get("/count-startupdata", FetchStartupDatainNumbers);
