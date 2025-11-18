@@ -18,10 +18,11 @@ const LoginModel = (user_mail, user_password) => {
                     const userData = result.rows[0];
                     const role = userData.user_role;
                     const department = userData.user_department;
+                    const startup_id = userData.startup_id
                     
                     // Create JWT token
                     const accessToken = jwt.sign(
-                        { user_mail: user_mail, role: role }, 
+                        { user_mail: user_mail, role: role,startup_id:startup_id }, 
                         process.env.ACCESS_TOKEN_SECRET, 
                         { expiresIn: '30m' }
                     );
@@ -53,7 +54,8 @@ const LoginModel = (user_mail, user_password) => {
                         department: department,
                         status: 'Login Authenticated',
                         authenticationLevel: authenticationLevel,
-                        userData: userData
+                        userData: userData,
+                        startup_id:startup_id
                     });
                     
                 } else {

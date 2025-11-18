@@ -79,12 +79,13 @@ const CreateTeamUser = (
   user_password,
   user_name,
   user_contact,
-  personal_email
+  personal_email,
+  startup_id
 ) => {
   const userId = uuidv4();
   return new Promise((resolve, reject) => {
     client.query(
-      "INSERT INTO user_data(user_mail, user_password, user_hash, user_department, user_role, user_name, user_contact, personal_email) VALUES($1, $2, $3, $4, $5, $6, $7, $8)",
+      "INSERT INTO user_data(user_mail, user_password, user_hash, user_department, user_role, user_name, user_contact, personal_email,startup_id) VALUES($1, $2, $3, $4, $5, $6, $7, $8,$9)",
       [
         user_mail,
         user_password,
@@ -94,6 +95,7 @@ const CreateTeamUser = (
         user_name,
         user_contact,
         personal_email,
+        startup_id
       ],
       (err, result) => {
         if (err) reject(err);
@@ -339,99 +341,33 @@ const TopStartupsSectors = (id) => {
     );
   });
 };
-const StartupDeleteData = (id) => {
-  return new Promise((resolve, reject) => {
-    client.query(
-      `UPDATE test_startup SET isdeleted = TRUE
-            WHERE user_id = $1`,
-      [id],
-      (err, result) => {
-        if (err) {
-          reject(err);
-        } else {
-          resolve(result);
-        }
-      }
+const StartupDeleteData = async (user_id) => {
+  try {
+    await client.query('BEGIN'); // Start transaction
+
+    // Soft delete (Flag)
+    await client.query(
+      `UPDATE test_startup 
+       SET isdeleted = TRUE
+       WHERE user_id = $1;`,
+      [user_id]
     );
-  });
+
+    // Delete related records from user_data
+    await client.query(
+      `DELETE FROM user_data 
+       WHERE startup_id = $1;`,  
+      [user_id]
+    );
+
+    await client.query('COMMIT'); // Apply all changes
+    return { success: true, message: 'Startup and related user data deleted successfully.' };
+
+  } catch (err) {
+    await client.query('ROLLBACK'); // Undo changes if error
+    throw err;
+  }
 };
-
-// const UpdateStartupAboutModel = async (data) => {
-//   const { basic, email_address } = data;
-
-//   const query = `
-//     UPDATE test_startup
-//     SET basic = jsonb_set(
-//                   jsonb_set(
-//                     jsonb_set(
-//                       basic,
-//                       '{program}', to_jsonb($1::text), true
-//                     ),
-//                     '{startup_type}', to_jsonb($2::text), true
-//                   ),
-//                   '{startup_sector}', to_jsonb($3::text), true
-//                 )
-//     WHERE official->>'official_email_address' = $4;
-//   `;
-
-//   const values = [
-//     basic.program || "",
-//     basic.startup_type || "",
-//     basic.startup_sector || "",
-//     email_address
-//   ];
-
-//   return new Promise((resolve, reject) => {
-//     client.query(query, values, (err, result) => {
-//       if (err) {
-//         reject(err);
-//       } else {
-//         resolve(result);
-//       }
-//     });
-//   });
-// };
-
-// const UpdateStartupAboutModel = async (data) => {
-//   const { basic, email_address,description } = data;
-
-//   const query = `
-//     UPDATE test_startup
-//     SET basic =jsonb_set(
-//                   jsonb_set(
-//                     jsonb_set(
-//                       basic,
-//                       '{program}', to_jsonb($1::text), true
-//                     ),
-//                     '{startup_domain}', to_jsonb($2::text), true
-//                   ),
-//                   '{startup_sector}', to_jsonb($3::text), true
-//                 ),
-//                 description = jsonb_set(
-//                         description,
-//                         '{startup_description}', to_jsonb($4::text), true
-//                       )
-//     WHERE official->>'official_email_address' = $5;
-//   `;
-
-//   const values = [
-//     basic.program || "",
-//     basic.startup_domain || "",
-//     basic.startup_sector || "",
-//     description.startup_description|| "",
-//     email_address
-//   ];
-
-//   return new Promise((resolve, reject) => {
-//     client.query(query, values, (err, result) => {
-//       if (err) {
-//         reject(err);
-//       } else {
-//         resolve(result);
-//       }
-//     });
-//   });
-// };
 
 const UpdateStartupAboutModel = async (data) => {
   const { basic, email_address, description, startup_status } = data;

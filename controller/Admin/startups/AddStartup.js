@@ -162,6 +162,7 @@ if (existingUser) {
     const generatedPassword = generatePassword();
 
     // 3. Create user in user_data
+    const startup_id = result.rows[0].user_id;
     const userId = uuidv4();
     await CreateTeamUser(
       official_email_address,
@@ -169,7 +170,7 @@ if (existingUser) {
       founder_name,
       founder_number,
       founder_email,
-      userId
+      startup_id
     );
 
     // 4. Send credentials email
@@ -180,7 +181,7 @@ if (existingUser) {
       result: result,
     });
   } catch (err) {
-    console.error("Error in AddStartup:", err);
+    // console.error("Error in AddStartup:", err);
     res.status(500).json({
       error: err.message || err,
       details: "Server Error: Something went wrong. Please try again.",
@@ -210,7 +211,7 @@ const FetchStartupDatainNumbers = async (req, res) => {
 
     res.status(200).json(startupData);
   } catch (err) {
-    console.error("Error in FetchStartupDatainNumbers:", err.stack || err);
+    // console.error("Error in FetchStartupDatainNumbers:", err.stack || err);
     res.status(500).json({ message: "Internal server error" });
   }
 };
@@ -270,14 +271,14 @@ const TeamDocuments = async (req, res) => {
 
 const DeleteStartupData = async (req, res) => {
   const id = req.params.id;
-  console.log("Deleting startup with email:", id);
+  // console.log("Deleting startup with email:", id);
 
   if (id) {
     try {
       const result = await StartupDeleteData(id);
       res.status(200).json(result);
     } catch (err) {
-      console.error("Delete error:", err);
+      // console.error("Delete error:", err);
       res.status(500).send(err);
     }
   } else {
@@ -332,7 +333,6 @@ const FetchStartupProfile = async (req, res) => {
 };
 
 const UpdateStartupDetails = async (req, res) => {
-  console.log(req.body);
   try {
     const {
       startup_name,
@@ -536,8 +536,6 @@ const UpdateStartupMentorDetails = async (req, res) => {
     };
 
     const result = await UpdateStartupMentorDetailsModel({ basic, official });
-    console.log("req.body:", req.body);
-    console.log("Received email_address:", email_address);
     res
       .status(200)
       .json({ message: "Startup details updated successfully", result });
@@ -549,7 +547,7 @@ const UpdateStartupMentorDetails = async (req, res) => {
 
 
 const AddAward = async (req, res) => {
-  console.log(req.body);
+
   try {
     const document_url = req.file ? req.file.path : null;
     const {
@@ -622,7 +620,6 @@ const UpdateAward = async (req, res) => {
 };
 const DeleteAward = async (req, res) => {
   const id = req.params.id;
-  console.log("deleteing awrad :", id);
 
   if (id) {
     try {
@@ -682,7 +679,6 @@ const FetchFounder = async (req, res) => {
 };
 
 const UpdateStartupFounder = async (req, res) => {
-  console.log(req.body);
   try {
     const {
       founder_name,

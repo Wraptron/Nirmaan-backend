@@ -40,6 +40,14 @@ const AddFunding = async (req, res) => {
     return res.status(400).send("Please fill all necessary fields");
   } else {
     try {
+            // project_name not required for "Funding utilized"
+        if (funding_type !== "Funding Utilized") {
+      if (!project_name || project_name.trim() === "") {
+        return res
+          .status(400)
+          .send("Project name required for Disbursed/External Funding");
+      }
+    }
 
         const projectBalances = await FetchFundingProjectModel();
       const projectKeyMap = {
@@ -54,9 +62,10 @@ const AddFunding = async (req, res) => {
       };
 
       const dbKey = projectKeyMap[project_name];
-      if (!dbKey) {
-        return res.status(400).send("Invalid project name.");
+      if (!dbKey && funding_type !== "Funding Utilized") {
+         return res.status(400).send("Invalid project name.");
       }
+      
        if (funding_type === "Funding Disbursed") {
       const totalAllocated = Number(projectBalances[dbKey]) || 0;
       const totalUtlized = await  GetTotalUtilizedForProject(project_name); 
@@ -151,7 +160,8 @@ const AddFunding = async (req, res) => {
       }
     } catch (err) {
       // console.log(err);
-      return res.status(500).json({ error: err });
+   return res.status(500).send(err.message || "Server error");
+
     }
   }
 };
