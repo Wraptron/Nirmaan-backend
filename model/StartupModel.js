@@ -109,7 +109,7 @@ const StartupDataModel = async () => {
   return new Promise((resolve, reject) => {
     const TotalCountStartups = new Promise((resolveQuery1, rejectQuery1) => {
       client.query(
-        "SELECT COUNT(*) AS startup_total FROM test_startup",
+        "SELECT COUNT(*) AS startup_total FROM test_startup where isdeleted ='f' ",
         (err, result) => {
           if (err) {
             rejectQuery1(err);
@@ -121,7 +121,7 @@ const StartupDataModel = async () => {
     });
     const ActiveStartups = new Promise((resolveQuery2, rejectQuery2) => {
       client.query(
-        "SELECT COUNT(startup_status) AS active FROM test_startup WHERE startup_status='Active'",
+        "SELECT COUNT(startup_status) AS active FROM test_startup WHERE startup_status='Active' AND isdeleted ='f' ",
         (err, result) => {
           if (err) {
             rejectQuery2(err);
@@ -133,7 +133,7 @@ const StartupDataModel = async () => {
     });
     const DroppedStartups = new Promise((resolveQuery3, rejectQuery3) => {
       client.query(
-        "SELECT COUNT(*) AS program_count FROM test_startup WHERE basic->>'program'='Dropped out'",
+        "SELECT COUNT(*) AS program_count FROM test_startup WHERE basic->>'program'='Dropped out' AND isdeleted ='f'",
         (err, result) => {
           if (err) {
             rejectQuery3(err);
@@ -146,7 +146,7 @@ const StartupDataModel = async () => {
 
     const GraduatedStartups = new Promise((resolveQuery3, rejectQuery3) => {
       client.query(
-        "SELECT COUNT(*) AS program_count FROM test_startup WHERE basic->>'program' = 'Graduated'",
+        "SELECT COUNT(*) AS program_count FROM test_startup WHERE basic->>'program' = 'Graduated' AND isdeleted ='f'",
         (err, result) => {
           if (err) {
             rejectQuery3(err);
@@ -158,7 +158,7 @@ const StartupDataModel = async () => {
     });
     const AksharStartups = new Promise((resolveQuery3, rejectQuery3) => {
       client.query(
-        "SELECT COUNT(*) AS program_count FROM test_startup WHERE basic->>'program' = 'Akshar'",
+        "SELECT COUNT(*) AS program_count FROM test_startup WHERE basic->>'program' = 'Akshar' AND isdeleted ='f'",
         (err, result) => {
           if (err) {
             rejectQuery3(err);
@@ -170,7 +170,7 @@ const StartupDataModel = async () => {
     });
     const PrathamStartups = new Promise((resolveQuery3, rejectQuery3) => {
       client.query(
-        "SELECT COUNT(*) AS program_count FROM test_startup WHERE basic->>'program' = 'Pratham'",
+        "SELECT COUNT(*) AS program_count FROM test_startup WHERE basic->>'program' = 'Pratham' AND isdeleted ='f'",
         (err, result) => {
           if (err) {
             rejectQuery3(err);

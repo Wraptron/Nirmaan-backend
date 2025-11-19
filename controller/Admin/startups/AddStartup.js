@@ -211,7 +211,7 @@ const FetchStartupDatainNumbers = async (req, res) => {
 
     res.status(200).json(startupData);
   } catch (err) {
-    // console.error("Error in FetchStartupDatainNumbers:", err.stack || err);
+    console.error("Error in FetchStartupDatainNumbers:", err.stack || err);
     res.status(500).json({ message: "Internal server error" });
   }
 };
