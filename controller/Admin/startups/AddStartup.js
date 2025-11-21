@@ -25,6 +25,7 @@ const generatePassword = require("../../../utils/GeneratePassword");
 const sendStartupCredentials = require("../../../components/SendStartupCredentials");
 const { v4: uuidv4 } = require("uuid");
 const md5 = require("md5");
+const { uploadToS3 } = require("../../../utils/s3Upload");
 
 // const AddStartup = async(req, res) => {
 //     const {basic, official, founder, description} = req.body;
@@ -344,31 +345,97 @@ const UpdateStartupDetails = async (req, res) => {
       startup_id,
     } = req.body;
 
+    // ========= IMAGE UPLOADS ===========
+    let profile_image_url = null;
+    let background_image_url = null;
+
+    if (req.files && req.files.profile_image) {
+      profile_image_url = await uploadToS3(
+        req.files.profile_image[0],
+        "profile_images"
+      );
+    }
+
+    if (req.files && req.files.background_image) {
+      background_image_url = await uploadToS3(
+        req.files.background_image[0],
+        "background_images"
+      );
+    }
+
+    // ========= BASIC + OFFICIAL ==========
     const basic = {
       startup_name,
+      profile_image: profile_image_url || null,
+      background_image: background_image_url || null,
     };
+
     const official = {
       official_contact_number: official_contact_number || "",
       linkedin_id: linkedin || "",
       website_link: website_link || "",
       email_address: email_address,
     };
+
+    // ========= DATABASE UPDATE ==========
     const result = await UpdateStartupPersonalInfoModel({
       basic,
       official,
       startup_status,
       startup_id,
     });
-    // console.log("req.body:", req.body);
+
     res.status(200).json({
       message: "Startup details updated successfully",
       result,
+      uploaded_images: {
+        profile_image_url,
+        background_image_url,
+      },
     });
   } catch (err) {
-    // console.error("Update failed:", err);
+    console.error("Update failed:", err);
     res.status(500).json({ error: "Failed to update startup details" });
   }
-};
+}
+//working fine version
+// const UpdateStartupDetails = async (req, res) => {
+//   try {
+//     const {
+//       startup_name,
+//       startup_status,
+//       official_contact_number,
+//       email_address,
+//       linkedin,
+//       website_link,
+//       startup_id,
+//     } = req.body;
+
+//     const basic = {
+//       startup_name,
+//     };
+//     const official = {
+//       official_contact_number: official_contact_number || "",
+//       linkedin_id: linkedin || "",
+//       website_link: website_link || "",
+//       email_address: email_address,
+//     };
+//     const result = await UpdateStartupPersonalInfoModel({
+//       basic,
+//       official,
+//       startup_status,
+//       startup_id,
+//     });
+//     // console.log("req.body:", req.body);
+//     res.status(200).json({
+//       message: "Startup details updated successfully",
+//       result,
+//     });
+//   } catch (err) {
+//     // console.error("Update failed:", err);
+//     res.status(500).json({ error: "Failed to update startup details" });
+//   }
+// };
 
 // const UpdateStartupAbout = async (req, res) => {
 //   try {

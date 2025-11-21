@@ -311,9 +311,6 @@
 // });
 
 // module.exports = app;
-
-
-
 const express = require("express");
 const http = require("http");
 const { Server } = require("socket.io");
@@ -322,7 +319,6 @@ const responseTime = require("response-time");
 const bodyParser = require("body-parser");
 const cors = require("cors");
 const multer = require("multer");
-
 // Import all route controllers
 const LoginController = require("./routes/route");
 const WorkRequestController = require("./routes/route");
@@ -439,7 +435,6 @@ const allowedOrigins = [
   "https://13.126.152.135:3000",     // HTTPS version with port
   "https://13.126.152.135:3001",     // HTTPS version with port
 ];
-
 const corsOptions = {
   origin: function (origin, callback) {
     // Allow requests with no origin (like mobile apps, curl requests, Postman)
@@ -467,13 +462,10 @@ const corsOptions = {
   maxAge: 86400, // 24 hours
   optionsSuccessStatus: 200 // Some legacy browsers choke on 204
 };
-
 // Apply CORS middleware FIRST
 app.use(cors(corsOptions));
-
 // Handle preflight requests explicitly
 app.options('*', cors(corsOptions));
-
 // Additional CORS headers for complex requests
 app.use((req, res, next) => {
   const origin = req.headers.origin;
@@ -485,7 +477,6 @@ app.use((req, res, next) => {
   res.setHeader('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization, Cache-Control, X-HTTP-Method-Override');
   res.setHeader('Access-Control-Expose-Headers', 'Content-Length, X-Foo, X-Bar');
   res.setHeader('Access-Control-Max-Age', '86400');
-  
   // Handle preflight requests
   if (req.method === 'OPTIONS') {
     res.sendStatus(200);
@@ -493,20 +484,16 @@ app.use((req, res, next) => {
     next();
   }
 });
-
 app.use(cookieParser());
 app.use(bodyParser.json({ limit: "50mb" }));
 app.use(bodyParser.urlencoded({ extended: true, limit: "50mb" }));
 app.use(responseTime());
-
 // File upload routes (uncomment if using S3)
-
 // app.get('/images/:key', (req, res) => {
 //   const fileKey = req.params.key;
 //   const readStream = getFileStream(fileKey);
 //   readStream.pipe(res);
 // });
-
 // app.post('/imagess', upload.single('image'), async (req, res) => {
 //   try {
 //     const file = req.file;
@@ -519,8 +506,6 @@ app.use(responseTime());
 //     res.status(500).send({ error: 'Upload failed' });
 //   }
 // });
-
-
 // API Routes
 app.use("/api/v1/", LoginController);
 app.use("/api/v1/", ForgotRequest);
@@ -596,7 +581,6 @@ app.use("/api/v1/resume", ResumeUpload);
 app.use("/api/v1/resume", Resumedata);
 app.use("/api/v1/resume", ApporvalRequest);
 app.use("/api/v1/resume", DeleteResume);
-
 // Test route
 app.get("/profile", (req, res) => {
   res.json({
@@ -605,7 +589,6 @@ app.get("/profile", (req, res) => {
     origin: req.headers.origin
   });
 });
-
 // Health check route
 app.get("/health", (req, res) => {
   res.status(200).json({
@@ -634,22 +617,18 @@ const removeUser = (socketId) => {
     console.log(`User disconnected. Online users: ${onlineUsers.length}`);
   }
 };
-
 const getUser = (username) => {
   return onlineUsers.find((user) => user.username === username);
 };
-
 // Socket.IO event handlers
 io.on("connection", (socket) => {
   console.log("A user connected:", socket.id);
-
   socket.on("newUser", (username) => {
     if (username) {
       addNewUser(username, socket.id);
       socket.emit("userConnected", { username, socketId: socket.id });
     }
   });
-
   socket.on("sendText", ({ senderName, receiverName, text }) => {
     const receiver = getUser(receiverName);
     if (receiver) {
@@ -662,7 +641,6 @@ io.on("connection", (socket) => {
       socket.emit("userNotFound", { receiverName });
     }
   });
-
   socket.on("getOnlineUsers", () => {
     socket.emit(
       "onlineUsers",
