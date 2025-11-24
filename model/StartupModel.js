@@ -463,34 +463,71 @@ const UpdateStartupAboutModel = async (data) => {
 //   });
 // };
 
+//working version with role check
+// const UpdateStartupPersonalInfoModel = async (data, requester) => {
 
-const UpdateStartupPersonalInfoModel = async (data) => {
-  const { basic, official, startup_status, startup_id } = data;
-//   const query = `
-//    UPDATE test_startup
+//   const { basic, official, startup_status, startup_id } = data;
+// const query = `
+//     UPDATE test_startup
 //     SET
 //       basic = jsonb_set(
+//                 jsonb_set(
 //                   basic,
 //                   '{startup_name}', to_jsonb($1::text), true
 //                 ),
-//         startup_status = $2,
+//                 '{profile_image}', to_jsonb($2::text), true
+//               ),
+//       startup_status = $3,
 //       official = jsonb_set(
-//                    jsonb_set(
-//                      jsonb_set(
-//                      jsonb_set(
-//                        official,
-//                        '{official_contact_number}', to_jsonb($3::text), true
-//                      ),
-//                      '{linkedin_id}', to_jsonb($4::text), true
-//                    ),
-//                    '{website_link}', to_jsonb($5::text), true
-//                  ),
-//                  '{official_email_address}', to_jsonb($6::text), true
-// )
-//     WHERE user_id = $7
+//                   jsonb_set(
+//                     jsonb_set(
+//                       jsonb_set(
+//                         official,
+//                         '{official_contact_number}', to_jsonb($4::text), true
+//                       ),
+//                       '{linkedin_id}', to_jsonb($5::text), true
+//                     ),
+//                     '{website_link}', to_jsonb($6::text), true
+//                   ),
+//                   '{official_email_address}', to_jsonb($7::text), true
+//                 )
+//     WHERE user_id = $8
 //   `;
 
-const query = `
+//   const values = [
+//     basic.startup_name || "",
+//     basic.profile_image || "",   // <-- NEW
+//     startup_status || "",
+//     official.official_contact_number || "",
+//     official.linkedin_id || "",
+//     official.website_link || "",
+//     official.email_address || "",
+//     startup_id,
+//   ];
+//   return new Promise((resolve, reject) => {
+//     const isPrivileged = [101].includes(Number(requester.role));
+//     if(!isPrivileged) {
+//         return resolve({
+//             status: 'Unauthorized',
+//             code: 401,
+//             message: 'You do not have permission to access this course data.'
+//         });
+//     }
+//     client.query(query, values, (err, result) => {
+//       if (err) {
+//         console.error("DB Error:", err);
+//         reject(err);
+//       } else {
+//         resolve(result);
+//       }
+//     });
+//   });
+// };
+
+const UpdateStartupPersonalInfoModel = async (data, requester) => {
+  const { basic, official, startup_status, startup_id } = data;
+
+  const query = `
     UPDATE test_startup
     SET
       basic = jsonb_set(
@@ -518,16 +555,29 @@ const query = `
   `;
 
   const values = [
-    basic.startup_name || "",
-    basic.profile_image || "",   // <-- NEW
-    startup_status || "",
-    official.official_contact_number || "",
-    official.linkedin_id || "",
-    official.website_link || "",
-    official.email_address || "",
+    basic.startup_name,
+    basic.profile_image,
+    startup_status,
+    official.official_contact_number,
+    official.linkedin_id,
+    official.website_link,
+    official.email_address,
     startup_id,
   ];
+
   return new Promise((resolve, reject) => {
+    // -------- Role-based Access ----------
+    const isPrivileged = [2].includes(Number(requester?.role));
+
+    if (!isPrivileged) {
+      return resolve({
+        status: "Unauthorized",
+        code: 401,
+        message: "You do not have permission to update this startup.",
+      });
+    }
+
+    // -------- Execute DB Query ----------
     client.query(query, values, (err, result) => {
       if (err) {
         console.error("DB Error:", err);

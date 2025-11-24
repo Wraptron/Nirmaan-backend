@@ -333,8 +333,11 @@ const FetchStartupProfile = async (req, res) => {
   }
 };
 
+
 const UpdateStartupDetails = async (req, res) => {
   try {
+    const requester = req.user;
+
     const {
       startup_name,
       startup_status,
@@ -345,27 +348,27 @@ const UpdateStartupDetails = async (req, res) => {
       startup_id,
     } = req.body;
 
-    // ========= IMAGE UPLOADS ===========
+    // ---------- IMAGE UPLOADS ----------
     let profile_image_url = null;
     let background_image_url = null;
 
-    if (req.files && req.files.profile_image) {
+    if (req.files?.profile_image?.[0]) {
       profile_image_url = await uploadToS3(
         req.files.profile_image[0],
         "profile_images"
       );
     }
 
-    if (req.files && req.files.background_image) {
+    if (req.files?.background_image?.[0]) {
       background_image_url = await uploadToS3(
         req.files.background_image[0],
         "background_images"
       );
     }
 
-    // ========= BASIC + OFFICIAL ==========
+    // ---------- STRUCTURE BASIC + OFFICIAL ----------
     const basic = {
-      startup_name,
+      startup_name: startup_name || "",
       profile_image: profile_image_url || null,
       background_image: background_image_url || null,
     };
@@ -374,30 +377,96 @@ const UpdateStartupDetails = async (req, res) => {
       official_contact_number: official_contact_number || "",
       linkedin_id: linkedin || "",
       website_link: website_link || "",
-      email_address: email_address,
+      email_address: email_address || "",
     };
 
-    // ========= DATABASE UPDATE ==========
-    const result = await UpdateStartupPersonalInfoModel({
-      basic,
-      official,
-      startup_status,
-      startup_id,
-    });
+    // ---------- DB UPDATE ----------
+    const result = await UpdateStartupPersonalInfoModel(
+      { basic, official, startup_status, startup_id },
+      requester
+    );
+    // Handle unauthorized
+    if (result?.code === 401) {
+      return res.status(401).json(result);
+    }
 
-    res.status(200).json({
+    return res.status(200).json({
       message: "Startup details updated successfully",
       result,
-      uploaded_images: {
-        profile_image_url,
-        background_image_url,
-      },
+      uploaded_images: { profile_image_url, background_image_url },
     });
+
   } catch (err) {
     console.error("Update failed:", err);
-    res.status(500).json({ error: "Failed to update startup details" });
+    return res.status(500).json({ error: "Failed to update startup details" });
   }
-}
+};
+// const UpdateStartupDetails = async (req, res) => {
+//   try {
+//     const requester = req.user;
+//     const {
+//       startup_name,
+//       startup_status,
+//       official_contact_number,
+//       email_address,
+//       linkedin,
+//       website_link,
+//       startup_id,
+//     } = req.body;
+
+//     // ========= IMAGE UPLOADS ===========
+//     let profile_image_url = null;
+//     let background_image_url = null;
+
+//     if (req.files && req.files.profile_image) {
+//       profile_image_url = await uploadToS3(
+//         req.files.profile_image[0],
+//         "profile_images"
+//       );
+//     }
+
+//     if (req.files && req.files.background_image) {
+//       background_image_url = await uploadToS3(
+//         req.files.background_image[0],
+//         "background_images"
+//       );
+//     }
+
+//     // ========= BASIC + OFFICIAL ==========
+//     const basic = {
+//       startup_name,
+//       profile_image: profile_image_url || null,
+//       background_image: background_image_url || null,
+//     };
+
+//     const official = {
+//       official_contact_number: official_contact_number || "",
+//       linkedin_id: linkedin || "",
+//       website_link: website_link || "",
+//       email_address: email_address,
+//     };
+
+//     // ========= DATABASE UPDATE ==========
+//     const result = await UpdateStartupPersonalInfoModel({
+//       basic,
+//       official,
+//       startup_status,
+//       startup_id,
+//     });
+
+//     res.status(200).json({
+//       message: "Startup details updated successfully",
+//       result,
+//       uploaded_images: {
+//         profile_image_url,
+//         background_image_url,
+//       },
+//     });
+//   } catch (err) {
+//     console.error("Update failed:", err);
+//     res.status(500).json({ error: "Failed to update startup details" });
+//   }
+// }
 //working fine version
 // const UpdateStartupDetails = async (req, res) => {
 //   try {

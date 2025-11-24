@@ -3,7 +3,6 @@ const router = express.Router();
 const multer = require("multer");
 const storage = multer.memoryStorage(); // important for S3 upload
 const upload = multer({ storage });
-const Authenticate = require("../utils/Authenticate.js");
 const LoginController = require("../controller/Admin/LoginController/LoginController");
 const WorkController = require("../controller/Admin/WorkRequestController/WorkRequestController");
 const ResumeController = require("../controller/Admin/Resume/ResumeController.js");
@@ -97,12 +96,12 @@ const {
 } = require("../controller/Admin/Mentorship/Mentorship.js");
 const IPdataUpload = require("../controller/Office/IPdata.js");
 const { AddFundingProject, FetchFundingProject, FetchFundingProjectData, UpdateFundingProjectData } = require("../controller/Finance/AddFundingProject.js");
-
+const Authenticate = require("../utils/Authenticate.js");
 router.get("/prof", ProfilePhoto);
 router.put("/update-status", UpdateStatus);
 router.get("/startup/:id", IndividualStartups);
 router.put(
-  "/edit-startupdata/personal-info",
+  "/edit-startupdata/personal-info", Authenticate,
   upload.fields([
     { name: "profile_image", maxCount: 1 },
     { name: "background_image", maxCount: 1 },
