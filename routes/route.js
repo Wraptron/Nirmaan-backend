@@ -1,205 +1,192 @@
 const express = require("express");
 const router = express.Router();
 const multer = require("multer");
-const upload = multer({ dest: "../uploads/" }); // For handling multipart/form-data
-
-// Middleware
-const Authenticate = require("../utils/Authenticate.js");
-
-// Login & Authentication
+const storage = multer.memoryStorage(); // important for S3 upload
+const upload = multer({ storage });
 const LoginController = require("../controller/Admin/LoginController/LoginController");
-const ForgotRequest = require("../controller/Admin/LoginController/ForgotRequest.js");
-
-// Profile
-const {
-  Profile,
-  ProfilePhoto,
-} = require("../controller/Admin/Profile/Profile.js");
-
-// Resume Management
+const WorkController = require("../controller/Admin/WorkRequestController/WorkRequestController");
 const ResumeController = require("../controller/Admin/Resume/ResumeController.js");
 const GetAllResumeController = require("../controller/Admin/Resume/GetAllResumeController.js");
 const ResumeUpload = require("../controller/Admin/Resume/ResumeUpload.js");
 const Resumedata = require("../controller/Admin/Resume/Resumedata.js");
 const ApprovalRequest = require("../controller/Admin/Resume/ApporvalRequest.js");
+const ForgotRequest = require("../controller/Admin/LoginController/ForgotRequest.js");
+const {
+  Profile,
+  ProfilePhoto,
+} = require("../controller/Admin/Profile/Profile.js");
 const DeleteResume = require("../controller/Admin/Resume/DeleteResume.js");
-
-// Mentor Management
-const {AddMentor, updateMentorProfile} = require("../controller/Admin/Mentors/AddMentor.js");
-// const AddMentor = require("../controller/Admin/Mentors/AddMentor.js");
-const {
-  FetchMentorData,
-  MentorCount,
-  DeleteMentorData,
-  UpdateMentorData,
-} = require("../controller/Admin/Mentors/MentorData.js");
-const {
-  AddMentorHour,
-  FetchDataMentor,
-} = require("../controller/Team/Mentor.js");
-const ScheduleMeeting = require("../controller/Admin/Mentors/ScheduleMeeting.js");
-const {
-  FetchMeetings,
-} = require("../controller/Admin/Mentors/FetchMeetings.js");
-
-
-// Startups
+const Settings = require("../controller/Admin/Settings/Settings.js");
 const {
   AddStartup,
+  AddFounder,
+  FetchFounder,
+  UpdateAward,
+  DeleteAward,
   FetchStartupDatainNumbers,
   FetchStartupData,
   UpdateStatus,
   IndividualStartups,
   TopStartupsSectorsCont,
   TeamDocuments,
+  DeleteStartupData,
+  UpdateStartupDetails,
+  UpdateStartupAbout,
+  UpdateStartupMentorDetails,
+  UpdateStartupFounder,
+  AddAward,
+  FetchAwardData,
 } = require("../controller/Admin/startups/AddStartup.js");
-
-// Messaging
 const {
   AddMessage,
   ViewMessage,
 } = require("../controller/Admin/Messages/Messages.js");
-
-// Work Requests
-const WorkController = require("../controller/Admin/WorkRequestController/WorkRequestController");
-
-// Connections
 const {
   AddConnections,
   ViewConnections,
   EstablishConnection,
+} = require("../controller/Admin/Connections/Connection.js");
+const Report = require("../controller/Admin/Reports/Report.js");
+const Founder = require("../controller/Team/Founder.js");
+const { FetchDataMentor } = require("../controller/Team/Mentor.js");
+const Job = require("../controller/Admin/Job/Job.js");
+const TeamMember = require("../controller/Team/TeamMember.js");
+const AwsCredits = require("../controller/Team/AwsCredits.js");
+const RaiseRequest = require("../controller/Team/RaiseRequest.js");
+const { AddMentorHour } = require("../controller/Team/Mentor.js");
+const {
   DeleteConnection,
 } = require("../controller/Admin/Connections/Connection.js");
-
-// Notifications
 const {
   ViewNotification,
 } = require("../controller/Admin/Notification/Notification.js");
-
-// Events
 const {
   CreateEvents,
   FetchEvents,
   RequestSpeaker,
 } = require("../controller/Admin/Events/Events.js");
-
-// Reports
-const Report = require("../controller/Admin/Reports/Report.js");
-
-// Jobs
-const Job = require("../controller/Admin/Job/Job.js");
+const {
+  FetchMentorData,
+  MentorCount,
+  DeleteMentorData,
+  Testimonial,
+  FetchTestimonial,
+  UpdateTestimonial,
+  DeleteTestimonial,
+  UpdateMentor,
+  Meetings,
+  FetchMeetings,
+  MeetingFeedback,
+  FetchMeetingFeedback,
+  UpdateFeedback,
+} = require("../controller/Admin/Mentors/MentorData.js");
 const AddJob = require("../controller/Team/AddJob.js");
-
-// Team & Founder
-const Founder = require("../controller/Team/Founder.js");
-const TeamMember = require("../controller/Team/TeamMember.js");
-
-// AWS, Raise Requests, IP Data
-const AwsCredits = require("../controller/Team/AwsCredits.js");
-const RaiseRequest = require("../controller/Team/RaiseRequest.js");
-const IPdataUpload = require("../controller/Office/IPdata.js");
-
-// Finance
 const {
   AddFunding,
   updateFundingNotif,
+  FetchFundingAmount,
+  FetchFundingData,
+  UpdateFundingData,
+  FetchFundingDatainNumbers,
+  FetchStartupDataDetail,
 } = require("../controller/Finance/AddFunding.js");
-
-// Settings
-const Settings = require("../controller/Admin/Settings/Settings.js");
-
-// Mentorship Scheduling
 const {
   ScheduleMentorMeeting,
 } = require("../controller/Admin/Mentorship/Mentorship.js");
-const Testimonial = require("../controller/Admin/Mentors/Testimonials.js");
-const { FetchTestimonial } = require("../controller/Admin/Mentors/FetchTestimonial.js");
-
-// ======== ROUTES ========
-
-// Profile & Auth
-router.get("/profile/:mail", Profile);
-router.get("/profile-data/:mail", Authenticate, Profile);
+const IPdataUpload = require("../controller/Office/IPdata.js");
+const { AddFundingProject, FetchFundingProject, FetchFundingProjectData, UpdateFundingProjectData } = require("../controller/Finance/AddFundingProject.js");
+const Authenticate = require("../utils/Authenticate.js");
+const { AddMentor} = require("../controller/Admin/Mentors/AddMentor.js");
 router.get("/prof", ProfilePhoto);
+router.put("/update-status", UpdateStatus);
+router.get("/startup/:id", IndividualStartups);
+router.put(
+  "/edit-startupdata/personal-info", Authenticate,
+  upload.fields([
+    { name: "profile_image", maxCount: 1 },
+    { name: "background_image", maxCount: 1 },
+  ]),
+  UpdateStartupDetails
+);
+router.put("/edit-startup/mentordetails", UpdateStartupMentorDetails);
+router.delete("delete-startup/:id", DeleteStartupData);
+router.put("/edit-startup/about", UpdateStartupAbout);
+router.post("/schedule-meeting", ScheduleMentorMeeting);
+router.post("/finance/addfunding", upload.none(), AddFunding);
+router.get("/finance/funding_amount", FetchFundingAmount);
+router.get("/finance/funding", FetchFundingData);
+router.put("/funding/edit", UpdateFundingData);
+router.get("/funding", FetchFundingDatainNumbers);
+router.post("/finance/funding-project",AddFundingProject);
+router.get("/finance/fetch-funding-project",FetchFundingProject);
+router.get("/fetch-funding-project",FetchFundingProjectData);
+router.put("/update-funding-project",UpdateFundingProjectData);
+router.get("/finance/startup-data",FetchStartupDataDetail);
+router.get("/fetch-startup", FetchStartupData);
+router.get("/fetchevents", FetchEvents);
+router.get("/count-startupdata", FetchStartupDatainNumbers);
+router.get("/mentor/count", MentorCount);
+router.post("/mentor/request-speaker", RequestSpeaker);
 router.post("/login", LoginController);
+router.post("/send-message", AddMessage);
 router.post("/forgot-password", ForgotRequest);
-
-// Resume
+router.post("/work-request", WorkController);
 router.get("/download/:filename", ResumeController);
 router.get("/getdata", GetAllResumeController);
 router.post("/resumeupload", ResumeUpload);
+router.get("/get-mentor-details", FetchMentorData);
 router.get("/resume-fetch/:page_data/:page_number", Resumedata);
 router.post("/resume-send", ApprovalRequest);
+router.get("/profile/:mail", Profile);
+router.put("/edit-startupdata/personal-info", UpdateStartupDetails);
+router.post("/addstartup/award", upload.single("document"), AddAward);
+router.get("/fetchaward", FetchAwardData);
+router.delete("/delete-award/:id", DeleteAward);
+router.put("/updateaward", UpdateAward);
 router.delete("/delete-resume/:id", DeleteResume);
-
-// Mentors
-router.post("/mentor/add", upload.single('choose_logo'), AddMentor);
-router.get("/get-mentor-details", FetchMentorData);
-router.get("/mentor/count", MentorCount);
-router.delete("/delete-mentor/:id", DeleteMentorData);
-router.put("/mentor/update/:id", UpdateMentorData);
-router.post("/customer/apply-mentor", AddMentorHour);
-router.get("/customer/fetch-mentor", FetchDataMentor);
-router.post("/schedulemeeting", ScheduleMeeting);
-router.get("/fetchmeeting/:mentor_reference_id", FetchMeetings);
-
-router.post("/testimonial",Testimonial)
-router.get("/fetchtestimonial/:mentor_ref_id",FetchTestimonial)
-router.put("/updateprofilephoto/:mentor_id", upload.single('mentor_logo'), updateMentorProfile)
-// Startups
-router.post("/add-startup", AddStartup);
-router.get("/startup/:id", IndividualStartups);
-router.put("/update-status", UpdateStatus);
-router.get("/fetch-startup", FetchStartupData);
-router.get("/count-startupdata", FetchStartupDatainNumbers);
-router.get("/st", TopStartupsSectorsCont);
-router.post("/teamdoc-upload", TeamDocuments);
-
-// Work
-router.post("/work-request", WorkController);
-
-// Messages
-router.post("/send-message", AddMessage);
-router.get("/view-message", ViewMessage);
-
-// Connections
-router.post("/add-connections", AddConnections);
-router.get("/viewconnections", ViewConnections);
-router.post("/establish-connection", EstablishConnection);
-router.delete("/delete-connection", DeleteConnection);
-
-// Notifications
-router.get("/notification", ViewNotification);
-
-// Events
+router.put("/edit-startup/founder", UpdateStartupFounder);
+router.post("/addfounder", AddFounder);
+router.get("/fetchfounder/:userId", FetchFounder);
+router.post(
+  "/mentor/add",
+  upload.fields([{ name: "mentor_logo", maxCount: 1 }]),
+  AddMentor
+);
+router.put("/mentor/update", UpdateMentor);
+router.post("/mentor/meeting", Meetings);
+router.get("/mentor/fetch-meeting/:mentor_id", FetchMeetings);
+router.post("/mentor/feedback", MeetingFeedback);
+router.put("/mentor/update-feedback", UpdateFeedback);
+router.get(
+  "/mentor/fetch-feedback/:mentor_id/:startup_id",
+  FetchMeetingFeedback
+);
+router.post("/mentor/add-testimonial", Testimonial);
+router.get("/mentor/fetch-testimonial", FetchTestimonial);
+router.put("/mentor/update-testimonial", UpdateTestimonial);
+router.delete("/mentor/delete-testimonial/:id", DeleteTestimonial);
 router.post("/create-events", CreateEvents);
-router.get("/fetchevents", FetchEvents);
-router.post("/mentor/request-speaker", RequestSpeaker);
-
-// Reports
-router.get("/fetch-report-data", Report);
-
-// Jobs
+router.get("/profile-data/:mail", Authenticate, Profile);
+router.post("/add-sector", Settings);
+router.get("/view-message", ViewMessage);
+router.post("/add-connections", AddConnections);
+router.post("/add-startup", AddStartup);
+router.get("/viewconnections", ViewConnections);
 router.post("/post-job", Authenticate, Job);
-router.post("/customer/add-job", AddJob);
-
-// Founder/Team
+router.get("/fetch-report-data", Report);
+router.post("/establish-connection", EstablishConnection);
 router.put("/customer/founder-update", Founder);
 router.post("/customer/teams-update", TeamMember);
-
-// AWS & Requests
 router.post("/customer/aws-credit-apply", AwsCredits);
 router.post("/customer/raise-request", RaiseRequest);
-
-// Finance
-router.post("/finance/funding-update", AddFunding);
+router.post("/customer/apply-mentor", AddMentorHour);
+router.get("/customer/fetch-mentor", FetchDataMentor);
+router.post("/customer/add-job", AddJob);
 router.get("/notification", updateFundingNotif);
-
-// Settings
-router.post("/add-sector", Settings);
-
-// IP Upload
+router.delete("/delete-mentor/:id", DeleteMentorData);
+router.delete("/delete-startup/:id", DeleteStartupData);
+router.delete("/delete-connection", DeleteConnection);
 router.post("/ipdataupload", upload.single("file"), IPdataUpload);
-
-// Export router
+router.get("/st", TopStartupsSectorsCont);
+router.post("/teamdoc-upload", TeamDocuments);
 module.exports = router;

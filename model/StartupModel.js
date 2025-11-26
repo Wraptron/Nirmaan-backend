@@ -1,1232 +1,909 @@
-const client = require('../utils/conn');
-const generatePassword = require('../utils/GeneratePassword');
-var md5 = require('md5');
-const AddStartupModel = async(basic, official, founder, description, official_email_address) => {
-    return new Promise((resolve, reject)=> {
-        client.query("INSERT INTO test_startup(basic, official, founder, description, official_email_address, startup_status) VALUES($1, $2, $3, $4, $5, $6)", [basic, official, founder, description, official_email_address, 'Active'], 
-          (err, result) => {
-            if(err)
-            {
-                reject({err});
-            }
-            else
-            {
-                resolve(result);
-            }
-          }  
-        )
-    })
-}
-const CreateTeamUser = (founder_email, founder_number, official_email_address) => {
-    return new Promise((resolve, reject) => {
-        client.query("INSERT INTO user_data(user_mail, user_password, user_hash, user_department, user_role, user_name, user_contact, personal_email) VALUES($1, $2, $3, $4, $5, $6, $7, $8)", [founder_email, generatePassword, md5(founder_email), 'student', '5', founder_number, official_contact_number, official_email_address], 
-            (err, result) => {
-                if(err)
-                {
-                    reject(err)
-                }
-                else
-                {
-                    resolve(result)
-                }
-            }
-        )
-    })
-}
-const StartupDataModel = async() => {
-    return new Promise((resolve, reject) => {
-            const TotalCountStartups = new Promise((resolveQuery1, rejectQuery1) => {
-                    client.query("SELECT COUNT(basic::json->'startup_name') AS startup_total FROM test_startup", (err, result) => {
-                        if(err)
-                        {
-                            rejectQuery1(err)
-                        }
-                        else
-                        {
-                            resolveQuery1(result)
-                        }
-                    })
-            })
-            const ActiveStartups = new Promise((resolveQuery2, rejectQuery2) => {
-                client.query("SELECT COUNT(startup_status) AS active FROM test_startup WHERE startup_status='Active'", (err, result) => {
-                    if(err)
-                    {
-                        rejectQuery2(err)
-                    }
-                    else
-                    {
-                        resolveQuery2(result)
-                    }
-                }) 
-            })
-            const DroppedStartups = new Promise((resolveQuery3, rejectQuery3) => {
-                client.query("SELECT COUNT(startup_status) AS Dropped_status FROM test_startup WHERE startup_status='Dropped'", (err, result) => {
-                    if(err)
-                    {
-                        rejectQuery3(err);
-                    }
-                    else
-                    {
-                        resolveQuery3(result)
-                    }
-                })
-            })
-
-            const GraduatedStartups = new Promise((resolveQuery3, rejectQuery3) => {
-                client.query("SELECT COUNT(startup_status) AS graduated_status FROM test_startup WHERE startup_status='Graduated'", (err, result) => {
-                    if(err)
-                    {
-                        rejectQuery3(err);
-                    }
-                    else
-                    {
-                        resolveQuery3(result)
-                    }
-                })
-            })
-
-            const Manufacturing = new Promise((resolveQuery4, rejectQuery4) => {
-                client.query("SELECT COUNT(basic::json->'startup_program') AS startup_manufacturing FROM test_startup WHERE (basic->>'startup_program')='Manufacturing & Industry'", (err, result) => {
-                    if(err)
-                    {   
-                        rejectQuery4(err);
-                    }
-                    else
-                    {
-                        resolveQuery4(result);
-                    }
-                })
-            })
-
-            const Services = new Promise((resolveQuery4, rejectQuery4) => {
-                client.query("SELECT COUNT(basic::json->'startup_program') AS startup_services FROM test_startup WHERE (basic->>'startup_program')='Services'", (err, result) => {
-                    if(err)
-                    {   
-                        rejectQuery4(err);
-                    }
-                    else
-                    {
-                        resolveQuery4(result);
-                    }
-                })
-            })
-
-            const Edtech = new Promise((resolveQuery4, rejectQuery4) => {
-                client.query("SELECT COUNT(basic::json->'startup_program') AS startup_edtech FROM test_startup WHERE (basic->>'startup_program')='Edtech'", (err, result) => {
-                    if(err)
-                    {   
-                        rejectQuery4(err);
-                    }
-                    else
-                    {
-                        resolveQuery4(result);
-                    }
-                })
-            })
-
-            const Agriculture = new Promise((resolveQuery4, rejectQuery4) => {
-                client.query("SELECT COUNT(basic::json->'startup_program') AS startup_agriculture FROM test_startup WHERE (basic->>'startup_program')='Agriculture & Food'", (err, result) => {
-                    if(err)
-                    {   
-                        rejectQuery4(err);
-                    }
-                    else
-                    {
-                        resolveQuery4(result);
-                    }
-                })
-            })
-
-            const Hardware = new Promise((resolveQuery4, rejectQuery4) => {
-                client.query("SELECT COUNT(basic::json->'startup_program') AS startup_hardware FROM test_startup WHERE (basic->>'startup_program')='Hardware & IOT'", (err, result) => {
-                    if(err)
-                    {   
-                        rejectQuery4(err);
-                    }
-                    else
-                    {
-                        resolveQuery4(result);
-                    }
-                })
-            })
-            const Energy = new Promise((resolveQuery4, rejectQuery4) => {
-                client.query("SELECT COUNT(basic::json->'startup_program') AS startup_energy FROM test_startup WHERE (basic->>'startup_program')='Energy & Environment'", (err, result) => {
-                    if(err)
-                    {   
-                        rejectQuery4(err);
-                    }
-                    else
-                    {
-                        resolveQuery4(result);
-                    }
-                })
-            })
-
-            const Ecommerce = new Promise((resolveQuery4, rejectQuery4) => {
-                client.query("SELECT COUNT(basic::json->'startup_program') AS startup_ecommerce FROM test_startup WHERE (basic->>'startup_program')='Ecommerce & Retail'", (err, result) => {
-                    if(err)
-                    {   
-                        rejectQuery4(err);
-                    }
-                    else
-                    {
-                        resolveQuery4(result);
-                    }
-                })
-            })
-
-            const Social = new Promise((resolveQuery4, rejectQuery4) => {
-                client.query("SELECT COUNT(basic::json->'startup_program') AS startup_social FROM test_startup WHERE (basic->>'startup_program')='Social & Leisure'", (err, result) => {
-                    if(err)
-                    {   
-                        rejectQuery4(err);
-                    }
-                    else
-                    {
-                        resolveQuery4(result);
-                    }
-                })
-            })
-
-            const SoftwareData = new Promise((resolveQuery4, rejectQuery4) => {
-                client.query("SELECT COUNT(basic::json->'startup_program') AS startup_software FROM test_startup WHERE (basic->>'startup_program')='Software & Data'", (err, result) => {
-                    if(err)
-                    {   
-                        rejectQuery4(err);
-                    }
-                    else
-                    {
-                        resolveQuery4(result);
-                    }
-                })
-            })
-
-
-            // const EnergyPratham = new Promise((resolveQuery5, rejectQuery5) => {
-            //     client.query("SELECT COUNT()")
-            // })
-
-//////PRATHAM DATA STARTS
-            const EnergyPratham = new Promise((resolveQuery5, rejectQuery5) => {
-                client.query("SELECT COUNT(basic::json->'program') AS energy_program_count FROM test_startup WHERE (basic->>'program')='Pratham' AND (basic->>'startup_program')='Energy & Environment'", (err, result) => {
-                    if(err)
-                    {   
-                        rejectQuery5(err);
-                    }
-                    else
-                    {
-                        resolveQuery5(result);
-                    }
-                })
-            })
-
-            const HardwarePratham = new Promise((resolveQuery7, rejectQuery7) => {
-                client.query("SELECT COUNT(basic::json->'program') AS hardware_program_count FROM test_startup WHERE (basic->>'program')='Pratham' AND (basic->>'startup_program')='Hardware & IOT'", (err, result) => {
-                    if(err)
-                    {   
-                        rejectQuery7(err);
-                    }
-                    else
-                    {
-                        resolveQuery7(result);
-                    }
-                })
-            })
-            
-            const SoftwareDataPratham = new Promise((resolveQuery8, rejectQuery8) => {
-                client.query("SELECT COUNT(basic::json->'program') AS software_program_count FROM test_startup WHERE (basic->>'program')='Pratham' AND (basic->>'startup_program')='Software & Data'", (err, result) => {
-                    if(err)
-                    {   
-                        rejectQuery8(err);
-                    }
-                    else
-                    {
-                        resolveQuery8(result);
-                    }
-                })
-            })
-
-            const EdtechPratham = new Promise((resolveQuery9, rejectQuery9) => {
-                client.query("SELECT COUNT(basic::json->'program') AS edtech_program_count FROM test_startup WHERE (basic->>'program')='Pratham' AND (basic->>'startup_program')='Edtech'", (err, result) => {
-                    if(err)
-                    {   
-                        rejectQuery9(err);
-                    }
-                    else
-                    {
-                        resolveQuery9(result);
-                    }
-                })
-            })
-            const ServicesPratham = new Promise((resolveQuery10, rejectQuery10) => {
-                client.query("SELECT COUNT(basic::json->'program') AS services_program_count FROM test_startup WHERE (basic->>'program')='Pratham' AND (basic->>'startup_program')='services'", (err, result) => {
-                    if(err)
-                    {   
-                        rejectQuery10(err);
-                    }
-                    else
-                    {
-                        resolveQuery10(result);
-                    }
-                })
-            })    
-
-            const AgriculturePratham = new Promise((resolveQuery10, rejectQuery10) => {
-                client.query("SELECT COUNT(basic::json->'program') AS agriculture_program_count FROM test_startup WHERE (basic->>'program')='Pratham' AND (basic->>'startup_program')='Agriculture & Food'", (err, result) => {
-                    if(err)
-                    {   
-                        rejectQuery10(err);
-                    }
-                    else
-                    {
-                        resolveQuery10(result);
-                    }
-                })
-            })  
-
-            const EcommercePratham = new Promise((resolveQuery11, rejectQuery11) => {
-                client.query("SELECT COUNT(basic::json->'program') AS ecommerce_program_count FROM test_startup WHERE (basic->>'program')='Pratham' AND (basic->>'startup_program')='Ecommerce & Retail'", (err, result) => {
-                    if(err)
-                    {   
-                        rejectQuery11(err);
-                    }
-                    else
-                    {
-                        resolveQuery11(result);
-                    }
-                })
-            })  
-
-            const SocialPratham = new Promise((resolveQuery12, rejectQuery12) => {
-                client.query("SELECT COUNT(basic::json->'program') AS social_program_count FROM test_startup WHERE (basic->>'program')='Pratham' AND (basic->>'startup_program')='Social & Leisure'", (err, result) => {
-                    if(err)
-                    {   
-                        rejectQuery12(err);
-                    }
-                    else
-                    {
-                        resolveQuery12(result);
-                    }
-                })
-            })
-            const ManufacturingPratham = new Promise((resolveQuery6, rejectQuery6) => {
-                client.query("SELECT COUNT(basic::json->'program') AS manufacturing_program_count FROM test_startup WHERE (basic->>'program')='Pratham' AND (basic->>'startup_program')='Manufacturing & Industry'", (err, result) => {
-                    if(err)
-                    {   
-                        rejectQuery6(err);
-                    }
-                    else
-                    {
-                        resolveQuery6(result);
-                    }
-                })
-            })
-/////PRATHAM DATA ENDS (FINACNE)
-            ///AkSHAR DATA starts
-
-            const EnergyAkshar = new Promise((resolveQuery13, rejectQuery13) => {
-                client.query("SELECT COUNT(basic::json->'program') AS energy_program_count_akshar FROM test_startup WHERE (basic->>'program')='Akshar' AND (basic->>'startup_program')='Energy & Environment'", (err, result) => {
-                    if(err)
-                    {   
-                        rejectQuery13(err);
-                    }
-                    else
-                    {
-                        resolveQuery13(result);
-                    }
-                })
-            })
-
-            const HardwareAkshar = new Promise((resolveQuery14, rejectQuery14) => {
-                client.query("SELECT COUNT(basic::json->'program') AS hardware_program_count_akshar FROM test_startup WHERE (basic->>'program')='Akshar' AND (basic->>'startup_program')='Hardware & IOT'", (err, result) => {
-                    if(err)
-                    {   
-                        rejectQuery14(err);
-                    }
-                    else
-                    {
-                        resolveQuery14(result);
-                    }
-                })
-            })
-            
-            const SoftwareDataAkshar = new Promise((resolveQuery15, rejectQuery15) => {
-                client.query("SELECT COUNT(basic::json->'program') AS software_program_count_akshar FROM test_startup WHERE (basic->>'program')='Akshar' AND (basic->>'startup_program')='Software & Data'", (err, result) => {
-                    if(err)
-                    {   
-                        rejectQuery15(err);
-                    }
-                    else
-                    {
-                        resolveQuery15(result);
-                    }
-                })
-            })
-
-            const EdtechAkshar = new Promise((resolveQuery16, rejectQuery16) => {
-                client.query("SELECT COUNT(basic::json->'program') AS edtech_program_count_akshar FROM test_startup WHERE (basic->>'program')='Akshar' AND (basic->>'startup_program')='Edtech'", (err, result) => {
-                    if(err)
-                    {   
-                        rejectQuery16(err);
-                    }
-                    else
-                    {
-                        resolveQuery16(result);
-                    }
-                })
-            })
-            const ServicesAkshar = new Promise((resolveQuery17, rejectQuery17) => {
-                client.query("SELECT COUNT(basic::json->'program') AS services_program_count_akshar FROM test_startup WHERE (basic->>'program')='Akshar' AND (basic->>'startup_program')='services'", (err, result) => {
-                    if(err)
-                    {   
-                        rejectQuery17(err);
-                    }
-                    else
-                    {
-                        resolveQuery17(result);
-                    }
-                })
-            })    
-
-            const AgricultureAkshar = new Promise((resolveQuery18, rejectQuery18) => {
-                client.query("SELECT COUNT(basic::json->'program') AS agriculture_program_count_akshar FROM test_startup WHERE (basic->>'program')='Akshar' AND (basic->>'startup_program')='Agriculture & Food'", (err, result) => {
-                    if(err)
-                    {   
-                        rejectQuery18(err);
-                    }
-                    else
-                    {
-                        resolveQuery18(result);
-                    }
-                })
-            })  
-
-            const EcommerceAkshar = new Promise((resolveQuery19, rejectQuery19) => {
-                client.query("SELECT COUNT(basic::json->'program') AS ecommerce_program_count_akshar FROM test_startup WHERE (basic->>'program')='Akshar' AND (basic->>'startup_program')='Ecommerce & Retail'", (err, result) => {
-                    if(err)
-                    {   
-                        rejectQuery19(err);
-                    }
-                    else
-                    {
-                        resolveQuery19(result);
-                    }
-                })
-            })  
-
-            const SocialAkshar = new Promise((resolveQuery20, rejectQuery20) => {
-                client.query("SELECT COUNT(basic::json->'program') AS social_program_count_akshar FROM test_startup WHERE (basic->>'program')='Akshar' AND (basic->>'startup_program')='Social & Leisure'", (err, result) => {
-                    if(err)
-                    {   
-                        rejectQuery20(err);
-                    }
-                    else
-                    {
-                        resolveQuery20(result);
-                    }
-                })
-            })
-
-            const ManufacturingAkshar = new Promise((resolveQuery21, rejectQuery21) => {
-                client.query("SELECT COUNT(basic::json->'program') AS manufacturing_program_count_akshar FROM test_startup WHERE (basic->>'program')='Akshar' AND (basic->>'startup_program')='Manufacturing & Industry'", (err, result) => {
-                    if(err)
-                    {   
-                        rejectQuery21(err);
-                    }
-                    else
-                    {
-                        resolveQuery21(result);
-                    }
-                })
-            })
-            ///pratham 
-            const PrathamTeamsCount = new Promise((resolveQuery22, rejectQuery22) => {
-                client.query("SELECT COUNT(basic::json->'program') AS pratham_teams FROM test_startup WHERE (basic->>'program')='Pratham'", (err, result) => {
-                    if(err)
-                    {   
-                        rejectQuery22(err);
-                    }
-                    else
-                    {
-                        resolveQuery22(result);
-                    }
-                })
-            })
-
-            const AksharTeamsCount = new Promise((resolveQuery22, rejectQuery22) => {
-                client.query("SELECT COUNT(basic::json->'program') AS akshar_teams FROM test_startup WHERE (basic->>'program')='Akshar'", (err, result) => {
-                    if(err)
-                    {   
-                        rejectQuery22(err);
-                    }
-                    else
-                    {
-                        resolveQuery22(result);
-                    }
-                })
-            })
-
-
-            const UpdatedFunds = new Promise((resolveQuery23, rejectQuery23) => {
-                client.query("SELECT SUM(amount) AS funds_distributed FROM update_funding WHERE funding_type='Funding Distributed'", (err, result) => {
-                    if(err)
-                    {
-                        rejectQuery23(err)
-                    }
-                    else
-                    {
-                        resolveQuery23(result);
-                    }
-                })
-            })
-
-            const UpdateFundsUtilized = new Promise((resolveQuery24, rejectQuery24) => {
-                client.query("SELECT SUM(amount) AS funds_utilized FROM update_funding WHERE funding_type='Funding Utilized' AND status='Approved'", (err, result) => {
-                    if(err)
-                    {
-                        rejectQuery24(err)
-                    }
-                    else
-                    {
-                        resolveQuery24(result);
-                    }
-                })
-            })
-
-            //
-            //Pratham team total fund distributed
-            // const TotalPrathamTeamFundsDistributed = new Promise((resolveQuery25, rejectQuery25) => {
-            //     client.query("SELECT ts.basic->>'program' AS program, ts.official_email_address, ts.basic->>'startup_name' AS startup_name, SUM(uf.amount) AS amount_total FROM test_startup ts JOIN update_funding uf ON uf.startup_name = ts.official_email_address WHERE ts.basic->>'program' = 'Pratham' AND uf.funding_type = 'Funding Distributed' GROUP BY ts.official_email_address;", (err, result) => {
-            //         if(err)
-            //         {
-            //             rejectQuery25(err)
-            //         }
-            //         else
-            //         {
-            //             resolveQuery25(result);
-            //         }
-            //     })
-            // })
-
-            const TotalPrathamTeamFundsDistributed = new Promise((resolveQuery25, rejectQuery25) => {
-                client.query("SELECT SUM(uf.amount) AS amount_total FROM test_startup ts JOIN update_funding uf ON uf.startup_name = ts.official_email_address WHERE ts.basic->>'program' = 'Pratham' AND uf.funding_type = 'Funding Distributed';", (err, result) => {
-                    if(err)
-                    {
-                        rejectQuery25(err)
-                    }
-                    else
-                    {
-                        resolveQuery25(result);
-                    }
-                })
-            })
-
-            //SELECT SUM(uf.amount) FROM test_startup ts JOIN update_funding uf ON uf.startup_name = ts.official_email_address WHERE ts.basic->>'program' = 'Pratham' AND uf.funding_type = 'Funding Distributed';
-            const TotalAksharTeamFundsDistributed = new Promise((resolveQuery26, rejectQuery26) => {
-                client.query("SELECT SUM(uf.amount) AS amount_total FROM test_startup ts JOIN update_funding uf ON uf.startup_name = ts.official_email_address WHERE ts.basic->>'program' = 'Akshar' AND uf.funding_type = 'Funding Distributed';", (err, result) => {
-                    if (err) {
-                        rejectQuery26(err);
-                    } else {
-                        resolveQuery26(result);
-                    }
-                });
-            });
-            
-
-
-            //Akshar teams fund calculations
-            const AksharManufacturingTotalFunds = new Promise((resolveQuery27, rejectQuery27) => {
-                client.query("SELECT SUM(uf.amount) AS manufacturing_akshar_funds FROM test_startup ts JOIN update_funding uf ON uf.startup_name = ts.official_email_address WHERE ts.basic->>'program' = 'Akshar' AND uf.funding_type = 'Funding Distributed' AND ts.basic::json->>'startup_program'='Manufacturing & Industry';", (err, result) => {
-                    if(err)
-                    {
-                        rejectQuery27(err)
-                    }
-                    else
-                    {
-                        resolveQuery27(result);
-                    }
-                })
-            })
-
-            const AksharEnergyTotalFunds = new Promise((resolveQuery27, rejectQuery27) => {
-                client.query("SELECT SUM(uf.amount) AS energy_akshar_funds FROM test_startup ts JOIN update_funding uf ON uf.startup_name = ts.official_email_address WHERE ts.basic->>'program' = 'Akshar' AND uf.funding_type = 'Funding Distributed' AND ts.basic::json->>'startup_program'='Energy & Environment';", (err, result) => {
-                    if(err)
-                    {
-                        rejectQuery27(err)
-                    }
-                    else
-                    {
-                        resolveQuery27(result);
-                    }
-                })
-            })
-
-            const AksharHardwareTotalFunds = new Promise((resolveQuery27, rejectQuery27) => {
-                client.query("SELECT SUM(uf.amount) AS hardware_akshar_funds FROM test_startup ts JOIN update_funding uf ON uf.startup_name = ts.official_email_address WHERE ts.basic->>'program' = 'Akshar' AND uf.funding_type = 'Funding Distributed' AND ts.basic::json->>'startup_program'='Hardware & IOT';", (err, result) => {
-                    if(err)
-                    {
-                        rejectQuery27(err)
-                    }
-                    else
-                    {
-                        resolveQuery27(result);
-                    }
-                })
-            })
-
-            const AksharSoftwareTotalFunds = new Promise((resolveQuery27, rejectQuery27) => {
-                client.query("SELECT SUM(uf.amount) AS software_akshar_funds FROM test_startup ts JOIN update_funding uf ON uf.startup_name = ts.official_email_address WHERE ts.basic->>'program' = 'Akshar' AND uf.funding_type = 'Funding Distributed' AND ts.basic::json->>'startup_program'='Software & Data';", (err, result) => {
-                    if(err)
-                    {
-                        rejectQuery27(err)
-                    }
-                    else
-                    {
-                        resolveQuery27(result);
-                    }
-                })
-            })
-
-            const AksharEdtechTotalFunds = new Promise((resolveQuery27, rejectQuery27) => {
-                client.query("SELECT SUM(uf.amount) AS edtech_akshar_funds FROM test_startup ts JOIN update_funding uf ON uf.startup_name = ts.official_email_address WHERE ts.basic->>'program' = 'Akshar' AND uf.funding_type = 'Funding Distributed' AND ts.basic::json->>'startup_program'='Edtech';", (err, result) => {
-                    if(err)
-                    {
-                        rejectQuery27(err)
-                    }
-                    else
-                    {
-                        resolveQuery27(result);
-                    }
-                })
-            })
-
-            const AksharServicesTotalFunds = new Promise((resolveQuery27, rejectQuery27) => {
-                client.query("SELECT SUM(uf.amount) AS services_akshar_funds FROM test_startup ts JOIN update_funding uf ON uf.startup_name = ts.official_email_address WHERE ts.basic->>'program' = 'Akshar' AND uf.funding_type = 'Funding Distributed' AND ts.basic::json->>'startup_program'='services';", (err, result) => {
-                    if(err)
-                    {
-                        rejectQuery27(err)
-                    }
-                    else
-                    {
-                        resolveQuery27(result);
-                    }
-                })
-            })
-
-            const AksharAgricultureTotalFunds = new Promise((resolveQuery27, rejectQuery27) => {
-                client.query("SELECT SUM(uf.amount) AS agriculture_akshar_funds FROM test_startup ts JOIN update_funding uf ON uf.startup_name = ts.official_email_address WHERE ts.basic->>'program' = 'Akshar' AND uf.funding_type = 'Funding Distributed' AND ts.basic::json->>'startup_program'='Agriculture & Food';", (err, result) => {
-                    if(err)
-                    {
-                        rejectQuery27(err)
-                    }
-                    else
-                    {
-                        resolveQuery27(result);
-                    }
-                })
-            })
-
-            const AksharEcommerceTotalFunds = new Promise((resolveQuery27, rejectQuery27) => {
-                client.query("SELECT SUM(uf.amount) AS ecommerce_akshar_funds FROM test_startup ts JOIN update_funding uf ON uf.startup_name = ts.official_email_address WHERE ts.basic->>'program' = 'Akshar' AND uf.funding_type = 'Funding Distributed' AND ts.basic::json->>'startup_program'='Ecommerce & Retail';", (err, result) => {
-                    if(err)
-                    {
-                        rejectQuery27(err)
-                    }
-                    else
-                    {
-                        resolveQuery27(result);
-                    }
-                })
-            })
-
-            const AksharSocialTotalFunds = new Promise((resolveQuery27, rejectQuery27) => {
-                client.query("SELECT SUM(uf.amount) AS social_akshar_funds FROM test_startup ts JOIN update_funding uf ON uf.startup_name = ts.official_email_address WHERE ts.basic->>'program' = 'Akshar' AND uf.funding_type = 'Funding Distributed' AND ts.basic::json->>'startup_program'='Social & Leisure';", (err, result) => {
-                    if(err)
-                    {
-                        rejectQuery27(err)
-                    }
-                    else
-                    {
-                        resolveQuery27(result);
-                    }
-                })
-            })
-
-
-            //Pratham teams fund calculations
-            const PrathamManufacturingTotalFunds = new Promise((resolveQuery28, rejectQuery28) => {
-                client.query("SELECT SUM(uf.amount) AS manufacturing_pratham_funds FROM test_startup ts JOIN update_funding uf ON uf.startup_name = ts.official_email_address WHERE ts.basic->>'program' = 'Pratham' AND uf.funding_type = 'Funding Distributed' AND ts.basic::json->>'startup_program'='Manufacturing & Industry';", (err, result) => {
-                    if(err)
-                    {
-                        rejectQuery28(err)
-                    }
-                    else
-                    {
-                        resolveQuery28(result);
-                    }
-                })
-            })
-
-            const PrathamEnergyTotalFunds = new Promise((resolveQuery30, rejectQuery30) => {
-                client.query("SELECT SUM(uf.amount) AS energy_pratham_funds FROM test_startup ts JOIN update_funding uf ON uf.startup_name = ts.official_email_address WHERE ts.basic->>'program' = 'Pratham' AND uf.funding_type = 'Funding Distributed' AND ts.basic::json->>'startup_program'='Energy & Environment';", (err, result) => {
-                    if(err)
-                    {
-                        rejectQuery30(err)
-                    }
-                    else
-                    {
-                        resolveQuery30(result);
-                    }
-                })
-            })
-
-            const PrathamHardwareTotalFunds = new Promise((resolveQuery31, rejectQuery31) => {
-                client.query("SELECT SUM(uf.amount) AS hardware_pratham_funds FROM test_startup ts JOIN update_funding uf ON uf.startup_name = ts.official_email_address WHERE ts.basic->>'program' = 'Pratham' AND uf.funding_type = 'Funding Distributed' AND ts.basic::json->>'startup_program'='Hardware & IOT';", (err, result) => {
-                    if(err)
-                    {
-                        rejectQuery31(err)
-                    }
-                    else
-                    {
-                        resolveQuery31(result);
-                    }
-                })
-            })
-
-            const PrathamSoftwareTotalFunds = new Promise((resolveQuery32, rejectQuery32) => {
-                client.query("SELECT SUM(uf.amount) AS software_pratham_funds FROM test_startup ts JOIN update_funding uf ON uf.startup_name = ts.official_email_address WHERE ts.basic->>'program' = 'Pratham' AND uf.funding_type = 'Funding Distributed' AND ts.basic::json->>'startup_program'='Software & Data';", (err, result) => {
-                    if(err)
-                    {
-                        rejectQuery32(err)
-                    }
-                    else
-                    {
-                        resolveQuery32(result);
-                    }
-                })
-            })
-
-            const PrathamEdtechTotalFunds = new Promise((resolveQuery33, rejectQuery33) => {
-                client.query("SELECT SUM(uf.amount) AS edtech_pratham_funds FROM test_startup ts JOIN update_funding uf ON uf.startup_name = ts.official_email_address WHERE ts.basic->>'program' = 'Pratham' AND uf.funding_type = 'Funding Distributed' AND ts.basic::json->>'startup_program'='Edtech';", (err, result) => {
-                    if(err)
-                    {
-                        rejectQuery33(err)
-                    }
-                    else
-                    {
-                        resolveQuery33(result);
-                    }
-                })
-            })
-
-            const PrathamServicesTotalFunds = new Promise((resolveQuery34, rejectQuery34) => {
-                client.query("SELECT SUM(uf.amount) AS services_pratham_funds FROM test_startup ts JOIN update_funding uf ON uf.startup_name = ts.official_email_address WHERE ts.basic->>'program' = 'Pratham' AND uf.funding_type = 'Funding Distributed' AND ts.basic::json->>'startup_program'='services';", (err, result) => {
-                    if(err)
-                    {
-                        rejectQuery34(err)
-                    }
-                    else
-                    {
-                        resolveQuery34(result);
-                    }
-                })
-            })
-
-            const PrathamAgricultureTotalFunds = new Promise((resolveQuery35, rejectQuery35) => {
-                client.query("SELECT SUM(uf.amount) AS agriculture_pratham_funds FROM test_startup ts JOIN update_funding uf ON uf.startup_name = ts.official_email_address WHERE ts.basic->>'program' = 'Pratham' AND uf.funding_type = 'Funding Distributed' AND ts.basic::json->>'startup_program'='Agriculture & Food';", (err, result) => {
-                    if(err)
-                    {
-                        rejectQuery35(err)
-                    }
-                    else
-                    {
-                        resolveQuery35(result);
-                    }
-                })
-            })
-
-            const PrathamEcommerceTotalFunds = new Promise((resolveQuery36, rejectQuery36) => {
-                client.query("SELECT SUM(uf.amount) AS ecommerce_pratham_funds FROM test_startup ts JOIN update_funding uf ON uf.startup_name = ts.official_email_address WHERE ts.basic->>'program' = 'Pratham' AND uf.funding_type = 'Funding Distributed' AND ts.basic::json->>'startup_program'='Ecommerce & Retail';", (err, result) => {
-                    if(err)
-                    {
-                        rejectQuery36(err)
-                    }
-                    else
-                    {
-                        resolveQuery36(result);
-                    }
-                })
-            })
-
-            const PrathamSocialTotalFunds = new Promise((resolveQuery37, rejectQuery37) => {
-                client.query("SELECT SUM(uf.amount) AS social_pratham_funds FROM test_startup ts JOIN update_funding uf ON uf.startup_name = ts.official_email_address WHERE ts.basic->>'program' = 'Pratham' AND uf.funding_type = 'Funding Distributed' AND ts.basic::json->>'startup_program'='Social & Leisure';", (err, result) => {
-                    if(err)
-                    {
-                        rejectQuery37(err)
-                    }
-                    else
-                    {
-                        resolveQuery37(result);
-                    }
-                })
-            })
-            ///Mentor data 
-
-
-            const TotalMentoringSessions  = new Promise((resolveQuery38, rejectQuery38) => {
-                client.query("SELECT COUNT(startup) AS session_total FROM mentor_schedule", (err, result) => {
-                    if(err)
-                    {
-                        rejectQuery38(err)
-                    }
-                    else
-                    {
-                        resolveQuery38(result)
-                    }
-                })
-            })
-
-
-            //fund utilized
-
-
-            const PrathamFundUtilized = new Promise((resolveQuery39, rejectQuery39) => {
-                client.query("SELECT SUM(uf.amount) AS pratham_fund_utilized FROM test_startup ts JOIN update_funding uf ON uf.startup_name = ts.official_email_address WHERE ts.basic->>'program'='Pratham' AND uf.funding_type='Funding Utilized' AND uf.status='Approved';", (err, result) => {
-                    if(err)
-                    {
-                        rejectQuery39(err)
-                    }
-                    else
-                    {
-                        resolveQuery39(result);
-                    }
-                })
-            })
-
-            const AksharFundUtilized = new Promise((resolveQuery40, rejectQuery40) => {
-                client.query("SELECT SUM(uf.amount) AS akshar_fund_utilized FROM test_startup ts JOIN update_funding uf ON uf.startup_name = ts.official_email_address WHERE ts.basic->>'program'='Akshar' AND uf.funding_type='Funding Utilized' AND uf.status='Approved';", (err, result) => {
-                    if(err)
-                    {
-                        rejectQuery40(err)
-                    }
-                    else
-                    {
-                        resolveQuery40(result);
-                    }
-                })
-            })
-
-            //
-            const MenWomen = new Promise((resolveQuery41, rejectQuery41) => {
-                client.query("select count(founder::json->>'founder_gender') male_count from test_startup WHERE (founder::json->>'founder_gender')='Male';", (err, result) => {
-                    if(err)
-                    {
-                        rejectQuery41(err)
-                    }
-                    else
-                    {
-                        resolveQuery41(result);
-                    }
-                })
-            })
-
-            const Women = new Promise((resolveQuery42, rejectQuery42) => {
-                client.query("select count(founder::json->>'founder_gender') female_count from test_startup WHERE (founder::json->>'founder_gender')='Female';", (err, result) => {
-                    if(err)
-                    {
-                        rejectQuery42(err)
-                    }
-                    else
-                    {
-                        resolveQuery42(result);
-                    }
-                })
-            })
-
-
-            const ManufacturingMentorScheduleCount = new Promise((resolveQuery43, rejectQuery43) => {
-                client.query("select COUNT(ms.startup) as startup_name from mentor_schedule ms JOIN test_startup t ON t.official_email_address = ms.startup WHERE t.basic::json->>'startup_program'='Manufacturing & Industry';", (err, result) => {
-                    if(err)
-                    {
-                        rejectQuery43(err)
-                    }
-                    else
-                    {
-                       resolveQuery43(result);    
-                    }
-                })
-            })
-
-            const EnergyMentorScheduleCount = new Promise((resolveQuery44, rejectQuery44) => {
-                client.query("select COUNT(ms.startup) as startup_name from mentor_schedule ms JOIN test_startup t ON t.official_email_address = ms.startup WHERE t.basic::json->>'startup_program'='Energy & Environment';", (err, result) => {
-                    if(err)
-                    {
-                        rejectQuery44(err);
-                    }
-                    else
-                    {
-                        resolveQuery44(result);
-                    }
-                })
-            })
-
-            const HardwareMentorScheduleCount = new Promise((resolveQuery45, rejectQuery45) => {
-                client.query("select COUNT(ms.startup) as startup_name from mentor_schedule ms JOIN test_startup t ON t.official_email_address = ms.startup WHERE t.basic::json->>'startup_program'='Hardware & IOT';", (err, result) => {
-                    if(err)
-                    {
-                        rejectQuery45(err);
-                    }
-                    else
-                    {
-                        resolveQuery45(result);
-                    }
-                })
-            })
-
-            const SoftwareMentorScheduleCount = new Promise((resolveQuery46, rejectQuery46) => {
-                client.query("select COUNT(ms.startup) as startup_name from mentor_schedule ms JOIN test_startup t ON t.official_email_address = ms.startup WHERE t.basic::json->>'startup_program'='Software & Data';", (err, result) => {
-                    if(err)
-                    {
-                        rejectQuery46(err);
-                    }
-                    else
-                    {
-                        resolveQuery46(result);
-                    }
-                })
-            })
-
-            const EdtechMentorScheduleCount = new Promise((resolveQuery47, rejectQuery47) => {
-                client.query("select COUNT(ms.startup) as startup_name from mentor_schedule ms JOIN test_startup t ON t.official_email_address = ms.startup WHERE t.basic::json->>'startup_program'='Edtech';", (err, result) => {
-                    if(err)
-                    {
-                        rejectQuery47(err);
-                    }
-                    else
-                    {
-                        resolveQuery47(result);
-                    }
-                })
-            })
-
-            const ServiceMentorScheduleCount = new Promise((resolveQuery48, rejectQuery48) => {
-                client.query("select COUNT(ms.startup) as startup_name from mentor_schedule ms JOIN test_startup t ON t.official_email_address = ms.startup WHERE t.basic::json->>'startup_program'='services';", (err, result) => {
-                    if(err)
-                    {
-                        rejectQuery48(err);
-                    }
-                    else
-                    {
-                        resolveQuery48(result);
-                    }
-                })
-            })
-            
-            const AgricultureMentorScheduleCount = new Promise((resolveQuery49, rejectQuery49) => {
-                client.query("select COUNT(ms.startup) as startup_name from mentor_schedule ms JOIN test_startup t ON t.official_email_address = ms.startup WHERE t.basic::json->>'startup_program'='Agriculture & Food';", (err, result) => {
-                    if(err)
-                    {
-                        rejectQuery49(err);
-                    }
-                    else
-                    {
-                        resolveQuery49(result);
-                    }
-                })
-            })
-
-            const EcommerceMentorScheduleCount = new Promise((resolveQuery50, rejectQuery50) => {
-                client.query("select COUNT(ms.startup) as startup_name from mentor_schedule ms JOIN test_startup t ON t.official_email_address = ms.startup WHERE t.basic::json->>'startup_program'='Ecommerce & Retail';", (err, result) => {
-                    if(err)
-                    {
-                        rejectQuery50(err);
-                    }
-                    else
-                    {
-                        resolveQuery50(result);
-                    }
-                })
-            })
-
-            const SocialMentorScheduleCount = new Promise((resolveQuery51, rejectQuery51) => {
-                client.query("select COUNT(ms.startup) as startup_name from mentor_schedule ms JOIN test_startup t ON t.official_email_address = ms.startup WHERE t.basic::json->>'startup_program'='Social & Leisure';", (err, result) => {
-                    if(err)
-                    {
-                        rejectQuery51(err);
-                    }
-                    else
-                    {
-                        resolveQuery51(result);
-                    }
-                })
-            })
-            //SELECT ts.basic->>'program' AS program, ts.official_email_address, ts.basic->>'startup_name' AS startup_name,SUM(uf.amount) AS amount_total FROM test_startup ts LEFT JOIN update_funding uf ON uf.sta
-//rtup_name = ts.official_email_address WHERE ts.basic->>'program' = 'Pratham' GROUP BY ts.official_email_address;
-
-
-            //startup count
-            ///Askshar Data ENds
-            Promise.all([TotalCountStartups, ActiveStartups, DroppedStartups, GraduatedStartups, Manufacturing, Services, Edtech, Agriculture, Hardware, Energy, Ecommerce, Social, SoftwareData, EnergyPratham, ManufacturingPratham, HardwarePratham, SoftwareDataPratham, EdtechPratham, ServicesPratham, AgriculturePratham, EcommercePratham, SocialPratham, 
-                ManufacturingAkshar,
-                ServicesAkshar,
-                EdtechAkshar,
-                AgricultureAkshar,
-                HardwareAkshar,
-                EnergyAkshar,
-                EcommerceAkshar,
-                SocialAkshar,
-                SoftwareDataAkshar,
-                PrathamTeamsCount,
-                AksharTeamsCount,
-                UpdatedFunds,
-                UpdateFundsUtilized,
-                TotalPrathamTeamFundsDistributed,
-                TotalAksharTeamFundsDistributed,
-                AksharManufacturingTotalFunds,
-                AksharEnergyTotalFunds,
-                AksharHardwareTotalFunds,
-                AksharSoftwareTotalFunds,
-                AksharEdtechTotalFunds,
-                AksharServicesTotalFunds,
-                AksharAgricultureTotalFunds,
-                AksharEcommerceTotalFunds,
-                AksharSocialTotalFunds,
-                PrathamManufacturingTotalFunds,
-                PrathamEnergyTotalFunds,
-                PrathamHardwareTotalFunds,
-                PrathamSoftwareTotalFunds,
-                PrathamEdtechTotalFunds,
-                PrathamServicesTotalFunds,
-                PrathamAgricultureTotalFunds,
-                PrathamEcommerceTotalFunds,
-                PrathamSocialTotalFunds,
-                TotalMentoringSessions,
-                PrathamFundUtilized,
-                AksharFundUtilized,
-                MenWomen,
-                Women,
-                ManufacturingMentorScheduleCount,
-                EnergyMentorScheduleCount,
-                HardwareMentorScheduleCount,
-                SoftwareMentorScheduleCount,
-                EdtechMentorScheduleCount,
-                ServiceMentorScheduleCount,
-                AgricultureMentorScheduleCount,
-                EcommerceMentorScheduleCount,
-                SocialMentorScheduleCount
-                ])
-            .then(([TotalCountStartups, ActiveStartups, DroppedStartups, GraduatedStartups, Manufacturing, Services, Edtech, Agriculture, Hardware, Energy, Ecommerce, Social, SoftwareData, EnergyPratham, ManufacturingPratham, HardwarePratham, SoftwareDataPratham, EdtechPratham, ServicesPratham, AgriculturePratham, EcommercePratham, SocialPratham,
-                ManufacturingAkshar,
-                ServicesAkshar,
-                EdtechAkshar,
-                AgricultureAkshar,
-                HardwareAkshar,
-                EnergyAkshar,
-                EcommerceAkshar,
-                SocialAkshar,
-                SoftwareDataAkshar,
-                PrathamTeamsCount,
-                AksharTeamsCount,
-                UpdatedFunds,
-                UpdateFundsUtilized,
-                TotalPrathamTeamFundsDistributed,
-                TotalAksharTeamFundsDistributed,
-                AksharManufacturingTotalFunds,
-                AksharEnergyTotalFunds,
-                AksharHardwareTotalFunds,
-                AksharSoftwareTotalFunds,
-                AksharEdtechTotalFunds,
-                AksharServicesTotalFunds,
-                AksharAgricultureTotalFunds,
-                AksharEcommerceTotalFunds,
-                AksharSocialTotalFunds,
-                PrathamManufacturingTotalFunds,
-                PrathamEnergyTotalFunds,
-                PrathamHardwareTotalFunds,
-                PrathamSoftwareTotalFunds,
-                PrathamEdtechTotalFunds,
-                PrathamServicesTotalFunds,
-                PrathamAgricultureTotalFunds,
-                PrathamEcommerceTotalFunds,
-                PrathamSocialTotalFunds,
-                TotalMentoringSessions,
-                PrathamFundUtilized,
-                AksharFundUtilized,
-                MenWomen,
-                Women,
-                ManufacturingMentorScheduleCount,
-                EnergyMentorScheduleCount,
-                HardwareMentorScheduleCount,
-                SoftwareMentorScheduleCount,
-                EdtechMentorScheduleCount,
-                ServiceMentorScheduleCount,
-                AgricultureMentorScheduleCount,
-                EcommerceMentorScheduleCount,
-                SocialMentorScheduleCount
-            ]) => {
-                resolve({
-                    TotalCountStartups,
-                    ActiveStartups,
-                    DroppedStartups,
-                    GraduatedStartups,
-                    Manufacturing,
-                    Services,
-                    Edtech,
-                    Agriculture,
-                    Hardware,
-                    Energy,
-                    Ecommerce,
-                    Social,
-                    SoftwareData,
-                    EnergyPratham,
-                    ManufacturingPratham,
-                    HardwarePratham,
-                    SoftwareDataPratham,
-                    EdtechPratham,
-                    ServicesPratham,
-                    AgriculturePratham,
-                    EcommercePratham,
-                    SocialPratham,
-                    ManufacturingAkshar,
-                    ServicesAkshar,
-                    EdtechAkshar,
-                    AgricultureAkshar,
-                    HardwareAkshar,
-                    EnergyAkshar,
-                    EcommerceAkshar,
-                    SocialAkshar,
-                    SoftwareDataAkshar,
-                    PrathamTeamsCount,
-                    AksharTeamsCount,
-                    UpdatedFunds,
-                    UpdateFundsUtilized,
-                    TotalPrathamTeamFundsDistributed,
-                    TotalAksharTeamFundsDistributed,
-                    AksharManufacturingTotalFunds,
-                    AksharEnergyTotalFunds,
-                    AksharHardwareTotalFunds,
-                    AksharSoftwareTotalFunds,
-                    AksharEdtechTotalFunds,
-                    AksharServicesTotalFunds,
-                    AksharAgricultureTotalFunds,
-                    AksharEcommerceTotalFunds,
-                    AksharSocialTotalFunds,
-                    PrathamManufacturingTotalFunds,
-                    PrathamEnergyTotalFunds,
-                    PrathamHardwareTotalFunds,
-                    PrathamSoftwareTotalFunds,
-                    PrathamEdtechTotalFunds,
-                    PrathamServicesTotalFunds,
-                    PrathamAgricultureTotalFunds,
-                    PrathamEcommerceTotalFunds,
-                    PrathamSocialTotalFunds,
-                    TotalMentoringSessions,
-                    PrathamFundUtilized,
-                    AksharFundUtilized,
-                    MenWomen,
-                    Women,
-                    ManufacturingMentorScheduleCount,
-                    EnergyMentorScheduleCount,
-                    HardwareMentorScheduleCount,
-                    SoftwareMentorScheduleCount,
-                    EdtechMentorScheduleCount,
-                    ServiceMentorScheduleCount,
-                    AgricultureMentorScheduleCount,
-                    EcommerceMentorScheduleCount,
-                    SocialMentorScheduleCount
-                });
-            })
-            .catch((err) => {
-                reject(err)
-            });
-    })  
-}
-const FetchStartupsModel = async() => {
-    return new Promise((resolve, reject) => {
-        client.query("SELECT basic::json->'startup_name' AS startup_name, startup_status as status, basic::json->'startup_program' as startup_sector, basic::json->'program' as program, founder::json->'founder_name' as founder_name, official::json->'official_email_address' AS email_address FROM test_startup;", (err, result) => {
-            if(err)
-            {   
-                reject(err);
-            }
-            else
-            {
-                resolve(result);
-            }
-        })
-    })
-} 
-const UpdateStartupStatusModel = async(startup_status, official_email_address) => {
-    return new Promise((resolve, reject) => {
-        client.query("UPDATE test_startup SET startup_status=$1 WHERE official_email_address=$2", [startup_status, official_email_address], (err, result) => {
-            if(err)
-            {
-                reject(err)
-            }
-            else 
-            {
-                resolve(result)
-            }
-        })
-    })
-}
-const IndividualStarupModel = async(id) => {
-    const GeneralData = () => {
-        return new Promise((resolveQuery2, rejectQuery2) => {
-            client.query(`select t.basic, t.official, t.founder, t.description, t.official_email_address, t.startup_status, u.startup_name, u.amount, u.funding_type from test_startup t LEFT JOIN update_funding u ON t.official_email_address = u.startup_name WHERE t.official_email_address=$1`, [id], (err, result) => { //select t.basic, t.official_email_address, u.startup_name, u.amount, u.funding_type from test_startup t JOIN update_funding u ON t.official_email_address = u.startup_name;
-                if(err)
-                {
-                    //SELECT * FROM test_startup WHERE official_email_address=$1
-                    rejectQuery2(err)
-                }
-                else
-                {
-                    resolveQuery2(result)
-                }
-            })
-        })
-    }
-
-    const FundingDistributes = () => {
-        return new Promise((resolveQuery1, rejectQuery1) => {
-            client.query("select u.funding_type, SUM(CAST(u.amount AS INTEGER)), u.startup_name from update_funding u JOIN test_startup t ON u.startup_name = t.official_email_address WHERE funding_type='Funding Utilized' AND startup_name=$1 GROUP BY u.funding_type, u.startup_name;", [id], (err, result) => {
-                if(err)
-                {     
-                    rejectQuery1(err)
-                }
-                else 
-                {
-                    resolveQuery1(result);
-                }
-            })
-        })
-    }
-
-    return new Promise((resolve, reject) => {
-        Promise.all([GeneralData(), FundingDistributes()])
-            .then(([generalData, fundingDistributes]) => {
-                resolve({
-                    GeneralData: generalData,
-                    FundingDistributes: fundingDistributes,
-                });
-            })
-            .catch((err) => {
-                reject(err);
-            });
+const client = require("../utils/conn");
+const generatePassword = require("../utils/GeneratePassword");
+var md5 = require("md5");
+const { v4: uuidv4 } = require("uuid");
+
+const AddStartupModel = async (
+  basic,
+  official,
+  founder,
+  description,
+  official_email_address
+) => {
+  return new Promise((resolve, reject) => {
+    // Determine startup_status based on basic.program
+    const status =
+      basic.program === "Dropped out" || basic.program === "Graduated"
+        ? "Inactive"
+        : "Active";
+
+    client.query(
+      "INSERT INTO test_startup(basic, official, founder, description, official_email_address, startup_status) VALUES($1, $2, $3, $4, $5, $6) RETURNING user_id",
+      [basic, official, founder, description, official_email_address, status],
+      (err, result) => {
+        if (err) {
+          reject( err );
+        } else {
+          resolve(result)
+        }
+      }
+    );
+  });
+};
+
+const CheckUserByEmail = async (email) => {
+  const query =
+    "SELECT * FROM test_startup WHERE official ->>'official_email_address' = $1";
+  const result = await client.query(query, [email]);
+  return result.rows[0] || null;
+};
+
+// const AddStartupModel = async(basic, official, founder, description, official_email_address) => {
+//     return new Promise((resolve, reject) => {
+//         // First check if startup already exists
+//         client.query(
+//             "SELECT * FROM test_startup WHERE official_email_address = $1 OR (basic->>'startup_name') = $2",
+//             [official_email_address, basic.startup_name],
+//             (err, existingResult) => {
+//                 if(err) {
+//                     console.error("Error checking existing startup:", err);
+//                     reject(err);
+//                     return;
+//                 }
+
+//                 if(existingResult.rows.length > 0) {
+//                     reject(new Error("Startup with this email or name already exists"));
+//                     return;
+//                 }
+
+//                 // If no existing startup, insert new one
+//                 client.query(
+//                     "INSERT INTO test_startup(basic, official, founder, description, official_email_address, startup_status) VALUES($1, $2, $3, $4, $5, $6) RETURNING *",
+//                     [basic, official, founder, description, official_email_address, 'Active'],
+//                     (insertErr, insertResult) => {
+//                         if(insertErr) {
+//                             console.error("Error inserting startup:", insertErr);
+//                             reject(insertErr);
+//                         } else {
+//                             resolve(insertResult.rows[0]);
+//                         }
+//                     }
+//                 );
+//             }
+//         );
+//     });
+// }
+
+const CreateTeamUser = (
+  user_mail,
+  user_password,
+  user_name,
+  user_contact,
+  personal_email,
+  startup_id
+) => {
+  const userId = uuidv4();
+  return new Promise((resolve, reject) => {
+    client.query(
+      "INSERT INTO user_data(user_mail, user_password, user_hash, user_department, user_role, user_name, user_contact, personal_email,startup_id) VALUES($1, $2, $3, $4, $5, $6, $7, $8,$9)",
+      [
+        user_mail,
+        user_password,
+        md5(user_mail),
+        "student",
+        "5",
+        user_name,
+        user_contact,
+        personal_email,
+        startup_id
+      ],
+      (err, result) => {
+        if (err) reject(err);
+        else resolve(result);
+      }
+    );
+  });
+};
+
+const StartupDataModel = async () => {
+  return new Promise((resolve, reject) => {
+    const TotalCountStartups = new Promise((resolveQuery1, rejectQuery1) => {
+      client.query(
+        "SELECT COUNT(*) AS startup_total FROM test_startup where isdeleted ='f' ",
+        (err, result) => {
+          if (err) {
+            rejectQuery1(err);
+          } else {
+            resolveQuery1(result);
+          }
+        }
+      );
     });
-}
+    const ActiveStartups = new Promise((resolveQuery2, rejectQuery2) => {
+      client.query(
+        "SELECT COUNT(startup_status) AS active FROM test_startup WHERE startup_status='Active' AND isdeleted ='f' ",
+        (err, result) => {
+          if (err) {
+            rejectQuery2(err);
+          } else {
+            resolveQuery2(result);
+          }
+        }
+      );
+    });
+    const DroppedStartups = new Promise((resolveQuery3, rejectQuery3) => {
+      client.query(
+        "SELECT COUNT(*) AS program_count FROM test_startup WHERE basic->>'program'='Dropped out' AND isdeleted ='f'",
+        (err, result) => {
+          if (err) {
+            rejectQuery3(err);
+          } else {
+            resolveQuery3(result);
+          }
+        }
+      );
+    });
+
+    const GraduatedStartups = new Promise((resolveQuery3, rejectQuery3) => {
+      client.query(
+        "SELECT COUNT(*) AS program_count FROM test_startup WHERE basic->>'program' = 'Graduated' AND isdeleted ='f'",
+        (err, result) => {
+          if (err) {
+            rejectQuery3(err);
+          } else {
+            resolveQuery3(result);
+          }
+        }
+      );
+    });
+    const AksharStartups = new Promise((resolveQuery3, rejectQuery3) => {
+      client.query(
+        "SELECT COUNT(*) AS program_count FROM test_startup WHERE basic->>'program' = 'Akshar' AND isdeleted ='f'",
+        (err, result) => {
+          if (err) {
+            rejectQuery3(err);
+          } else {
+            resolveQuery3(result);
+          }
+        }
+      );
+    });
+    const PrathamStartups = new Promise((resolveQuery3, rejectQuery3) => {
+      client.query(
+        "SELECT COUNT(*) AS program_count FROM test_startup WHERE basic->>'program' = 'Pratham' AND isdeleted ='f'",
+        (err, result) => {
+          if (err) {
+            rejectQuery3(err);
+          } else {
+            resolveQuery3(result);
+          }
+        }
+      );
+    });
+
+    const IITMIC = new Promise((resolveQuery3, rejectQuery3) => {
+      client.query(
+        "SELECT COUNT(*) AS program_count FROM test_startup WHERE TRIM(both ' ' FROM basic->>'graduated_to') = 'IITM-IC';",
+        (err, result) => {
+          if (err) {
+            rejectQuery3(err);
+          } else {
+            resolveQuery3(result);
+          }
+        }
+      );
+    });
+
+    const PIA = new Promise((resolveQuery3, rejectQuery3) => {
+      client.query(
+        "SELECT COUNT(*) AS program_count FROM test_startup WHERE TRIM(both ' ' FROM official->>'pia_state') = 'Signed';",
+        (err, result) => {
+          if (err) {
+            rejectQuery3(err);
+          } else {
+            resolveQuery3(result);
+          }
+        }
+      );
+    });
+    Promise.all([
+      TotalCountStartups,
+      ActiveStartups,
+      DroppedStartups,
+      GraduatedStartups,
+      AksharStartups,
+      PrathamStartups,
+      IITMIC,
+      PIA,
+    ])
+      .then(
+        ([
+          TotalCountStartups,
+          ActiveStartups,
+          DroppedStartups,
+          GraduatedStartups,
+          AksharStartups,
+          PrathamStartups,
+          IITMIC,
+          PIA,
+        ]) => {
+          resolve({
+            TotalCountStartups,
+            ActiveStartups,
+            DroppedStartups,
+            GraduatedStartups,
+            AksharStartups,
+            PrathamStartups,
+            IITMIC,
+            PIA,
+          });
+        }
+      )
+      .catch((err) => {
+        reject(err);
+      });
+  });
+};
+
+const FetchStartupsModel = async () => {
+  return new Promise((resolve, reject) => {
+    client.query(
+      "SELECT user_id AS startup_id, basic::jsonb->>'profile_image' AS profile_image, basic::jsonb->>'startup_name' AS startup_name, startup_status AS startup_status,  basic::jsonb->>'startup_domain' AS startup_domain, basic::jsonb->>'startup_sector' AS startup_sector, basic::jsonb->>'startup_Community' AS startup_Community, basic::jsonb->>'startup_type' AS startup_type, basic::jsonb->>'startup_technology' AS startup_technology, basic::jsonb->>'startup_cohort' AS startup_cohort, basic::jsonb->>'startup_yog' AS startup_yog, basic::jsonb->>'graduated_to' AS graduated_to, basic::jsonb->>'graduated_to_other' AS graduated_to_other, basic::jsonb->>'program' AS program, official::jsonb->>'official_email_address' AS email_address, official::jsonb->>'official_contact_number' AS official_contact_number,  official::jsonb->>'role_of_faculty' AS role_of_faculty, official::jsonb->>'cin_registration_number' AS cin_registration_number,official::jsonb->>'funding_stage' AS funding_stage,  official::jsonb->>'website_link' AS website_link, official::jsonb->>'dpiit_number' AS dpiit, official::jsonb->>'official_registered' AS register, official::jsonb->>'linkedin_id' AS linkedin, official::jsonb->>'mentor_associated' AS mentor_associated, official::jsonb->>'pia_state' AS pia_state, official::jsonb->>'scheme' AS scheme, founder::jsonb->>'founder_name' AS founder_name, founder::jsonb->>'founder_email' AS founder_email, founder::jsonb->>'founder_number' AS founder_number, founder::jsonb->>'academic_background' AS academic_background,  founder::jsonb->>'founder_gender' AS founder_gender, description::jsonb->>'logo' AS logo, description::jsonb->>'startup_description' AS startup_description FROM test_startup WHERE isdeleted = 'f';",
+      (err, result) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(result);
+        }
+      }
+    );
+  });
+};
+const UpdateStartupStatusModel = async (
+  startup_status,
+  official_email_address
+) => {
+  return new Promise((resolve, reject) => {
+    client.query(
+      "UPDATE test_startup SET startup_status=$1 WHERE official_email_address=$2",
+      [startup_status, official_email_address],
+      (err, result) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(result);
+        }
+      }
+    );
+  });
+};
+const IndividualStarupModel = async (id) => {
+  const GeneralData = () => {
+    return new Promise((resolveQuery2, rejectQuery2) => {
+      client.query(
+        `select t.basic, t.official, t.founder, t.description, t.official_email_address, t.startup_status, u.startup_name, u.amount, u.funding_type from test_startup t LEFT JOIN update_funding u ON t.official_email_address = u.startup_name WHERE t.official_email_address=$1`,
+        [id],
+        (err, result) => {
+          //select t.basic, t.official_email_address, u.startup_name, u.amount, u.funding_type from test_startup t JOIN update_funding u ON t.official_email_address = u.startup_name;
+          if (err) {
+            //SELECT * FROM test_startup WHERE official_email_address=$1
+            rejectQuery2(err);
+          } else {
+            resolveQuery2(result);
+          }
+        }
+      );
+    });
+  };
+
+  const FundingDistributes = () => {
+    return new Promise((resolveQuery1, rejectQuery1) => {
+      client.query(
+        "select u.funding_type, SUM(CAST(u.amount AS INTEGER)), u.startup_name from update_funding u JOIN test_startup t ON u.startup_name = t.official_email_address WHERE funding_type='Funding Utilized' AND startup_name=$1 GROUP BY u.funding_type, u.startup_name;",
+        [id],
+        (err, result) => {
+          if (err) {
+            rejectQuery1(err);
+          } else {
+            resolveQuery1(result);
+          }
+        }
+      );
+    });
+  };
+
+  return new Promise((resolve, reject) => {
+    Promise.all([GeneralData(), FundingDistributes()])
+      .then(([generalData, fundingDistributes]) => {
+        resolve({
+          GeneralData: generalData,
+          FundingDistributes: fundingDistributes,
+        });
+      })
+      .catch((err) => {
+        reject(err);
+      });
+  });
+};
 
 const TopStartupsSectors = (id) => {
-    return new Promise((resolve, reject) => {
-        client.query("select t.basic->>'startup_program' as sector, SUM(uf.amount), uf.funding_type AS funding_type from test_startup t JOIN update_funding uf ON uf.startup_name=t.official_email_address WHERE funding_type='Funding Distributed' GROUP BY t.basic->>'startup_program', uf.funding_type ORDER by sum DESC LIMIT $1;", [id], (err, result) => {
-            if(err)
-            {
-                reject(err)
-            }
-            else
-            {
-                resolve(result)
-            }
-        })
-    })
-}
-module.exports = {AddStartupModel, StartupDataModel, FetchStartupsModel, UpdateStartupStatusModel, IndividualStarupModel, CreateTeamUser, TopStartupsSectors};
+  return new Promise((resolve, reject) => {
+    client.query(
+      "select t.basic->>'startup_program' as sector, SUM(uf.amount), uf.funding_type AS funding_type from test_startup t JOIN update_funding uf ON uf.startup_name=t.official_email_address WHERE funding_type='Funding Distributed' GROUP BY t.basic->>'startup_program', uf.funding_type ORDER by sum DESC LIMIT $1;",
+      [id],
+      (err, result) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(result);
+        }
+      }
+    );
+  });
+};
+const StartupDeleteData = async (user_id) => {
+  try {
+    await client.query('BEGIN'); // Start transaction
+
+    // Soft delete (Flag)
+    await client.query(
+      `UPDATE test_startup 
+       SET isdeleted = TRUE
+       WHERE user_id = $1;`,
+      [user_id]
+    );
+
+    // Delete related records from user_data
+    await client.query(
+      `DELETE FROM user_data 
+       WHERE startup_id = $1;`,  
+      [user_id]
+    );
+
+    await client.query('COMMIT'); // Apply all changes
+    return { success: true, message: 'Startup and related user data deleted successfully.' };
+
+  } catch (err) {
+    await client.query('ROLLBACK'); // Undo changes if error
+    throw err;
+  }
+};
+
+const UpdateStartupAboutModel = async (data) => {
+  const { basic, email_address, description, startup_status } = data;
+
+  const query = `
+    UPDATE test_startup
+    SET basic = jsonb_set(
+                  jsonb_set(
+                    jsonb_set(
+                      jsonb_set(
+                        basic,
+                        '{program}', to_jsonb($1::text), true
+                      ),
+                      '{startup_domain}', to_jsonb($2::text), true
+                    ),
+                    '{startup_sector}', to_jsonb($3::text), true
+                  ),
+                  '{startup_type}', to_jsonb($4::text), true
+                ),
+        description = jsonb_set(
+                        description,
+                        '{startup_description}', to_jsonb($5::text), true
+                      ),
+              startup_status = $6
+    WHERE official->>'official_email_address' = $7;
+  `;
+
+  const values = [
+    basic.program || "",
+    basic.startup_domain || "",
+    basic.startup_sector || "",
+    basic.startup_type || "",
+    description.startup_description || "",
+    startup_status || "",
+    email_address,
+  ];
+
+  return new Promise((resolve, reject) => {
+    client.query(query, values, (err, result) => {
+      if (err) {
+        reject(err);
+      } else {
+        resolve(result);
+      }
+    });
+  });
+};
+
+// const UpdateStartupPersonalInfoModel = async (data) => {
+//   const { basic, official, startup_status, startup_id } = data;
+//   const query = `
+//    UPDATE test_startup
+//     SET
+//       basic = jsonb_set(
+//                   basic,
+//                   '{startup_name}', to_jsonb($1::text), true
+//                 ),
+//         startup_status = $2,
+//       official = jsonb_set(
+//                    jsonb_set(
+//                      jsonb_set(
+//                      jsonb_set(
+//                        official,
+//                        '{official_contact_number}', to_jsonb($3::text), true
+//                      ),
+//                      '{linkedin_id}', to_jsonb($4::text), true
+//                    ),
+//                    '{website_link}', to_jsonb($5::text), true
+//                  ),
+//                  '{official_email_address}', to_jsonb($6::text), true
+// )
+//     WHERE user_id = $7
+//   `;
+
+//   const values = [
+//     basic.startup_name || "",
+//     startup_status || "",
+//     official.official_contact_number || "",
+//     official.linkedin_id || "",
+//     official.website_link || "",
+//     official.email_address || "",
+//     startup_id,
+//   ];
+//   return new Promise((resolve, reject) => {
+//     client.query(query, values, (err, result) => {
+//       if (err) {
+//         console.error("DB Error:", err);
+//         reject(err);
+//       } else {
+//         resolve(result);
+//       }
+//     });
+//   });
+// };
+
+//working version with role check
+// const UpdateStartupPersonalInfoModel = async (data, requester) => {
+
+//   const { basic, official, startup_status, startup_id } = data;
+// const query = `
+//     UPDATE test_startup
+//     SET
+//       basic = jsonb_set(
+//                 jsonb_set(
+//                   basic,
+//                   '{startup_name}', to_jsonb($1::text), true
+//                 ),
+//                 '{profile_image}', to_jsonb($2::text), true
+//               ),
+//       startup_status = $3,
+//       official = jsonb_set(
+//                   jsonb_set(
+//                     jsonb_set(
+//                       jsonb_set(
+//                         official,
+//                         '{official_contact_number}', to_jsonb($4::text), true
+//                       ),
+//                       '{linkedin_id}', to_jsonb($5::text), true
+//                     ),
+//                     '{website_link}', to_jsonb($6::text), true
+//                   ),
+//                   '{official_email_address}', to_jsonb($7::text), true
+//                 )
+//     WHERE user_id = $8
+//   `;
+
+//   const values = [
+//     basic.startup_name || "",
+//     basic.profile_image || "",   // <-- NEW
+//     startup_status || "",
+//     official.official_contact_number || "",
+//     official.linkedin_id || "",
+//     official.website_link || "",
+//     official.email_address || "",
+//     startup_id,
+//   ];
+//   return new Promise((resolve, reject) => {
+//     const isPrivileged = [101].includes(Number(requester.role));
+//     if(!isPrivileged) {
+//         return resolve({
+//             status: 'Unauthorized',
+//             code: 401,
+//             message: 'You do not have permission to access this course data.'
+//         });
+//     }
+//     client.query(query, values, (err, result) => {
+//       if (err) {
+//         console.error("DB Error:", err);
+//         reject(err);
+//       } else {
+//         resolve(result);
+//       }
+//     });
+//   });
+// };
+
+const UpdateStartupPersonalInfoModel = async (data, requester) => {
+  const { basic, official, startup_status, startup_id } = data;
+
+  const query = `
+    UPDATE test_startup
+    SET
+      basic = jsonb_set(
+                jsonb_set(
+                  basic,
+                  '{startup_name}', to_jsonb($1::text), true
+                ),
+                '{profile_image}', to_jsonb($2::text), true
+              ),
+      startup_status = $3,
+      official = jsonb_set(
+                  jsonb_set(
+                    jsonb_set(
+                      jsonb_set(
+                        official,
+                        '{official_contact_number}', to_jsonb($4::text), true
+                      ),
+                      '{linkedin_id}', to_jsonb($5::text), true
+                    ),
+                    '{website_link}', to_jsonb($6::text), true
+                  ),
+                  '{official_email_address}', to_jsonb($7::text), true
+                )
+    WHERE user_id = $8
+  `;
+
+  const values = [
+    basic.startup_name,
+    basic.profile_image,
+    startup_status,
+    official.official_contact_number,
+    official.linkedin_id,
+    official.website_link,
+    official.email_address,
+    startup_id,
+  ];
+
+  return new Promise((resolve, reject) => {
+    // -------- Role-based Access ----------
+    const isPrivileged = [2].includes(Number(requester?.role));
+
+    if (!isPrivileged) {
+      return resolve({
+        status: "Unauthorized",
+        code: 401,
+        message: "You do not have permission to update this startup.",
+      });
+    }
+
+    // -------- Execute DB Query ----------
+    client.query(query, values, (err, result) => {
+      if (err) {
+        console.error("DB Error:", err);
+        reject(err);
+      } else {
+        resolve(result);
+      }
+    });
+  });
+};
+
+const UpdateStartupMentorDetailsModel = async (data) => {
+  const { basic, official } = data;
+  const query = `
+   UPDATE test_startup
+SET
+  basic = jsonb_set(
+            jsonb_set(
+              jsonb_set(
+                jsonb_set(
+                  jsonb_set(
+                    basic,
+                    '{startup_yog}', to_jsonb($1::text), true
+                  ),
+                  '{graduated_to}', to_jsonb($2::text), true
+                ),
+                '{startup_cohort}', to_jsonb($3::text), true
+              ),
+              '{startup_industry}', to_jsonb($4::text), true
+            ),
+            '{startup_technology}', to_jsonb($5::text), true
+          ),
+  official = jsonb_set(
+                 jsonb_set(
+                   jsonb_set(
+                     jsonb_set(
+                       jsonb_set(
+                         jsonb_set(
+                           jsonb_set(
+                             jsonb_set(
+                               official,
+                               '{scheme}', to_jsonb($6::text), true
+                             ),
+                             '{pia_state}', to_jsonb($7::text), true
+                           ),
+                           '{dpiit_number}', to_jsonb($8::text), true
+                         ),
+                         '{role_of_faculty}', to_jsonb($9::text), true
+                       ),
+                       '{funding_stage}', to_jsonb($10::text), true
+                     ),
+                     '{mentor_associated}', to_jsonb($11::text), true
+                   ),
+                   '{official_registered}', to_jsonb($12::text), true
+                 ),
+                 '{cin_registration_number}', to_jsonb($13::text), true
+               )
+WHERE official->>'official_email_address' = $14;
+  `;
+
+  const values = [
+    basic.startup_yog,
+    basic.graduated_to,
+    basic.startup_cohort,
+    basic.startup_industry,
+    basic.startup_technology,
+    official.scheme,
+    official.pia_state,
+    official.dpiit_number,
+    official.role_of_faculty,
+    official.funding_stage,
+    official.mentor_associated,
+    official.official_registered,
+    official.cin_registration_number,
+    official.official_email_address,
+  ];
+
+  return new Promise((resolve, reject) => {
+    client.query(query, values, (err, result) => {
+      if (err) {
+        console.error("DB Error:", err);
+        reject(err);
+      } else {
+        resolve(result);
+      }
+    });
+  });
+};
+
+const AddAwardModel = async (
+  official_email_address,
+  award_name,
+  award_org,
+  prize_money,
+  awarded_date,
+  document_url,
+  description,
+  startup_id
+) => {
+  return new Promise((resolve, reject) => {
+    client.query(
+      `INSERT INTO startup_awards (
+        official_email_address,
+        award_name,
+        award_org,
+        prize_money,
+        awarded_date,
+        document_url,
+        description,
+        startup_id
+      ) VALUES (
+        $1, $2, $3, $4, $5, $6, $7,$8
+      )`,
+      [
+        official_email_address,
+        award_name,
+        award_org,
+        prize_money,
+        awarded_date,
+        document_url,
+        description,
+        startup_id,
+      ],
+      (err, result) => {
+        if (err) {
+          reject({ err });
+        } else {
+          resolve(result);
+        }
+      }
+    );
+  });
+};
+
+const FetchAwardModel = () => {
+  return new Promise((resolve, reject) => {
+    client.query("select * from startup_awards", (err, result) => {
+      if (err) {
+        reject(err);
+      } else {
+        resolve(result);
+      }
+    });
+  });
+};
+
+const UpdateAwardModel = async (
+  award_name,
+  award_org,
+  prize_money,
+  awarded_date,
+  document_url,
+  description,
+  id
+) => {
+  return new Promise((resolve, reject) => {
+    client.query(
+      `UPDATE startup_awards 
+       SET award_name=$1, award_org=$2, prize_money=$3, awarded_date=$4, 
+           document_url=$5, description=$6
+       WHERE id=$7 RETURNING *`,
+      [
+        award_name,
+        award_org,
+        prize_money,
+        awarded_date,
+        document_url,
+        description,
+        id,
+      ],
+      (err, result) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(result.rows[0]);
+        }
+      }
+    );
+  });
+};
+const DeleteAwardModal = (id) => {
+  return new Promise((resolve, reject) => {
+    client.query(
+      "DELETE from startup_awards where id=$1",
+      [id],
+      (err, result) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(result);
+        }
+      }
+    );
+  });
+};
+
+const AddFounderModel = async (startup_id, foundersArray) => {
+  return new Promise((resolve, reject) => {
+    client.query(
+      `UPDATE test_startup
+       SET founder = 
+         CASE 
+           WHEN jsonb_typeof(founder) = 'array' THEN founder || $1::jsonb
+           WHEN founder IS NULL THEN $1::jsonb
+           ELSE jsonb_build_array(founder) || $1::jsonb
+         END
+       WHERE user_id = $2
+       RETURNING founder`,
+      [JSON.stringify(foundersArray), startup_id],
+      (err, result) => {
+        if (err) {
+          console.error("Error in AddFounderModel:", err);
+          reject(err);
+        } else {
+          resolve(result.rows[0]);
+        }
+      }
+    );
+  });
+};
+
+const FetchFounderModel = (userId) => {
+  return new Promise((resolve, reject) => {
+    const query = `
+    SELECT 
+  ts.user_id, 
+  jsonb_build_object(
+    'founder_name', f.value->>'founder_name',
+    'founder_email', f.value->>'founder_email',
+    'founder_number', f.value->>'founder_number',
+    'founder_designation', f.value->>'founder_designation',
+    'founder_id', f.value->>'founder_id'
+  ) AS founder
+FROM test_startup ts,
+     jsonb_array_elements(
+       CASE 
+         WHEN jsonb_typeof(ts.founder) = 'array' THEN ts.founder
+         ELSE jsonb_build_array(ts.founder)
+       END
+     ) AS f(value)
+WHERE ts.user_id = $1
+`;
+    client.query(query, [userId], (err, result) => {
+      if (err) {
+        console.error("Database query failed:", err); // log for debugging
+        reject(new Error("Database query failed"));
+      } else {
+        resolve(result.rows);
+      }
+    });
+  });
+};
+
+const UpdateStartupFounderModel = async (data) => {
+  const { founder } = data;
+  const query = `
+UPDATE test_startup
+SET founder = (
+  SELECT jsonb_agg(
+    CASE
+      WHEN f->>'founder_id' = $5 THEN
+        f || jsonb_build_object(
+               'founder_name', $1::text,
+               'founder_number', $2::text,
+               'founder_designation', $3::text,
+               'founder_email', $4::text
+             )
+      ELSE f
+    END
+  )
+  FROM jsonb_array_elements(
+         CASE 
+           WHEN jsonb_typeof(founder) = 'array' THEN founder
+           ELSE jsonb_build_array(founder)
+         END
+       ) AS f
+)
+WHERE EXISTS (
+  SELECT 1
+  FROM jsonb_array_elements(
+         CASE 
+           WHEN jsonb_typeof(founder) = 'array' THEN founder
+           ELSE jsonb_build_array(founder)
+         END
+       ) AS f2
+  WHERE f2->>'founder_id' = $5
+)
+`;
+  const values = [
+    founder.founder_name || "",
+    founder.founder_number || "",
+    founder.founder_designation || "",
+    founder.founder_email || "",
+    founder.founder_id || "",
+  ];
+  return new Promise((resolve, reject) => {
+    client.query(query, values, (err, result) => {
+      if (err) {
+        console.log(err);
+        reject(err);
+      } else {
+        console.log(result);
+        resolve(result);
+      }
+    });
+  });
+};
+
+module.exports = {
+  AddStartupModel,
+  CheckUserByEmail,
+  UpdateStartupAboutModel,
+  AddAwardModel,
+  FetchAwardModel,
+  UpdateStartupFounderModel,
+  UpdateStartupMentorDetailsModel,
+  UpdateStartupPersonalInfoModel,
+  StartupDataModel,
+  FetchStartupsModel,
+  UpdateStartupStatusModel,
+  IndividualStarupModel,
+  CreateTeamUser,
+  TopStartupsSectors,
+  StartupDeleteData,
+  AddFounderModel,
+  FetchFounderModel,
+  UpdateAwardModel,
+  DeleteAwardModal,
+};
