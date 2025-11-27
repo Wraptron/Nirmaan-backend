@@ -53,8 +53,19 @@ const UpdateMentor = async (req, res) => {
       result,
     });
   } catch (err) {
-    console.error("Error in UpdateMentor:", err);
-    res.status(500).json({ error: "Failed to update Mentor details" });
+   if (
+        err.code === "23505" &&
+        err.constraint === "add_mentor_pkey"
+      ) {
+        return res.status(409).json({ Error: "Email already registered" });
+      }else if (
+        err.code === "22001") {
+        return res
+          .status(413)
+          .json({ Error: "Description cannot exceed 200 words" });
+        }
+        return res.status(500).json({ Error: "Failed to update Mentor details" });
+    console.log(err);
   }
 };
 
