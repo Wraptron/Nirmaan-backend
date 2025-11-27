@@ -4,13 +4,24 @@ const { ExpressValidator, check, checkExact } = require('express-validator');
 const validator = require('validator');
 const EmailValid = require('../../../validation/EmailValid');
 const PhoneNumberValid = require('../../../validation/PhoneNumberValid');
+const { uploadToS3 } = require("../../../utils/s3Upload");
 const AddMentor = async(req, res) => {
     const description = JSON.parse(req.body.description);
     const professional = JSON.parse(req.body.professional);
     const contact = JSON.parse(req.body.contact);
-    const { mentor_name,mentor_logo, mentor_description } = description;
+    const { mentor_name, mentor_description } = description;
     const { years_of_experience, area_of_expertise, current_designation, institution, qualification, year_of_passing_out, startup_associated } = professional;
-    const { contact_number, email_address, linkedIn_ID, password } = contact;
+  const { contact_number, email_address, linkedIn_ID, password } = contact;
+  
+   let mentor_logo_url = null;
+
+   if (req.files?.mentor_logo?.[0]) {
+     mentor_logo_url = await uploadToS3(
+       req.files.mentor_logo[0],
+       "mentor_logo"
+     );
+  }
+
     if (!mentor_name || !contact_number || !email_address || !password) 
     {
         return res.status(400).send('All fields are required');
@@ -26,7 +37,7 @@ const AddMentor = async(req, res) => {
     else {
         try
         {
-            const result = await AddMentorModel(mentor_name,mentor_logo, mentor_description, years_of_experience, area_of_expertise, current_designation, institution, qualification, year_of_passing_out, startup_associated, contact_number, email_address, linkedIn_ID, password);
+            const result = await AddMentorModel(mentor_name,mentor_logo_url, mentor_description, years_of_experience, area_of_expertise, current_designation, institution, qualification, year_of_passing_out, startup_associated, contact_number, email_address, linkedIn_ID, password);
             res.status(200).send(result);
         }
         catch(err)
