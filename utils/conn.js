@@ -5,7 +5,7 @@ const client = new Client({
   host: "localhost",
   user: "postgres",
   port: "5432",
-  password: "1234",
+  password: "2104",
   database: "postgres"
 })
 client.connect(function(err) {
