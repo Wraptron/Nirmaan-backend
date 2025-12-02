@@ -7,94 +7,42 @@ const AddStartupModel = async (
   basic,
   official,
   founder,
-  // team,
-  funding,
-  intellectual_property,
   description,
-  graduation,
-  official_email_address,
-  user_id
+  official_email_address
 ) => {
-  console.log(basic,founder,"ksdjhfkdsjhfsdkjfhasdjkl");
-  
   return new Promise(async (resolve, reject) => {
-    try {
-      // Check for duplicates
-      const check = await client.query(
-        "SELECT user_id FROM test_startup WHERE basic->>'startup_name' = $1",
-        [basic.startup_name.trim()]
-      );
+    const check = await client.query(
+      "SELECT user_id FROM test_startup WHERE basic->>'startup_name' = $1",
+      [basic.startup_name]
+    );
 
-      if (check.rows.length > 0) {
-        // Duplicate found — SKIP inserting
-        return resolve({ 
-          status: "duplicate_skipped", 
-          user_id: check.rows[0].user_id 
-        });
-      }
+    if (check.rows.length > 0) {
+      // Duplicate found — SKIP inserting
+      return resolve({
+        status: "duplicate_skipped",
+        user_id: check.rows[0].user_id,
+      });
+    }
+    // Determine startup_status based on basic.program
+    const status =
+      basic.program === "Dropped out" || basic.program === "Graduated"
+        ? "Inactive"
+        : "Active";
 
-      // Determine startup_status based on basic.program
-      const status =
-        basic.program === "Dropped out" || 
-        basic.program === "Graduated" || 
-        basic.program === "Pratham"
-          ? "Inactive"
-          : "Active";
-   
-          console.log(basic.startup_name,founder.founder_email,founder.founder_name,"56789087689+++++++++++++++++++++++");
-          
-      // Validate required fields
-      // if (!basic.startup_name || !founder.founder_email || !founder.founder_name) {
-        
-        
-      //   return reject(
-      //     new Error("Missing required fields: startup_name, founder_email, or founder_name")
-      //   );
-      // }
-      // Prepare INSERT query with explicit columns
-      const query = `
-        INSERT INTO test_startup(
-          basic, 
-          official, 
-          founder, 
-          description, 
-          official_email_address, 
-          startup_status
-        ) 
-        VALUES($1,$2,$3,$4,$5,$6) 
-      `;
-
-      const values = [
-        JSON.stringify(basic),           // $1
-        JSON.stringify(official),        // $2
-        JSON.stringify(founder),         // $3
-        // JSON.stringify(team),            // $4
-        // JSON.stringify(funding),         // $5
-        // JSON.stringify(intellectual_property), // $6
-        JSON.stringify(description),     // $7
-        // JSON.stringify(graduation),      // $8
-        official_email_address,   // $9
-        status,                          // $10
-        // user_id,                         // $11
-      ];
-
-      client.query(query, values, (err, result) => {
+    client.query(
+      "INSERT INTO test_startup(basic, official, founder, description, official_email_address, startup_status) VALUES($1, $2, $3, $4, $5, $6) RETURNING user_id",
+      [basic, official, founder, description, official_email_address, status],
+      (err, result) => {
         if (err) {
-          console.log("Error inserting startup:", err);
           reject(err);
         } else {
-          resolve({
-            status: "success",
-            // user_id: result.rows[0].user_id,
-            // startup_name: result.rows[].startup_name
-          });
+          resolve(result);
         }
-      });
-    } catch (err) {
-      reject(err);
-    }
+      }
+    );
   });
 };
+
 
 const CheckUserByEmail = async (email) => {
   const query =

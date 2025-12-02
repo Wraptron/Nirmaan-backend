@@ -221,7 +221,7 @@ const FetchStartupData = async (req, res) => {
     const result = await FetchStartupsModel();
     res.status(200).json(result);
   } catch (err) {
-    res.status(500).json(result);
+    res.status(500).json(err);
   }
 };
 
