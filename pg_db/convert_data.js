@@ -2,124 +2,243 @@ const fs = require("fs");
 const csv = require("csv-parser");
 const { AddStartupModel } = require("../model/StartupModel");
 
-// CSV → JSON Mapping Function
-function mapRowToJson(row) {
+// Helper function to clean strings
+function cleanString(value) {
+  return String(value || "").trim();
+}
+
+// Helper function to parse funding values
+function parseFunding(value) {
+  if (!value) return 0;
+  const num = parseFloat(String(value).replace(/[^0-9.-]/g, ""));
+  return isNaN(num) ? 0 : num;
+}
+
+// Helper function to parse CSV lists
+function parseCSVList(value) {
+  if (!value) return [];
+  return String(value)
+    .split(",")
+    .map(item => item.trim())
+    .filter(item => item.length > 0);
+}
+
+// Helper to safely parse integers
+function parseIntSafe(value, defaultVal = 0) {
+  const parsed = parseInt(value, 10);
+  return isNaN(parsed) ? defaultVal : parsed;
+}
+
+// CSV → JSON mapping
+function mapRowToJson(row, userId) {
+  const founderEmail = cleanString(
+    row["Personal Email Id"] || row["Institute / Smail Id"] || ""
+  );
+
+  const contactNum = cleanString(row["Contact Number"]);
+  const startupName = cleanString(row["Name of Startup"]);
+
   return {
     basic: {
-      startup_name: row["Name of Startup"],
-      startup_type: row["Type"] || "",
-      startup_cohort: row["Cohort"] || "",
-      startup_domain: row["Domain"],
-      startup_sector: row["Sector"],
-      startup_industry: row["Industry"] || "",
-      startup_Community: row["Community"],
-      startup_technology: row["Technology"] || "",
-      program: row["Phase"],
+      startup_name: startupName,
+      startup_cohort: cleanString(row["Cohort"]),
+      startup_domain: cleanString(row["Domain"]),
+      startup_sector: cleanString(row["Sector"]),
+      startup_community: cleanString(row["Community"]),
+      program: cleanString(row["Phase"]),
+      status: cleanString(row["Status"]),
+      startup_technology: cleanString(row["Technology"])
     },
+
     official: {
-      password: "",
-      pia_state: row["PIA State"] || "",
-      linkedin_id: row["LinkedIn ID"] || "",
-      dpiit_number: row["DPIIT Number"] || "",
-      website_link: row["Website"] || "",
-      funding_stage: row["Funding Stage"] || "",
-      role_of_faculty: row["Faculty Involved"] || "",
-      mentor_associated: row["Mentor"] || "",
-      official_registered: row["Official Registered"] || "",
-      official_email_address:
-        row["Personal Email Id"] ?? "uttamsharma.867@gmail.com",
-      cin_registration_number: row["CIN Number"] || "",
-      official_contact_number: row["Contact Number"],
+      official_email_address: founderEmail,
+      official_contact_number: contactNum,
+      official_registered:
+        cleanString(row["Officially Registered"]).toLowerCase() === "yes",
+      cin_registration_number: cleanString(row["CIN/Registration Number"]),
+      dpiit_number: cleanString(row["DPIIT Number"]),
+      pia_signed: cleanString(row["PIA Signed"]),
+      faculty_involved: cleanString(row["Faculty Involved"]),
+      website_link: cleanString(row["Website"] || ""),
+      funding_stage: cleanString(row["Fund Source"]),
+      mentor_associated: cleanString(row["Mentors"]),
+      role_of_faculty: cleanString(row["Role of Faculty"])
     },
-    official_email_address:
-      row["Personal Email Id"] ?? "uttamsharma.867@gmail.com",
+
     founder: {
-      founder_id: row["Founder ID"] || "",
-      linkedInid: row["Founder LinkedIn"] || "",
-      founder_name: row["Founder PoC"],
-      founder_email: row["Personal Email Id"],
-      founder_gender: row["Gender"] || "",
-      founder_number: row["Contact Number"],
-      founder_student_id: row["Roll Number"] || "",
-      academic_background: row["Academic Background"],
+      founder_name: cleanString(row["Founder PoC"]),
+      founder_student_id: cleanString(row["Roll Number"]),
+      personal_email: founderEmail,
+      founder_email: founderEmail,
+      founder_number: contactNum,
+      academic_background: cleanString(row["Academic Background"]),
+      university: cleanString(row["University"]),
+      institute_email: cleanString(row["Institute / Smail Id"])
     },
+
+    funding: {
+      fund_source: cleanString(row["Fund Source"]),
+      fund_allocated: parseFunding(row["Fund allocated"]),
+      fund_used: parseFunding(row["Fund used"]),
+      balance_fund: parseFunding(row["Balance Fund Left"]),
+      external_funds_received: parseFunding(row["External Funds Received"]),
+      external_funds_used: parseFunding(row["External Funds Used"])
+    },
+
+    intellectual_property: {
+      patent: parseIntSafe(row["Patent"], 0),
+      design: parseIntSafe(row["Design"], 0),
+      trademark: parseIntSafe(row["Trademark"], 0),
+      copyright: parseIntSafe(row["Copyright"], 0)
+    },
+
     description: {
-      logo: {},
-      logo_image: "",
-      startup_description: row["Brief description"] || "",
+      achievements: cleanString(row["Achievements"]),
+      about: cleanString(row["Brief description"]),
+      pitch_deck_url: cleanString(row["Pitch Deck"])
     },
-    startup_status: row["Status"],
-    user_id: row["User ID"] || "",
-    isdeleted: "f",
+
+    graduation: {
+      graduated_to: cleanString(row["Graduated TO"]),
+      year_of_graduation: parseIntSafe(row["Year Of Graduation"], 0)
+    },
+
+    official_email_address: founderEmail,
+    startup_status: cleanString(row["Status"]),
+    user_id: userId
   };
 }
 
-// ====== CSV READING & DB INSERTION ======
-let rowCount = 0;
-let totalCount = 0;
-let rows = [];
+// CSV IMPORT
+async function importStartupsFromCSV(filePath = "startups.csv", userId = "admin") {
+  let rowCount = 0;
+  let successCount = 0;
+  let duplicateCount = 0;
+  let errorCount = 0;
 
-fs.createReadStream("startups.csv")
-  .pipe(csv())
-  .on("data", (row) => {
-    totalCount++;
-    rows.push(row);
-  })
-  .on("end", async () => {
-    console.log("📥 CSV Loaded. Starting insert...");
+  const results = [];
+  const errors = [];
 
-    // ⭐ SKIP FIRST ROW (csv-parser already handles headers, so this may be unnecessary)
-    // if (rowCount === 1) {
-    //   console.log("⏭ Skipping first row");
-    //   return;
-    // }
-
-    let successCount = 0;
-    let duplicateCount = 0;
-    let errorCount = 0;
-   
-    for (let i = 1; i < rows.length; i++) {
-      const row = rows[i];
-
-        const mapped = mapRowToJson(row);
-          if (
-            !mapped.basic.startup_name ||
-            mapped.basic.startup_name.trim() === ""
-          ) {
-            console.error(
-              `❌ ERROR (Row ${rowCount}): Startup Name is missing`
-            );
-            continue; // skip insert
-        };
-      try {
-        const result = await AddStartupModel(
-          mapped.basic,
-          mapped.official,
-          mapped.founder,
-          mapped.description,
-          mapped.official_email_address
-        );
-
-        if (result?.status === "duplicate_skipped") {
-          console.log(
-            `⚠ Duplicate skipped at row ${i + 1}: ${mapped.basic.startup_name || "No Name"}`
-          );
-          duplicateCount++;
-        } else {
-          successCount++;
-        }
-      } catch (err) {
-        errorCount++;
-        console.error(`❌ Insert failed at row ${i + 1}:`, err);
-      }
+  return new Promise((resolve, reject) => {
+    if (!fs.existsSync(filePath)) {
+      return reject(new Error(`❌ File not found: ${filePath}`));
     }
-    console.log("=====================================");
-    console.log("🚀 IMPORT SUMMARY");
-    console.log("=====================================");
-    console.log(`📌 Total Rows Read:         ${totalCount}`);
-    console.log(`✅ Successfully Inserted:   ${successCount}`);
-    console.log(`⚠ Duplicate Skipped:        ${duplicateCount}`);
-    console.log(`❌ Failed Rows:             ${errorCount}`);
-    console.log("=====================================");
-    console.log("✅ JSON generated → output.json");
+
+    fs.createReadStream(filePath)
+      .pipe(csv())
+      .on("data", async (row) => {
+        rowCount++;
+
+        try {
+          const startupName = cleanString(row["Name of Startup"]);
+
+          // Skip if no startup name
+          if (!startupName) {
+            errorCount++;
+            errors.push({ row: rowCount, startup: "N/A", error: "Missing startup name" });
+            console.warn(`⏭️ Row ${rowCount}: Skipped (missing startup name)`);
+            return;
+          }
+
+          console.log(`📝 Row ${rowCount}: Processing "${startupName}"`);
+
+          // Convert row to JSON
+          const mapped = mapRowToJson(row, userId);
+
+          // Insert into DB
+          const result = await AddStartupModel(
+            mapped.basic,
+            mapped.official,
+            mapped.founder,
+            mapped.funding,
+            mapped.intellectual_property,
+            mapped.description,
+            mapped.graduation,
+            mapped.official_email_address,
+            mapped.user_id
+          );
+
+          if (result?.status === "duplicate_skipped") {
+            duplicateCount++;
+            console.log(`⚠️ Row ${rowCount}: Duplicate - "${startupName}"`);
+          } else {
+            successCount++;
+            console.log(`✅ Row ${rowCount}: Inserted - "${startupName}"`);
+          }
+
+          results.push(mapped);
+
+        } catch (err) {
+          errorCount++;
+          errors.push({
+            row: rowCount,
+            startup: row["Name of Startup"] || "N/A",
+            error: err.message
+          });
+
+          console.error(`❌ Row ${rowCount}: ${err.message}`);
+        }
+      })
+
+      .on("end", () => {
+        console.log("\n" + "═".repeat(70));
+        console.log("🚀 CSV IMPORT SUMMARY");
+        console.log("═".repeat(70));
+        console.log(`📌 Total Rows Processed:     ${rowCount}`);
+        console.log(`✅ Successfully Inserted:    ${successCount}`);
+        console.log(`⚠️ Duplicates Skipped:       ${duplicateCount}`);
+        console.log(`❌ Failed:                   ${errorCount}`);
+        console.log(
+          `📊 Success Rate:             ${((successCount / rowCount) * 100).toFixed(
+            2
+          )}%`
+        );
+        console.log("═".repeat(70));
+
+        // Save results
+        if (results.length > 0) {
+          fs.writeFileSync("output.json", JSON.stringify(results, null, 2));
+          console.log(`✨ ${results.length} records saved → output.json`);
+        }
+
+        if (errors.length > 0) {
+          fs.writeFileSync("import_errors.json", JSON.stringify(errors, null, 2));
+          console.log(`📄 ${errors.length} errors saved → import_errors.json`);
+        }
+
+        resolve({
+          total: rowCount,
+          success: successCount,
+          duplicate: duplicateCount,
+          error: errorCount,
+          errors,
+          successRate: ((successCount / rowCount) * 100).toFixed(2) + "%"
+        });
+      })
+
+      .on("error", (err) => {
+        reject(new Error(`❌ CSV Reading Error: ${err.message}`));
+      });
   });
+}
+
+// MAIN
+(async () => {
+  try {
+    console.log("🚀 Starting CSV import...\n");
+
+    const filePath = process.argv[2] || "startups.csv";
+    const userId = process.argv[3] || "admin";
+
+    const stats = await importStartupsFromCSV(filePath, userId);
+
+    console.log("\n✨ Import completed successfully!");
+    console.log("📊 Final Stats:");
+    console.log(stats);
+  } catch (err) {
+    console.error("💥 Fatal error:", err.message);
+    process.exit(1);
+  }
+})();
+
+module.exports = { importStartupsFromCSV };
