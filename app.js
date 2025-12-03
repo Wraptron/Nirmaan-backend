@@ -428,12 +428,12 @@ const upload = multer({ dest: "uploads/" });
 const allowedOrigins = [
   "http://localhost:3000",
   "http://localhost:3001",
-  "http://13.126.152.135",           // Add your EC2 IP
-  "http://13.126.152.135:3000",      // Add your EC2 IP with port
-  "http://13.126.152.135:3001",      // Add your EC2 IP with port
-  "https://13.126.152.135",          // HTTPS version
-  "https://13.126.152.135:3000",     // HTTPS version with port
-  "https://13.126.152.135:3001",     // HTTPS version with port
+  "http://13.126.152.135",
+  "http://13.126.152.135:3000",
+  "http://13.126.152.135:3001",
+  "https://13.126.152.135",
+  "https://13.126.152.135:3000",
+  "https://13.126.152.135:3001",
 ];
 const corsOptions = {
   origin: function (origin, callback) {
