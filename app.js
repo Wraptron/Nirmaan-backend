@@ -434,6 +434,7 @@ const allowedOrigins = [
   "https://13.126.152.135",
   "https://13.126.152.135:3000",
   "https://13.126.152.135:3001",
+  "http://sieiitm.org/",
 ];
 const corsOptions = {
   origin: function (origin, callback) {
