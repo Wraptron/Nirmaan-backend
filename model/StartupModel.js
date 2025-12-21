@@ -10,17 +10,19 @@ const AddStartupModel = async (
   description,
   official_email_address
 ) => {
-  return new Promise(async(resolve, reject) => {
+  return new Promise(async (resolve, reject) => {
+    const check = await client.query(
+      "SELECT user_id FROM test_startup WHERE basic->>'startup_name' = $1",
+      [basic.startup_name]
+    );
 
-     const check = await client.query(
-        "SELECT user_id FROM test_startup WHERE basic->>'startup_name' = $1",
-        [basic.startup_name]
-      );
-
-      if (check.rows.length > 0) {
-        // Duplicate found — SKIP inserting
-        return resolve({ status: "duplicate_skipped", user_id: check.rows[0].user_id });
-      }
+    if (check.rows.length > 0) {
+      // Duplicate found — SKIP inserting
+      return resolve({
+        status: "duplicate_skipped",
+        user_id: check.rows[0].user_id,
+      });
+    }
     // Determine startup_status based on basic.program
     const status =
       basic.program === "Dropped out" || basic.program === "Graduated"
@@ -32,14 +34,15 @@ const AddStartupModel = async (
       [basic, official, founder, description, official_email_address, status],
       (err, result) => {
         if (err) {
-          reject( err );
+          reject(err);
         } else {
-          resolve(result)
+          resolve(result);
         }
       }
     );
   });
 };
+
 
 const CheckUserByEmail = async (email) => {
   const query =
