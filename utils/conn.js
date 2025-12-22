@@ -4,9 +4,9 @@
 // const client = new Client({
 //   host: "localhost",
 //   user: "postgres",
-//   port: "5432",
+//   port: "5433",
 //   password: "1234",
-//   database: "postgres"
+//   database: "nirmaandb"
 // })
 // client.connect(function(err) {
 //   if(err) throw err;
@@ -16,6 +16,7 @@
 //   }
 // });
 // module.exports = client;
+// db.js
 const { Client } = require("pg");
 
 //const connectionString = "postgres://postgres:Supabase%401234@db.rcoyvhpccbezoprhqhwy.supabase.co:5432/postgres";
