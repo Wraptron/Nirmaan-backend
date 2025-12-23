@@ -203,6 +203,7 @@ const FetchStartupDatainNumbers = async (req, res) => {
       pratham: result?.PrathamStartups?.rows?.[0]?.program_count || 0,
       IITMIC: result?.IITMIC?.rows?.[0]?.program_count || 0,
       PIA: result?.PIA?.rows?.[0]?.program_count || 0,
+      IP: result?.IP?.rows?.[0]?.total_ip_sum || 0,
       Mentors: {
         Session_Total: parseInt(
           result?.TotalMentoringSessions?.rows?.[0]?.session_total || 0

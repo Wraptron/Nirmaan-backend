@@ -15,6 +15,7 @@ function mapRowToJson(row) {
       startup_Community: row["Community"],
       startup_technology: row["Technology"] || "",
       program: row["Phase"],
+      graduated_to: row["Graduated To"],
     },
     official: {
       password: "",
@@ -51,6 +52,12 @@ function mapRowToJson(row) {
     startup_status: row["Status"],
     user_id: row["User ID"] || "",
     isdeleted: "f",
+    ip_details: {
+      patent: row["Patent"] || "",
+      design: row["Design"] || "",
+      trademark: row["Trademark"] || "",
+      copyright: row["Copyright"] || "",
+    },
   };
 }
 
@@ -58,6 +65,8 @@ function mapRowToJson(row) {
 let totalCount = 0;
 let rows1 = [];
 let rows2 = [];
+let rows3 = [];
+let rows4 = [];
 
 function loadCSV(filePath, targetArray) {
   return new Promise((resolve, reject) => {
@@ -73,12 +82,17 @@ function loadCSV(filePath, targetArray) {
 }
 
 async function start() {
-  await loadCSV("startups.csv", rows1);
-  await loadCSV("AksharTeams.csv", rows2);
+  await loadCSV("Pratham Teams.csv", rows1);
+  await loadCSV("Akshar Teams.csv", rows2);
+  await loadCSV("Graduated Teams.csv", rows3);
+  await loadCSV("Dropped Teams.csv", rows4);
 
   console.log("All CSVs loaded:");
   console.log("Rows in file 1:", rows1.length);
   console.log("Rows in file 2:", rows2.length);
+  console.log("Rows in file 3:", rows3.length);
+  console.log("Rows in file 4:", rows4.length);
+
 
   // ⭐ SKIP FIRST ROW (csv-parser already handles headers, so this may be unnecessary)
   // if (rowCount === 1) {
@@ -89,8 +103,8 @@ async function start() {
   let successCount = 0;
   let duplicateCount = 0;
   let errorCount = 0;
-const allRows = [...rows1, ...rows2];
-  for (let i = 1; i < allRows.length; i++) {
+const allRows = [...rows1, ...rows2, ...rows3, ...rows4];
+  for (let i = 0; i < allRows.length; i++) {
     const row = allRows[i];
 
     const mapped = mapRowToJson(row);
@@ -107,8 +121,10 @@ const allRows = [...rows1, ...rows2];
         mapped.official,
         mapped.founder,
         mapped.description,
-        mapped.official_email_address
-      );
+        mapped.official_email_address,
+        mapped.startup_status,
+        mapped.ip_details
+      )
 
       if (result?.status === "duplicate_skipped") {
         // console.log(

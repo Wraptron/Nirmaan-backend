@@ -8,7 +8,9 @@ const AddStartupModel = async (
   official,
   founder,
   description,
-  official_email_address
+  official_email_address,
+  status,
+  ip_details
 ) => {
   return new Promise(async (resolve, reject) => {
     const check = await client.query(
@@ -24,14 +26,14 @@ const AddStartupModel = async (
       });
     }
     // Determine startup_status based on basic.program
-    const status =
-      basic.program === "Dropped out" || basic.program === "Graduated"
-        ? "Inactive"
-        : "Active";
+    // const status =
+    //   basic.program === "Dropped out" || basic.program === "Graduated"
+    //     ? "Inactive"
+    //     : "Active";
 
     client.query(
-      "INSERT INTO test_startup(basic, official, founder, description, official_email_address, startup_status) VALUES($1, $2, $3, $4, $5, $6) RETURNING user_id",
-      [basic, official, founder, description, official_email_address, status],
+      "INSERT INTO test_startup(basic, official, founder, description, official_email_address, startup_status, ip_details) VALUES($1, $2, $3, $4, $5, $6,$7) RETURNING user_id",
+      [basic, official, founder, description, official_email_address, status,ip_details],
       (err, result) => {
         if (err) {
           reject(err);
@@ -146,7 +148,7 @@ const StartupDataModel = async () => {
     });
     const DroppedStartups = new Promise((resolveQuery3, rejectQuery3) => {
       client.query(
-        "SELECT COUNT(*) AS program_count FROM test_startup WHERE basic->>'program'='Dropped out' AND isdeleted ='f'",
+        "SELECT COUNT(*) AS program_count FROM test_startup WHERE startup_status='Dropped Out' AND isdeleted ='f'",
         (err, result) => {
           if (err) {
             rejectQuery3(err);
@@ -183,7 +185,7 @@ const StartupDataModel = async () => {
     });
     const PrathamStartups = new Promise((resolveQuery3, rejectQuery3) => {
       client.query(
-        "SELECT COUNT(*) AS program_count FROM test_startup WHERE basic->>'program' = 'Pratham' AND isdeleted ='f'",
+        "SELECT COUNT(*) AS program_count FROM test_startup WHERE basic->>'program' = 'Pratham' AND startup_status='Active' AND isdeleted ='f'",
         (err, result) => {
           if (err) {
             rejectQuery3(err);
@@ -196,7 +198,7 @@ const StartupDataModel = async () => {
 
     const IITMIC = new Promise((resolveQuery3, rejectQuery3) => {
       client.query(
-        "SELECT COUNT(*) AS program_count FROM test_startup WHERE TRIM(both ' ' FROM basic->>'graduated_to') = 'IITM-IC';",
+        "SELECT COUNT(*) AS program_count FROM test_startup WHERE TRIM(both ' ' FROM basic->>'graduated_to') = 'IITMIC';",
         (err, result) => {
           if (err) {
             rejectQuery3(err);
@@ -219,6 +221,18 @@ const StartupDataModel = async () => {
         }
       );
     });
+    const IP = new Promise((resolveQuery3, rejectQuery3) => {
+      client.query(
+        "SELECT COALESCE(SUM(NULLIF(TRIM(value), '')::int), 0) AS total_ip_sum FROM test_startup, jsonb_each_text(ip_details) WHERE isdeleted = 'f';",
+        (err, result) => {
+          if (err) {
+            rejectQuery3(err);
+          } else {
+            resolveQuery3(result);
+          }
+        }
+      );
+    });
     Promise.all([
       TotalCountStartups,
       ActiveStartups,
@@ -228,6 +242,7 @@ const StartupDataModel = async () => {
       PrathamStartups,
       IITMIC,
       PIA,
+      IP
     ])
       .then(
         ([
@@ -239,6 +254,7 @@ const StartupDataModel = async () => {
           PrathamStartups,
           IITMIC,
           PIA,
+          IP
         ]) => {
           resolve({
             TotalCountStartups,
@@ -249,6 +265,7 @@ const StartupDataModel = async () => {
             PrathamStartups,
             IITMIC,
             PIA,
+            IP
           });
         }
       )
@@ -261,7 +278,7 @@ const StartupDataModel = async () => {
 const FetchStartupsModel = async () => {
   return new Promise((resolve, reject) => {
     client.query(
-      "SELECT user_id AS startup_id, basic::jsonb->>'profile_image' AS profile_image, basic::jsonb->>'startup_name' AS startup_name, startup_status AS startup_status,  basic::jsonb->>'startup_domain' AS startup_domain, basic::jsonb->>'startup_sector' AS startup_sector, basic::jsonb->>'startup_Community' AS startup_Community, basic::jsonb->>'startup_type' AS startup_type, basic::jsonb->>'startup_technology' AS startup_technology, basic::jsonb->>'startup_cohort' AS startup_cohort, basic::jsonb->>'startup_yog' AS startup_yog, basic::jsonb->>'graduated_to' AS graduated_to, basic::jsonb->>'graduated_to_other' AS graduated_to_other, basic::jsonb->>'program' AS program, official::jsonb->>'official_email_address' AS email_address, official::jsonb->>'official_contact_number' AS official_contact_number,  official::jsonb->>'role_of_faculty' AS role_of_faculty, official::jsonb->>'cin_registration_number' AS cin_registration_number,official::jsonb->>'funding_stage' AS funding_stage,  official::jsonb->>'website_link' AS website_link, official::jsonb->>'dpiit_number' AS dpiit, official::jsonb->>'official_registered' AS register, official::jsonb->>'linkedin_id' AS linkedin, official::jsonb->>'mentor_associated' AS mentor_associated, official::jsonb->>'pia_state' AS pia_state, official::jsonb->>'scheme' AS scheme, founder::jsonb->>'founder_name' AS founder_name, founder::jsonb->>'founder_email' AS founder_email, founder::jsonb->>'founder_number' AS founder_number, founder::jsonb->>'academic_background' AS academic_background,  founder::jsonb->>'founder_gender' AS founder_gender, description::jsonb->>'logo' AS logo, description::jsonb->>'startup_description' AS startup_description FROM test_startup WHERE isdeleted = 'f';",
+      "SELECT user_id AS startup_id, basic::jsonb->>'profile_image' AS profile_image, basic::jsonb->>'startup_name' AS startup_name, startup_status AS startup_status,  basic::jsonb->>'startup_domain' AS startup_domain, basic::jsonb->>'startup_sector' AS startup_sector, basic::jsonb->>'startup_Community' AS startup_Community, basic::jsonb->>'startup_type' AS startup_type, basic::jsonb->>'startup_technology' AS startup_technology, basic::jsonb->>'startup_cohort' AS startup_cohort, basic::jsonb->>'startup_yog' AS startup_yog, basic::jsonb->>'graduated_to' AS graduated_to, basic::jsonb->>'graduated_to_other' AS graduated_to_other, basic::jsonb->>'program' AS program, official::jsonb->>'official_email_address' AS email_address, official::jsonb->>'official_contact_number' AS official_contact_number,  official::jsonb->>'role_of_faculty' AS role_of_faculty, official::jsonb->>'cin_registration_number' AS cin_registration_number,official::jsonb->>'funding_stage' AS funding_stage,  official::jsonb->>'website_link' AS website_link, official::jsonb->>'dpiit_number' AS dpiit, official::jsonb->>'official_registered' AS register, official::jsonb->>'linkedin_id' AS linkedin, official::jsonb->>'mentor_associated' AS mentor_associated, official::jsonb->>'pia_state' AS pia_state, official::jsonb->>'scheme' AS scheme, founder::jsonb->>'founder_name' AS founder_name, founder::jsonb->>'founder_email' AS founder_email, founder::jsonb->>'founder_number' AS founder_number, founder::jsonb->>'academic_background' AS academic_background,  founder::jsonb->>'founder_gender' AS founder_gender,ip_details::jsonb->>'patent' AS patent,ip_details::jsonb->>'design' AS design,ip_details::jsonb->>'trademark'AS trademark,ip_details::jsonb->>'copyright' AS copyright,description::jsonb->>'logo' AS logo, description::jsonb->>'startup_description' AS startup_description FROM test_startup WHERE isdeleted = 'f';",
       (err, result) => {
         if (err) {
           reject(err);
