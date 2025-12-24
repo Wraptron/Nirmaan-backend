@@ -18,7 +18,19 @@ const AddMentorModel = (
   password
 ) => {
   const mentorId = uuidv4();
-  return new Promise((resolve, reject) => {
+  return new Promise(async(resolve, reject) => {
+   const check = await client.query(
+     "SELECT 1 FROM add_mentor WHERE email_address = $1",
+     [email_address] // the email you want to insert
+   );
+
+   if (check.rows.length > 0) {
+     // Duplicate email found — skip inserting
+     return resolve({
+       status: "duplicate_skipped",
+     });
+   }
+
     client.query(
       "INSERT INTO add_mentor(mentor_id, mentor_name,mentor_logo,mento_description, years_of_exp, area_of_expertise, designation, institution, qualification, year_of_passing_out, startup_assoc, contact_num, email_address, linkedIn_id, password, hashkey, user_role) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16,$17)",
       [
