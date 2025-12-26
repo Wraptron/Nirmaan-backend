@@ -915,6 +915,46 @@ WHERE EXISTS (
     });
   });
 };
+const IPDetailsModel = async (data) => {
+  const { ip_details, user_id } = data;
+  const query = `
+   UPDATE test_startup
+SET
+  ip_details = jsonb_set(
+            jsonb_set(
+              jsonb_set(
+                  jsonb_set(
+                    ip_details,
+                    '{patent}', to_jsonb($1::text), true
+                  ),
+                  '{design}', to_jsonb($2::text), true
+                ),
+                '{trademark}', to_jsonb($3::text), true
+              ),
+              '{copyright}', to_jsonb($4::text), true
+            )
+WHERE user_id = $5;
+  `;
+
+  const values = [
+    ip_details.patent,
+    ip_details.design,
+    ip_details.trademark,
+    ip_details.copyright,
+    user_id,
+  ];
+
+  return new Promise((resolve, reject) => {
+    client.query(query, values, (err, result) => {
+      if (err) {
+        console.error("DB Error:", err);
+        reject(err);
+      } else {
+        resolve(result);
+      }
+    });
+  });
+};
 
 module.exports = {
   AddStartupModel,
@@ -936,4 +976,5 @@ module.exports = {
   FetchFounderModel,
   UpdateAwardModel,
   DeleteAwardModal,
+  IPDetailsModel
 };

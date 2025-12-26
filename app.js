@@ -393,6 +393,7 @@ const AddFounder = require("./routes/route");
 const FetchFounder = require("./routes/route");
 const UpdateFundingData = require("./routes/route");
 const FetchFundingDatainNumbers = require("./routes/route");
+const IPDetails = require("./routes/route");
 
 
 // Import utilities
@@ -570,6 +571,7 @@ app.use("/api/v1/", AddAward);
 app.use("/api/v1/", FetchAwardData);
 app.use("/api/v1/", DeleteAward);
 app.use("/api/v1/", UpdateAward);
+app.use("/api/v1/", IPDetails);
 app.use("/api/v1/", ProfilePhoto);
 app.use("/api/v1/", TeamDocuments);
 app.use("/api/v1/", FetchFundingAmount);
