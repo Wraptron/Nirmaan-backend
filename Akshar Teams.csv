@@ -1,6 +1,5 @@
 S No,Name of Startup,Cohort,Domain,Sector,Status,Phase,Community,Founder PoC,University,Academic Background,Institute / Smail Id,Personal Email Id,Contact Number,Roll Number,Team members,Team Members Email ids,Core Team Size,"No. of Female 
-Founders",No.of Co-Founders,Faculty Involved,PIA Signed,Fund Source,Fund allocated,Fund used,Balance Fund Left,External Funds Received,External Funds Used,IPs Filed,,,,Achievements,Brief description,Pitch Deck,Mentors,Role of Faculty,CIN/Registration Number,Graduated TO,Technology,Year Of Graduation,Officially Registered,DPIIT Number,Year Of Graduation
-,,,,,,,,,,,,,,,,,,,,,,,,,,,,Patent,Design,Trademark,Copyright,,,,,,,,,,,,
+Founders",No.of Co-Founders,Faculty Involved,PIA Signed,Fund Source,Fund allocated,Fund used,Balance Fund Left,External Funds Received,External Funds Used,Patent,Design,Trademark,Copyright,Achievements,Brief description,Pitch Deck,Mentors,Role of Faculty,CIN/Registration Number,Graduated to,Technology,Year Of Graduation,Officially Registered,DPIIT Number,Year Of Graduation
 1,Remster (NidraTech),Nov' 24,Healthcare,Hardware & IoT,Active,Akshar,Direct entry,Sumukha Nadig V,IITM,M.Tech/MBA/MS/P.hD,ae22s017@smail.iitm.ac.in,-,9591234859,AE22S017,"Shubham Gupta (CTO)
 Sumukha Nadig V(CEO)","shubhamg121996@gmail.com,
 sumukha.nadig8@gmail.com",2,N/A,,N/A,Not signed,Seed Funding,,"44,870.00","291,718.00",,,,,,,,"A temperature-regulated mattress cover that’s comfortable and fits on your existing mattress!
@@ -19,7 +18,7 @@ pmzeexai@gmail.com
 zeexaimarketing@gmail.com
  business.zeexai@gmail.com
 admin@zeexai.com
-Zeex.ai87@gmail.com",1,N/A,,N/A,Signed,Seed Funding,"200,000.00","78,065.70","121,934.30",,,,,,2,,Real-time CCTV using AI,Link,Srinivasan Kidambi,,,,,,,,
+Zeex.ai87@gmail.com",1,N/A,,N/A,Signed,Seed Funding,"200,000.00","78,065.70","121,934.30",,,1,,,,,Real-time CCTV using AI,Link,Srinivasan Kidambi,,,,,,,,
 3,DEMETER,Aug' 23,Sustainability,Manufacturing & Industry,Active,Akshar,Direct entry,Vijai Suraj S R,IITM,B.Tech/BS,-,vijaisuraj2001@gmail.com,8056181235,ep19b009,N/A,-,1,0,,,Signed,Seed funding,,,,,,,,,,,,,,,,,,,,,
 ,,,,,,,,,,,,,,,,,,,,,,Hyperverge,"700,000.00","11,872.00","688,128.00",,,,,,,,,,,,,,,,,,
 4,RunVerve,Aug' 23,Healthcare,Software & Data,Active,Akshar,Direct entry,Anil Kumar,IITM,MS (E),ms23a094@smail.iitm.ac.in,anil@runverve.tech,9705933771,MS23A094,"1.Anil Kumar (Founder & CEO)
@@ -36,7 +35,7 @@ Venkat (CMO & Co Founder), Samuel (Tech Lead - S/W)
 11.Shanmathi (UI/UX Intern)
 12. Aravind Prabhu (Data Engineering Intern)
 13. Purushothaman (Frontend Intern)
-14. Navan (Frontend Intern).","ms23a094@smail.iitm.ac.in, ms23s401@smail.iitm.ac.in",14,0,,,Signed,Seed funding,,,,,,,,,2,"Part of Startup BootCamp '24 (E-Summit IIT Madras) and one of the 5 BuildSchool Startups
+14. Navan (Frontend Intern).","ms23a094@smail.iitm.ac.in, ms23s401@smail.iitm.ac.in",14,0,,,Signed,Seed funding,,,,,,,,,,"Part of Startup BootCamp '24 (E-Summit IIT Madras) and one of the 5 BuildSchool Startups
 1. Investor Engagement & Startup Showcases:
 Runverve participated in VCCircle by Hindustan Times to raise funds. Here is a link to the event details: 
 Following this, we were invited to the Digital Innovation Conclave Startup Expo 2025, where we showcased our innovations at Feathers - A Radha Hotel, Chennai:
@@ -57,7 +56,7 @@ We received the Shatham Grant from IITM Incubation Cell and Office of Innovation
 2. Sai Gowtham Head
 3. Vinay team member
  4.Bala team member","ed19b063@smail.iitm.ac.in
-ed19b064@smail.iitm.ac.in",4,0,,,Signed,Seed funding,,"8,778.00","534,289.00",,,,1,,,"We have secured 1st position in startup series and won prize money of 40K.
+ed19b064@smail.iitm.ac.in",4,0,,,Signed,Seed funding,,"8,778.00","534,289.00",,,1,,,,"We have secured 1st position in startup series and won prize money of 40K.
 secured runnerup in Bootcamp by Ecell, won 50K prize money.
 Link","Our Seat oF Joy manufacturers a child safety seat for Motorcycles that protects a child during accidents. Our Seat along with protecting the child, also slidable foldable and convertible into a storage box.",Link,,,,,,,,,
 ,,,,,,,,,,,,,,,,,,,,,,Aptiv,"700,000.00","156,933.00",,,,,,,,,,,,,,,,,,,
@@ -67,7 +66,7 @@ Link","Our Seat oF Joy manufacturers a child safety seat for Motorcycles that pr
  4.Dr.Vidya Praveen Bhallamudi","ph22d041@smail.iitm.ac.in
 rathimedphy@gmail.com
 ee19d204@smail.iitm.ac.in
-praveen.bhallamudi@iitm.ac.in",4,0,,,Signed,Seed funding,,,,,,,1,,,,We are working on building an alternative system for Malaria detection at the early stages of the disease. Existing methods are either costly or need trained experts or less accurate.,Link,,,,,,,,,
+praveen.bhallamudi@iitm.ac.in",4,0,,,Signed,Seed funding,,,,,,1,,,,,We are working on building an alternative system for Malaria detection at the early stages of the disease. Existing methods are either costly or need trained experts or less accurate.,Link,,,,,,,,,
 ,,,,,,,,,,,,,,,,,,,,,,AI for Healthcare,"700,000.00","301,685.00","398,315.00",,,,,,,,,,,,,,,,,,
 7,Brilletmaker Pvt Ltd,Aug' 23,Sustainability,Energy & Environment,Active,Akshar,i2I,Kokilavani Rajendran,Non-IITM,PhD,-,nishanthini2505@gmail.com,9629618931,-,"1. Kokilavani Rajendran Founder
 2.Nishanthini Thangavelu Co-Founder","nishanthini2505@gmail.com, kokilavanirajadren@gmail.com",2,2,,,Signed,AmEx,,,,,,,,,,Link,Mobile Production Unit for Customizable Semi-Torrefied Mixed Agrowaste Biomass Pellet,Link,,,,,,,,,
@@ -86,7 +85,7 @@ Presented at Demoday at IITM.","EasyGold is a digital gold investment platform w
 ,,,,,,,,Vedasri Bai khavala,IITM,PhD,,,,,,,,,,,,Seed funding,"200,000.00","12,590.00","187,410.00",,,,,,,,,,,,,,,,,,
 9,Electra Wheeler,Aug' 23,Mobility,Ecommerce & Retail,Active,Akshar,Direct entry, Prakash Dev ,IITM,M.Tech,-,"electrawheeler@gmail.com
 prakashdev@electrawheeler.in",9174288939,AM22M014,"1. Prakash Dev  Founder & CEO
-2.Hemlata  Co-Founder",-,3,1,,,Signed,Seed funding,,"111,936.00","13,615.00",,,,1,,2,WhatsApp Video 2025-01-16 at 7.54.28 AM.mp4,"Electric vehicle companies are struggling to establish showrooms for every product, while customers lack options to test different brands. and customer also faces problem after-sales-service, due to the unavailability of spare parts and a service center nearby home",Link,,,,,,,,,
+2.Hemlata  Co-Founder",-,3,1,,,Signed,Seed funding,,"111,936.00","13,615.00",,,,,,,WhatsApp Video 2025-01-16 at 7.54.28 AM.mp4,"Electric vehicle companies are struggling to establish showrooms for every product, while customers lack options to test different brands. and customer also faces problem after-sales-service, due to the unavailability of spare parts and a service center nearby home",Link,,,,,,,,,
 ,,,,,,,,Hemlata,Non-IITM,Others,,,,,,,,,,,,Aptiv,"200,000.00","74,449.00",,,,,,,,,,,,,,,,,,,
 10,Kinople (ShotBizz),Aug' 23,Industry 4.0,Software & Data,Active,Akshar,Direct entry,Sujith Kumar,IITM,B.Tech/BS,na20b067@smail.iitm.ac.in,-,91509 91450,-,1.Sujith Kumar   Founder & CEO,be20b038@smail.iitm.ac.in,1,0,,,Not signed,Seed funding,,"143,742.00","-5,440.00",,,,,,,"1) Signed a Letter of Intent (LoI) with a leading production house in Bollywood for beta testing.
 2) Signed a Momerandum of Understanding (MoU) with a public company for commercially using the product.

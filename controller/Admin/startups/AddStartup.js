@@ -18,6 +18,7 @@ const {
   AddFounderModel,
   FetchFounderModel,
   CheckUserByEmail,
+  IPDetailsModel,
 } = require("../../../model/StartupModel");
 const EmailValid = require("../../../validation/EmailValid");
 const PhoneNumberValid = require("../../../validation/PhoneNumberValid");
@@ -203,6 +204,7 @@ const FetchStartupDatainNumbers = async (req, res) => {
       pratham: result?.PrathamStartups?.rows?.[0]?.program_count || 0,
       IITMIC: result?.IITMIC?.rows?.[0]?.program_count || 0,
       PIA: result?.PIA?.rows?.[0]?.program_count || 0,
+      IP: result?.IP?.rows?.[0]?.total_ip_sum || 0,
       Mentors: {
         Session_Total: parseInt(
           result?.TotalMentoringSessions?.rows?.[0]?.session_total || 0
@@ -841,7 +843,24 @@ const UpdateStartupFounder = async (req, res) => {
     res.status(500).json({ error: "Failed to update startup details" });
   }
 };
+const IPDetails = async (req, res) => {
+  try {
+    const { patent, design, trademark, copyright, user_id } = req.body;
 
+    const ip_details = {
+      patent: patent || "",
+      design: design || "",
+      trademark: trademark || "",
+      copyright: copyright || "",
+    };
+
+    const result = await IPDetailsModel({ ip_details, user_id });
+    res.status(200).json({ message: "IP details added successfully", result });
+  } catch (err) {
+    console.error("Update failed:", err);
+    res.status(500).json({ error: "Failed to add ip details" });
+  }
+};
 module.exports = {
   AddStartup,
   UpdateStartupMentorDetails,
@@ -862,4 +881,5 @@ module.exports = {
   FetchStartupProfile,
   AddFounder,
   FetchFounder,
+  IPDetails
 };

@@ -1,7 +1,7 @@
 const express = require("express");
 
-// const data  = require("../pg_db/convert_data.js");
-
+// const data = require("../pg_db/convert_data.js");
+// 
 const router = express.Router();
 const multer = require("multer");
 const storage = multer.memoryStorage(); // important for S3 upload
@@ -39,6 +39,7 @@ const {
   UpdateStartupFounder,
   AddAward,
   FetchAwardData,
+  IPDetails,
 } = require("../controller/Admin/startups/AddStartup.js");
 const {
   AddMessage,
@@ -146,6 +147,7 @@ router.post("/addstartup/award", upload.single("document"), AddAward);
 router.get("/fetchaward", FetchAwardData);
 router.delete("/delete-award/:id", DeleteAward);
 router.put("/updateaward", UpdateAward);
+router.put("/ipdetails", IPDetails);
 router.delete("/delete-resume/:id", DeleteResume);
 router.put("/edit-startup/founder", UpdateStartupFounder);
 router.post("/addfounder", AddFounder);
