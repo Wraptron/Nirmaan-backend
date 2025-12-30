@@ -409,16 +409,18 @@ const io = new Server(server, {
   cors: {
     origin: [
       "http://localhost:3000",
-      "http://localhost:3001", 
+      "http://localhost:3001",
       "http://13.126.152.135",
       "http://13.126.152.135:3000",
       "http://13.126.152.135:3001",
       "https://13.126.152.135",
       "https://13.126.152.135:3000",
-      "https://13.126.152.135:3001"
+      "https://13.126.152.135:3001",
+      "http://sieiitm.org",
+      "https://sieiitm.org"
     ],
     methods: ["GET", "POST"],
-    credentials: true
+    credentials: true,
   },
 });
 
@@ -435,7 +437,8 @@ const allowedOrigins = [
   "https://13.126.152.135",
   "https://13.126.152.135:3000",
   "https://13.126.152.135:3001",
-  "http://sieiitm.org/",
+  "http://sieiitm.org",
+  "https://sieiitm.org"
 ];
 const corsOptions = {
   origin: function (origin, callback) {
