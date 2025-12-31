@@ -19,6 +19,7 @@ const {
   FetchFounderModel,
   CheckUserByEmail,
   IPDetailsModel,
+  DeleteStartupFounderModel,
 } = require("../../../model/StartupModel");
 const EmailValid = require("../../../validation/EmailValid");
 const PhoneNumberValid = require("../../../validation/PhoneNumberValid");
@@ -865,6 +866,22 @@ const IPDetails = async (req, res) => {
     res.status(500).json({ error: "Failed to add ip details" });
   }
 };
+const DeleteFounder = async (req, res) => {
+  try {
+    const { founderid } = req.params;
+
+    if (!founderid) {
+      return res.status(400).json({ message: "Founder email is required" });
+    }
+
+    const result = await DeleteStartupFounderModel(founderid);
+
+    return res.status(200).json({ message: 'Founder deleted successfully', result });
+  } catch (err) {
+    return res.status(500).json({ message: 'Internal server error', error: err.message });
+  }
+};
+
 module.exports = {
   AddStartup,
   UpdateStartupMentorDetails,
@@ -885,5 +902,6 @@ module.exports = {
   FetchStartupProfile,
   AddFounder,
   FetchFounder,
+  DeleteFounder,
   IPDetails
 };

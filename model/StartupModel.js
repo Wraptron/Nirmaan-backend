@@ -915,6 +915,38 @@ WHERE EXISTS (
     });
   });
 };
+
+const DeleteStartupFounderModel = async (founderid) => {
+  const query = `
+  UPDATE test_startup
+SET founder = COALESCE(
+  (
+    SELECT jsonb_agg(f)
+    FROM jsonb_array_elements(founder) AS f
+    WHERE f->>'founder_id' <> $1
+  ),
+  '[]'::jsonb
+)
+WHERE jsonb_typeof(founder) = 'array'
+  AND EXISTS (
+    SELECT 1
+    FROM jsonb_array_elements(founder) AS f
+    WHERE f->>'founder_id' = $1
+  )`;
+
+  const values = [founderid];
+
+  return new Promise((resolve, reject) => {
+    client.query(query, values, (err, result) => {
+      if (err) {
+        reject(err);
+      } else {
+        resolve(result);
+      }
+    });
+  });
+};
+
 const IPDetailsModel = async (data) => {
   const { ip_details, user_id } = data;
   const query = `
@@ -974,6 +1006,7 @@ module.exports = {
   StartupDeleteData,
   AddFounderModel,
   FetchFounderModel,
+  DeleteStartupFounderModel,
   UpdateAwardModel,
   DeleteAwardModal,
   IPDetailsModel

@@ -25,9 +25,18 @@ const client = new Client({
   connectionString,
 });
 
-client.connect((err) => {
-  if (err) console.error("Connection error:", err.stack);
-  else console.log("Connected successfully!!");
+
+client.on("error", (err) => {
+  console.error("PostgreSQL client error:", err);
 });
+
+(async () => {
+  try {
+    await client.connect();
+    console.log("Connected successfully!!");
+  } catch (err) {
+    console.error("Connection error:", err);
+  }
+})();
 
 module.exports = client;

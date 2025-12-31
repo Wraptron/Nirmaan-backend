@@ -40,6 +40,7 @@ const {
   AddAward,
   FetchAwardData,
   IPDetails,
+  DeleteFounder,
 } = require("../controller/Admin/startups/AddStartup.js");
 const {
   AddMessage,
@@ -152,6 +153,7 @@ router.delete("/delete-resume/:id", DeleteResume);
 router.put("/edit-startup/founder", UpdateStartupFounder);
 router.post("/addfounder", AddFounder);
 router.get("/fetchfounder/:userId", FetchFounder);
+router.put("/deletefounder/:founderid", DeleteFounder);
 router.post(
   "/mentor/add",
   upload.fields([{ name: "mentor_logo", maxCount: 1 }]),
