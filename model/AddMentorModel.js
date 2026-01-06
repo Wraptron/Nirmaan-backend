@@ -75,11 +75,12 @@ const UpdateMentorModel = async (
   contact_num,
   email_address,
   linkedin_iD,
+  mentor_logo,
   mentor_id
 ) => {
   return new Promise((resolve, reject) => {
     client.query(
-      "UPDATE add_mentor SET mentor_name=$1,mento_description=$2, years_of_exp=$3, area_of_expertise=$4,designation=$5,institution=$6,qualification=$7,year_of_passing_out=$8,startup_assoc=$9,contact_num=$10,email_address=$11, linkedIn_id=$12 where mentor_id=$13",
+      "UPDATE add_mentor SET mentor_name=$1,mento_description=$2, years_of_exp=$3, area_of_expertise=$4,designation=$5,institution=$6,qualification=$7,year_of_passing_out=$8,startup_assoc=$9,contact_num=$10,email_address=$11, linkedIn_id=$12, mentor_logo=$13 where mentor_id=$14",
       [
         mentor_name,
         mentor_description,
@@ -93,6 +94,7 @@ const UpdateMentorModel = async (
         contact_num,
         email_address,
         linkedin_iD,
+        mentor_logo,
         mentor_id,
       ],
       (err, result) => {

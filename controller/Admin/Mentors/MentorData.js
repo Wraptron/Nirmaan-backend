@@ -13,9 +13,21 @@ const {
   FetchMeetingFeedbackModel,
   UpdateFeedbackModel,
 } = require("../../../model/AddMentorModel");
+const { uploadToS3 } = require("../../../utils/s3Upload");
 
 const UpdateMentor = async (req, res) => {
   try {
+    console.log(req.body);
+    console.log(req.files);
+    let mentor_logo_url = null;
+
+    // If new image uploaded → upload to S3
+    if (req.files?.mentor_logo?.[0]) {
+      mentor_logo_url = await uploadToS3(
+        req.files.mentor_logo[0],
+        "mentor_logo"
+      );
+    }
     const {
       mentor_name,
       mentor_description,
@@ -45,6 +57,7 @@ const UpdateMentor = async (req, res) => {
       contact_num,
       email_address,
       linkedin_iD,
+      mentor_logo_url,
       mentor_id
     );
 

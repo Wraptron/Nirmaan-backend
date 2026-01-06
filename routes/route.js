@@ -159,7 +159,7 @@ router.post(
   upload.fields([{ name: "mentor_logo", maxCount: 1 }]),
   AddMentor
 );
-router.put("/mentor/update", UpdateMentor);
+router.put("/mentor/update", upload.fields([{ name: "mentor_logo", maxCount: 1 }]), UpdateMentor);
 router.post("/mentor/meeting", Meetings);
 router.get("/mentor/fetch-meeting/:mentor_id", FetchMeetings);
 router.post("/mentor/feedback", MeetingFeedback);
