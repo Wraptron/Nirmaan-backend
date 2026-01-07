@@ -599,11 +599,9 @@ const UpdateStartupAbout = async (req, res) => {
       startup_status,
       email_address,
     } = req.body;
-
     if (!email_address) {
       return res.status(400).json({ error: "Missing email_address" });
     }
-
     const basic = {
       startup_type,
       startup_domain,
@@ -613,7 +611,6 @@ const UpdateStartupAbout = async (req, res) => {
     const description = {
       startup_description: about || "",
     };
-
     const result = await UpdateStartupAboutModel({
       basic,
       email_address,
@@ -629,7 +626,6 @@ const UpdateStartupAbout = async (req, res) => {
     res.status(500).json({ error: "Failed to update startup details" });
   }
 };
-
 const UpdateStartupMentorDetails = async (req, res) => {
   try {
     const {
