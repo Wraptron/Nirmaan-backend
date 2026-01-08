@@ -580,15 +580,15 @@ const UpdateStartupPersonalInfoModel = async (data, requester) => {
 
   return new Promise((resolve, reject) => {
     // -------- Role-based Access ----------
-    const isPrivileged = [2].includes(Number(requester?.role));
+    // const isPrivileged = [2].includes(Number(requester?.role));
 
-    if (!isPrivileged) {
-      return resolve({
-        status: "Unauthorized",
-        code: 401,
-        message: "You do not have permission to update this startup.",
-      });
-    }
+    // if (!isPrivileged) {
+    //   return resolve({
+    //     status: "Unauthorized",
+    //     code: 401,
+    //     message: "You do not have permission to update this startup.",
+    //   });
+    // }
 
     // -------- Execute DB Query ----------
     client.query(query, values, (err, result) => {

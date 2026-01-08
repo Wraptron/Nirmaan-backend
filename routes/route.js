@@ -104,7 +104,7 @@ router.get("/prof", ProfilePhoto);
 router.put("/update-status", UpdateStatus);
 router.get("/startup/:id", IndividualStartups);
 router.put(
-  "/edit-startupdata/personal-info", Authenticate,
+  "/edit-startupdata/personal-info",
   upload.fields([
     { name: "profile_image", maxCount: 1 },
     { name: "background_image", maxCount: 1 },
