@@ -211,6 +211,27 @@ const FetchStartupsDetailModel = async () => {
     );
   });
 };
+
+const GetStartupProjectBalanceModel = async (startup_id, project_name) => {
+  return new Promise((resolve, reject) => {
+    client.query(
+      `
+      SELECT 
+        COALESCE(SUM(CASE WHEN funding_type = 'Funding Disbursed' THEN amount ELSE 0 END),0) AS disbursed,
+        COALESCE(SUM(CASE WHEN funding_type = 'Funding Utilized' THEN amount ELSE 0 END),0) AS utilized,
+        COALESCE(SUM(CASE WHEN funding_type = 'Funding Disbursed' THEN amount ELSE 0 END),0) -
+        COALESCE(SUM(CASE WHEN funding_type = 'Funding Utilized' THEN amount ELSE 0 END),0) AS balance
+      FROM update_funding
+      WHERE startup_id = $1 AND project_name = $2
+      `,
+      [startup_id, project_name],
+      (err, result) => {
+        if (err) reject(err);
+        else resolve(result.rows[0]);
+      }
+    );
+  });
+};
 module.exports = {
   AddFundingModel,
   FundingNotificationModel,
@@ -219,5 +240,6 @@ module.exports = {
   UpdateFundingDataModel,
   FetchFundingRecordModel,
   FetchFundingTotalNumbers,
-  FetchStartupsDetailModel 
+  FetchStartupsDetailModel,
+  GetStartupProjectBalanceModel,
 };

@@ -14,7 +14,9 @@ const {
   FetchFundingIndividualgDetailsModel,
   FetchFundingTotalNumbers,
   FetchStartupsDetailModel,
+  GetStartupProjectBalanceModel,
 } = require("../../model/Finance/AddFuningModel");
+
 
 const AddFunding = async (req, res) => {
   const {
@@ -40,16 +42,13 @@ const AddFunding = async (req, res) => {
     return res.status(400).send("Please fill all necessary fields");
   } else {
     try {
-            // project_name not required for "Funding utilized"
-        if (funding_type !== "Funding Utilized") {
-      if (!project_name || project_name.trim() === "") {
-        return res
-          .status(400)
-          .send("Project name required for Disbursed/External Funding");
-      }
-    }
+      // project_name not required for "Funding utilized"
 
-        const projectBalances = await FetchFundingProjectModel();
+      if (!project_name || project_name.trim() === "") {
+        return res.status(400).send("Please provide a valid project name.");
+      }
+
+      const projectBalances = await FetchFundingProjectModel();
       const projectKeyMap = {
         "Nirmaan Seed Funding": "nirmaan_seed_funding",
         "Shankar Endownment Fund": "shankar_endownment_fund",
@@ -62,22 +61,9 @@ const AddFunding = async (req, res) => {
       };
 
       const dbKey = projectKeyMap[project_name];
-      if (!dbKey && funding_type !== "Funding Utilized") {
-         return res.status(400).send("Invalid project name.");
+      if (!dbKey) {
+        return res.status(400).send("Invalid project name.");
       }
-      
-       if (funding_type === "Funding Disbursed") {
-      const totalAllocated = Number(projectBalances[dbKey]) || 0;
-      const totalUtlized = await  GetTotalUtilizedForProject(project_name); 
-      const totalAvailable = totalAllocated - totalUtlized;
-
-      if (totalAvailable < Number(amount)) {
-        return res
-          .status(400)
-          .send(
-            `Not enough funds available for this project. Available: ${totalAvailable}`
-          );
-      }}
 
       // Check available funds for "Funding Disbursed"
       if (funding_type === "Funding Disbursed") {
@@ -90,6 +76,7 @@ const AddFunding = async (req, res) => {
             );
         }
       }
+
       const fundingDetails = await FetchFundingIndividualgDetailsModel();
       const currentFunding = fundingDetails[startup_id] || {
         funding_disbursed: 0,
@@ -99,20 +86,25 @@ const AddFunding = async (req, res) => {
       };
 
       if (funding_type === "Funding Utilized") {
-        // Allow only if Disbursed exists
-        if (currentFunding.funding_disbursed <= 0) {
-          return res
-            .status(401)
-            .send("Team hasn't received any disbursed funds yet.");
+        const projectFunding = await GetStartupProjectBalanceModel(
+          startup_id,
+          project_name
+        );
+
+        if (!projectFunding || Number(projectFunding.disbursed) <= 0) {
+          return res.status(400).send("No funds disbursed for this project.");
         }
 
-        if (
-          currentFunding.funding_utilized + Number(amount) >
-          currentFunding.balance
-        ) {
+        const availableProjectBalance =
+          Number(projectFunding.disbursed) -
+          Number(projectFunding.utilized || 0);
+
+        if (Number(amount) > availableProjectBalance) {
           return res
             .status(400)
-            .send("Not enough funding available to utilize.");
+            .send(
+              `Insufficient funds for ${project_name}. Available: ${availableProjectBalance}`
+            );
         }
 
         const result = await AddFundingModel(
@@ -160,12 +152,10 @@ const AddFunding = async (req, res) => {
       }
     } catch (err) {
       // console.log(err);
-   return res.status(500).send(err.message || "Server error");
-
+      return res.status(500).send(err.message || "Server error");
     }
   }
 };
-
 const FetchFundingAmount = async (req, res) => {
   try {
     const allFundingData = await FetchFundingIndividualgDetailsModel();
