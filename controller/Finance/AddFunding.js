@@ -42,8 +42,6 @@ const AddFunding = async (req, res) => {
     return res.status(400).send("Please fill all necessary fields");
   } else {
     try {
-      // project_name not required for "Funding utilized"
-
       if (!project_name || project_name.trim() === "") {
         return res.status(400).send("Please provide a valid project name.");
       }
@@ -65,7 +63,7 @@ const AddFunding = async (req, res) => {
         return res.status(400).send("Invalid project name.");
       }
 
-      // Check available funds for "Funding Disbursed"
+      // ✅ KEEPING this check AS IS (no change)
       if (funding_type === "Funding Disbursed") {
         const totalAvailable = Number(projectBalances[dbKey]) || 0;
         if (totalAvailable < Number(amount)) {
@@ -85,6 +83,7 @@ const AddFunding = async (req, res) => {
         external_funding: 0,
       };
 
+      /* ---------------- FUNDING UTILIZED ---------------- */
       if (funding_type === "Funding Utilized") {
         const projectFunding = await GetStartupProjectBalanceModel(
           startup_id,
@@ -107,24 +106,7 @@ const AddFunding = async (req, res) => {
             );
         }
 
-        const result = await AddFundingModel(
-          startup_id,
-          startup_name,
-          project_name,
-          funding_type,
-          amount,
-          purpose,
-          funding_date,
-          reference_number,
-          document,
-          status
-        );
-        return res.status(200).send(result);
-      } else if (
-        funding_type === "Funding Disbursed" ||
-        funding_type === "External Funding"
-      ) {
-        // Always allow Disbursed or External Funding
+        // 1️⃣ add funding utilization for startup
         const result = await AddFundingModel(
           startup_id,
           startup_name,
@@ -138,24 +120,45 @@ const AddFunding = async (req, res) => {
           status
         );
 
-        if (funding_type === "Funding Disbursed") {
-          await AddFundingProjectModel(
-            project_name,
-            "Funding Utilized",
-            amount,
-            funding_date
-          );
-        }
+        // 2️⃣ NOW reduce project amount (ONLY HERE)
+        await AddFundingProjectModel(
+          project_name,
+          "Funding Utilized",
+          amount,
+          funding_date
+        );
+
+        return res.status(200).send(result);
+      } else if (
+
+      /* ---------------- FUNDING DISBURSED / EXTERNAL ---------------- */
+        funding_type === "Funding Disbursed" ||
+        funding_type === "External Funding"
+      ) {
+        const result = await AddFundingModel(
+          startup_id,
+          startup_name,
+          project_name,
+          funding_type,
+          amount,
+          purpose,
+          funding_date,
+          reference_number,
+          document,
+          status
+        );
+
+        // ❌ REMOVED project deduction from here (no error logic changed)
         return res.status(200).send(result);
       } else {
         return res.status(400).send("Invalid funding type.");
       }
     } catch (err) {
-      // console.log(err);
       return res.status(500).send(err.message || "Server error");
     }
   }
 };
+
 const FetchFundingAmount = async (req, res) => {
   try {
     const allFundingData = await FetchFundingIndividualgDetailsModel();
