@@ -4,12 +4,17 @@ const AddFundingProjectModel = async (
   project_name,
   funding_type,
   amount,
-  date
+  date,
+  pi,
+  co_pi,
+  fund_details,
+  duration,
+  project_no
 ) => {
   return new Promise((resolve, reject) => {
     client.query(
-      "INSERT INTO funding_projects(project_name,funding_type,amount,date) VALUES ($1,$2,$3,$4)",
-      [project_name, funding_type, amount, date],
+      "INSERT INTO funding_projects(project_name,funding_type,amount,date,pi,co_pi,fund_details,duration,project_no) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)",
+      [project_name, funding_type, amount, date, pi, co_pi, fund_details, duration, project_no],
       (err, result) => {
         if (err) {
           reject(err);
