@@ -1,7 +1,15 @@
 const client = require('../../utils/conn');
-const CreateEventsModel = (event_type, event_title, event_privacy, event_description, event_date, event_time, created_by, select_speaker) => {
+const CreateEventsModel = (  event_type,
+    event_title,
+    event_privacy,
+    speaker,
+    event_date,
+    event_time,
+    event_link,
+    thumbnail,
+    description) => {
     return new Promise((resolve, reject) => {
-        client.query('INSERT INTO EVENTS (event_type, event_title, event_privacy, event_description, event_date, event_time, created_by, select_speaker) VALUES($1, $2, $3, $4, $5, $6, $7, $8)', [event_type, event_title, event_privacy, event_description, event_date, event_time, created_by, select_speaker], 
+        client.query('INSERT INTO events (event_type, event_title, event_privacy, speaker, event_date, event_time, event_link, event_thumbnail, event_description) VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9)', [event_type, event_title, event_privacy, speaker, event_date, event_time, event_link, thumbnail, description], 
             (err, result) => {
                  if(err) 
                  {
@@ -30,7 +38,21 @@ const FetchEventsModel = () => {
         )
     })
 }
-
+const DeleteEventModal = (id) => {
+  return new Promise((resolve, reject) => {
+    client.query(
+      "DELETE from events where event_id=$1",
+      [id],
+      (err, result) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(result);
+        }
+      },
+    );
+  });
+};
 const RequestSpeakerModel = (select_speaker, event_description, created_by) => {
     return new Promise((resolve, reject) => {
         client.query('INSERT INTO request_speaker(speaker_name, event_description, created_by) VALUES($1, $2, $3)', [select_speaker, event_description, created_by],
@@ -65,4 +87,4 @@ const AddPastEventsModel = (event_type, event_title, event_date, event_time, eve
     })
 }
 
-module.exports = {CreateEventsModel, FetchEventsModel, RequestSpeakerModel, AddPastEventsModel};
+module.exports = {CreateEventsModel, FetchEventsModel,DeleteEventModal, RequestSpeakerModel, AddPastEventsModel};

@@ -1,23 +1,48 @@
-const {CreateEventsModel, FetchEventsModel, RequestSpeakerModel} = require('../../../model/Admin/EventsModel');
-const CreateEvents = async(req, res) => {
-    const {event_type, event_title,  event_privacy, event_description, select_speaker, event_date, event_time, created_by} = req.body;
-    if(!event_type || !event_title || !event_privacy || !event_description || !select_speaker || !event_date || !event_time || !created_by)
-    {
-        res.status(400).json({status: 'Check all fields'})
-    }
-    else 
-    {
-        try
-        {
-            const result = await CreateEventsModel(event_type, event_title, event_privacy, event_description, event_date, event_time, created_by, select_speaker);
-            res.status(200).json(result);
-        }
-        catch(err) 
-        {
-            res.send(err);
-        }
-    }
-}
+const {CreateEventsModel, FetchEventsModel, RequestSpeakerModel, DeleteEventModal} = require('../../../model/Admin/EventsModel');
+const { uploadToS3 } = require('../../../utils/s3Upload');
+const CreateEvents = async (req, res) => {
+  try {
+    const {
+      event_type,
+      event_title,
+      event_privacy,
+      speaker,
+      event_date,
+      event_time,
+      event_link,
+      description,
+    } = req.body;
+
+  let thumbnail = null;
+
+  if (req.files?.thumbnail?.[0]) {
+      thumbnail = await uploadToS3(req.files.thumbnail[0], "thumbnail");
+  }
+
+ 
+    const result = await CreateEventsModel(
+      event_type,
+      event_title,
+      event_privacy,
+      speaker,
+      event_date,
+      event_time,
+      event_link,
+      thumbnail,
+      description,
+    );
+
+    res.status(200).json({
+      data: result,
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({
+      error: err.message,
+    });
+  }
+};
+
 
 const FetchEvents = async(req, res) => {
     try 
@@ -30,6 +55,20 @@ const FetchEvents = async(req, res) => {
         console.log(err);
     }
 }
+const DeleteEvent = async (req, res) => {
+  const id = req.params.id;
+
+  if (id) {
+    try {
+      const result = await DeleteEventModal(id);
+      res.status(200).send(result);
+    } catch (err) {
+      res.status(500).send(err);
+    }
+  } else {
+    res.status(400).send("params missing");
+  }
+};
 
 const RequestSpeaker = async(req, res) => {
     const {select_speaker, event_description, created_by} = req.body;
@@ -66,4 +105,4 @@ const RequestSpeaker = async(req, res) => {
 //         catch(err)
 //     }
 // }
-module.exports = {CreateEvents, FetchEvents, RequestSpeaker};
+module.exports = {CreateEvents, FetchEvents,DeleteEvent, RequestSpeaker};

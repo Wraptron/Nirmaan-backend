@@ -69,6 +69,7 @@ const {
   CreateEvents,
   FetchEvents,
   RequestSpeaker,
+  DeleteEvent,
 } = require("../controller/Admin/Events/Events.js");
 const {
   FetchMentorData,
@@ -172,7 +173,11 @@ router.post("/mentor/add-testimonial", Testimonial);
 router.get("/mentor/fetch-testimonial", FetchTestimonial);
 router.put("/mentor/update-testimonial", UpdateTestimonial);
 router.delete("/mentor/delete-testimonial/:id", DeleteTestimonial);
-router.post("/create-events", CreateEvents);
+router.post(
+  "/create-events",
+  upload.fields([{ name: "thumbnail", maxCount: 1 }]),
+  CreateEvents,
+);router.delete("/delete-event/:id", DeleteEvent);
 router.get("/profile-data/:mail", Authenticate, Profile);
 router.post("/add-sector", Settings);
 router.get("/view-message", ViewMessage);
