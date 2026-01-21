@@ -214,6 +214,37 @@ const FetchMeetingsModel = (mentor_id) => {
     );
   });
 };
+
+// Fetch meetings WITH mentor name & image
+const FetchMeetingsWithMentorDetailsModel = () => {
+  return new Promise((resolve, reject) => {
+    const query = `
+      SELECT
+        sm.meet_id,
+        sm.start_up_name,
+        sm.date,
+        sm.time,
+        sm.meeting_duration,
+        md.mentor_id,
+        md.mentor_name,
+        md.mentor_logo
+      FROM schedule_meetings sm
+      JOIN add_mentor md
+        ON TRIM(sm.mentor_reference_id) = TRIM(md.mentor_id)
+      ORDER BY sm.date DESC
+    `;
+
+    client.query(query, (err, result) => {
+      if (err) {
+        reject(err);
+      } else {
+        resolve(result.rows);
+      }
+    });
+  });
+};
+
+
 const TestimonialModel = (mentor_ref_id, name, role, description) => {
   return new Promise((resolve, reject) => {
     client.query(
@@ -345,6 +376,7 @@ module.exports = {
   MentorDeleteData,
   MentorScheduleModel,
   FetchMeetingsModel,
+  FetchMeetingsWithMentorDetailsModel,
   TestimonialModel,
   FetchTestimonialModel,
   UpdateTestimonialModel,

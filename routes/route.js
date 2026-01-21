@@ -103,6 +103,7 @@ const IPdataUpload = require("../controller/Office/IPdata.js");
 const { AddFundingProject, FetchFundingProject, FetchFundingProjectData, UpdateFundingProjectData } = require("../controller/Finance/AddFundingProject.js");
 const Authenticate = require("../utils/Authenticate.js");
 const { AddMentor} = require("../controller/Admin/Mentors/AddMentor.js");
+const { FetchMeetingsDetailsWithMentor } = require("../controller/Admin/Mentors/FetchMeetings.js");
 router.get("/prof", ProfilePhoto);
 router.put("/update-status", UpdateStatus);
 router.get("/startup/:id", IndividualStartups);
@@ -163,6 +164,7 @@ router.post(
 router.put("/mentor/update", upload.fields([{ name: "mentor_logo", maxCount: 1 }]), UpdateMentor);
 router.post("/mentor/meeting", Meetings);
 router.get("/mentor/fetch-meeting/:mentor_id", FetchMeetings);
+router.get("/mentor/fetch-mentor_meeting/", FetchMeetingsDetailsWithMentor);
 router.post("/mentor/feedback", MeetingFeedback);
 router.put("/mentor/update-feedback", UpdateFeedback);
 router.get(
