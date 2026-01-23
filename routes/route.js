@@ -70,6 +70,7 @@ const {
   FetchEvents,
   RequestSpeaker,
   DeleteEvent,
+  UpdateEvent,
 } = require("../controller/Admin/Events/Events.js");
 const {
   FetchMentorData,
@@ -181,7 +182,9 @@ router.post(
   "/create-events",
   upload.fields([{ name: "thumbnail", maxCount: 1 }]),
   CreateEvents,
-);router.delete("/delete-event/:id", DeleteEvent);
+);
+router.put("/edit-event/", upload.fields([{ name: "thumbnail", maxCount: 1 }]), UpdateEvent);
+router.delete("/delete-event/:id", DeleteEvent);
 router.get("/profile-data/:mail", Authenticate, Profile);
 router.post("/add-sector", Settings);
 router.get("/view-message", ViewMessage);

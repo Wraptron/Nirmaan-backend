@@ -53,6 +53,47 @@ const DeleteEventModal = (id) => {
     );
   });
 };
+
+const UpdateEventModel = async (
+  event_type,
+    event_title,
+    event_privacy,
+    speaker,
+    event_date,
+    event_time,
+    event_link,
+    thumbnail,
+    description,
+    event_id
+) => {
+  return new Promise((resolve, reject) => {
+    client.query(
+      `UPDATE events 
+       SET event_type=$1, event_title=$2, event_privacy=$3, speaker=$4, 
+        event_date=$5, event_time=$6,event_link=$7,event_thumbnail=$8,event_description=$9
+       WHERE event_id=$10 RETURNING *`,
+      [
+        event_type,
+        event_title,
+        event_privacy,
+        speaker,
+        event_date,
+        event_time,
+        event_link,
+        thumbnail,
+          description,
+        event_id
+      ],
+      (err, result) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(result.rows[0]);
+        }
+      },
+    );
+  });
+};
 const RequestSpeakerModel = (select_speaker, event_description, created_by) => {
     return new Promise((resolve, reject) => {
         client.query('INSERT INTO request_speaker(speaker_name, event_description, created_by) VALUES($1, $2, $3)', [select_speaker, event_description, created_by],
@@ -87,4 +128,4 @@ const AddPastEventsModel = (event_type, event_title, event_date, event_time, eve
     })
 }
 
-module.exports = {CreateEventsModel, FetchEventsModel,DeleteEventModal, RequestSpeakerModel, AddPastEventsModel};
+module.exports = {CreateEventsModel, FetchEventsModel,DeleteEventModal,UpdateEventModel, RequestSpeakerModel, AddPastEventsModel};
