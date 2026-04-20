@@ -22,6 +22,7 @@ const DeleteResume = require("../controller/Admin/Resume/DeleteResume.js");
 const Settings = require("../controller/Admin/Settings/Settings.js");
 const {
   AddStartup,
+  SyncStartupFromIncubation,
   AddFounder,
   FetchFounder,
   UpdateAward,
@@ -190,6 +191,7 @@ router.post("/add-sector", Settings);
 router.get("/view-message", ViewMessage);
 router.post("/add-connections", AddConnections);
 router.post("/add-startup", AddStartup);
+router.post("/sync/startup", SyncStartupFromIncubation);
 router.get("/viewconnections", ViewConnections);
 router.post("/post-job", Authenticate, Job);
 router.get("/fetch-report-data", Report);
