@@ -12,6 +12,8 @@ const {
   MeetingFeedbackModel,
   FetchMeetingFeedbackModel,
   UpdateFeedbackModel,
+  FetchMeetingsWithMentorDetailsModel,
+  DeleteMeetingModal,
 } = require("../../../model/AddMentorModel");
 const { uploadToS3 } = require("../../../utils/s3Upload");
 
@@ -166,6 +168,32 @@ const FetchMeetings = async (req, res) => {
   }
 };
 
+const FetchMeetingsDetailsWithMentor = async (req, res) => {
+  try {
+    const result = await FetchMeetingsWithMentorDetailsModel();
+    res.status(200).json(result);
+  } catch (err) {
+    console.log(err);
+    res.send(err);
+  }
+};
+
+const DeleteMeetings = async (req, res) => {
+  const id = req.params.id;
+
+  if (id) {
+    try {
+      const result = await DeleteMeetingModal(id);
+      res.status(200).send(result);
+    } catch (err) {
+      res.status(500).send(err);
+    }
+  } else {
+    res.status(400).send("params missing");
+  }
+};
+
+
 const Testimonial = async (req, res) => {
   try {
     const { mentor_ref_id, name, role, description } = req.body;
@@ -230,6 +258,8 @@ const MeetingFeedback = async (req, res) => {
   try {
     const { meet_id, mentor_id, startup_id, feedback_text } = req.body;
 
+    console.log(req.body)
+
     const result = await MeetingFeedbackModel(
       meet_id,
       mentor_id,
@@ -283,6 +313,8 @@ module.exports = {
   DeleteTestimonial,
   Meetings,
   FetchMeetings,
+  FetchMeetingsDetailsWithMentor,
+  DeleteMeetings,
   MeetingFeedback,
   UpdateFeedback,
   FetchMeetingFeedback,

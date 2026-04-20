@@ -19,10 +19,10 @@ const LoginModel = (user_mail, user_password) => {
                     const role = userData.user_role;
                     const department = userData.user_department;
                     const startup_id = userData.startup_id
-                    
+                    const mentor_id = userData.mentor_id
                     // Create JWT token
                     const accessToken = jwt.sign(
-                        { user_mail: user_mail, role: role,startup_id:startup_id }, 
+                        { user_mail: user_mail, role: role,startup_id:startup_id,mentor_id:mentor_id }, 
                         process.env.ACCESS_TOKEN_SECRET, 
                         { expiresIn: '30m' }
                     );
@@ -42,6 +42,9 @@ const LoginModel = (user_mail, user_password) => {
                         case 5:
                             authenticationLevel = "Student";
                             break;
+                        case 6:
+                            authenticationLevel = "Mentor";
+                            break;
                         default:
                             authenticationLevel = "Unknown";
                     }
@@ -55,7 +58,8 @@ const LoginModel = (user_mail, user_password) => {
                         status: 'Login Authenticated',
                         authenticationLevel: authenticationLevel,
                         userData: userData,
-                        startup_id:startup_id
+                        startup_id:startup_id,
+                        mentor_id:mentor_id
                     });
                     
                 } else {

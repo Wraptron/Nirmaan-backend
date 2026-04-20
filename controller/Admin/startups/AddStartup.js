@@ -192,6 +192,64 @@ if (existingUser) {
   }
 };
 
+const SyncStartupFromIncubation = async (req, res) => {
+  try {
+    const configuredSecret = process.env.APP_Y_API_SECRET;
+    if (!configuredSecret) {
+      return res.status(500).json({ error: "APP_Y_API_SECRET is not configured" });
+    }
+
+    const incomingSecret =
+      req.headers["x-api-key"] ||
+      req.headers["x-app-secret"] ||
+      (req.headers.authorization || "").replace(/^Bearer\s+/i, "");
+
+    if (!incomingSecret || incomingSecret !== configuredSecret) {
+      return res.status(401).json({ error: "Unauthorized sync request" });
+    }
+
+    const { basic, official, founder, description } = req.body || {};
+    const official_email_address = official?.official_email_address;
+
+    if (!basic?.startup_name || !official_email_address) {
+      return res.status(400).json({
+        error: "Missing required sync fields",
+        required: ["basic.startup_name", "official.official_email_address"],
+      });
+    }
+
+    const existingByEmail = await CheckUserByEmail(official_email_address);
+    if (existingByEmail) {
+      return res.status(200).json({
+        status: "already_exists",
+        message: "Startup already exists in test_startup",
+      });
+    }
+
+    const startupStatus = "Active";
+    const ipDetails = { patent: "", design: "", trademark: "", copyright: "" };
+    const result = await AddStartupModel(
+      basic,
+      official,
+      founder || {},
+      description || {},
+      official_email_address,
+      startupStatus,
+      ipDetails
+    );
+
+    return res.status(200).json({
+      status: "synced",
+      message: "Startup synced to test_startup successfully",
+      result,
+    });
+  } catch (err) {
+    return res.status(500).json({
+      error: err.message || "Failed to sync startup",
+    });
+  }
+};
+
 const FetchStartupDatainNumbers = async (req, res) => {
   try {
     const result = await StartupDataModel();
@@ -880,6 +938,7 @@ const DeleteFounder = async (req, res) => {
 
 module.exports = {
   AddStartup,
+  SyncStartupFromIncubation,
   UpdateStartupMentorDetails,
   FetchAwardData,
   AddAward,

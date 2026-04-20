@@ -225,6 +225,7 @@ const FetchMeetingsWithMentorDetailsModel = () => {
         sm.date,
         sm.time,
         sm.meeting_duration,
+        sm.startup_id,
         md.mentor_id,
         md.mentor_name,
         md.mentor_logo
@@ -241,6 +242,22 @@ const FetchMeetingsWithMentorDetailsModel = () => {
         resolve(result.rows);
       }
     });
+  });
+};
+
+const DeleteMeetingModal = (id) => {
+  return new Promise((resolve, reject) => {
+    client.query(
+      "DELETE from schedule_meetings where meet_id=$1",
+      [id],
+      (err, result) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(result);
+        }
+      },
+    );
   });
 };
 
@@ -384,4 +401,5 @@ module.exports = {
   MeetingFeedbackModel,
   UpdateFeedbackModel,
   FetchMeetingFeedbackModel,
+  DeleteMeetingModal
 };
