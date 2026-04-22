@@ -1,7 +1,6 @@
 const client = require("../utils/conn");
-const generatePassword = require("../utils/GeneratePassword");
 var md5 = require("md5");
-const { v4: uuidv4 } = require("uuid");
+const bcrypt = require("bcrypt");
 
 const AddStartupModel = async (
   basic,
@@ -89,7 +88,7 @@ const CheckUserByEmail = async (email) => {
 //     });
 // }
 
-const CreateTeamUser = (
+const CreateTeamUser = async (
   user_mail,
   user_password,
   user_name,
@@ -97,13 +96,13 @@ const CreateTeamUser = (
   personal_email,
   startup_id
 ) => {
-  const userId = uuidv4();
+  const hashedPassword = await bcrypt.hash(user_password, 10);
   return new Promise((resolve, reject) => {
     client.query(
       "INSERT INTO user_data(user_mail, user_password, user_hash, user_department, user_role, user_name, user_contact, personal_email,startup_id) VALUES($1, $2, $3, $4, $5, $6, $7, $8,$9)",
       [
         user_mail,
-        user_password,
+        hashedPassword,
         md5(user_mail),
         "student",
         "5",

@@ -8,8 +8,8 @@ const sendStartupCredentials = async (toEmail, password) => {
         port: 587,
         secure: false,
         auth: {
-            user: "krish21498@gmail.com",
-            pass: process.env.PASS_KEY
+            user: "charucharukash45@gmail.com",
+            pass: "tond hpht vqau tcna"
         },
     });
     try {

@@ -109,7 +109,7 @@ const Authenticate = require("../utils/Authenticate.js");
 const { AddMentor} = require("../controller/Admin/Mentors/AddMentor.js");
 router.get("/prof", ProfilePhoto);
 router.put("/update-status", UpdateStatus);
-router.get("/startup/:id", IndividualStartups);
+router.get("/startup/:id", Authenticate, IndividualStartups);
 router.put(
   "/edit-startupdata/personal-info", Authenticate,
   upload.fields([
