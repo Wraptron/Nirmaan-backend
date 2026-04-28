@@ -3,19 +3,29 @@ const jwt = require('jsonwebtoken');
 const path = require('path');
 require('dotenv').config({ path: path.resolve(__dirname, '../../.env') });
 const nodeCache = require('node-cache');
+const bcrypt = require("bcrypt");
 
 const LoginModel = (user_mail, user_password) => {
     const cache = new nodeCache();
     
     return new Promise((resolve, reject) => {
-        client.query('SELECT * FROM user_data WHERE user_mail=$1 AND user_password=$2',
-        [user_mail, user_password],
+        client.query('SELECT * FROM user_data WHERE user_mail=$1',
+        [user_mail],
         (error, result) => {
             if (error) {
                 reject(error);
             } else {
                 if(result.rows.length > 0) {
                     const userData = result.rows[0];
+                    const storedPassword = userData.user_password || "";
+                    const isBcryptHash = storedPassword.startsWith("$2");
+                    const passwordMatches = isBcryptHash
+                      ? bcrypt.compareSync(user_password, storedPassword)
+                      : storedPassword === user_password;
+
+                    if (!passwordMatches) {
+                      return resolve({ status: "User_not_found" });
+                    }
                     const role = userData.user_role;
                     const department = userData.user_department;
                     const startup_id = userData.startup_id

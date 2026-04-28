@@ -1,31 +1,38 @@
-const e = require('express');
 const nodemailer = require('nodemailer');
 const path = require('path');
 require('dotenv').config({ path: path.resolve(__dirname, '../../.env') });
-const ForgotPassword = async(email_prompt) => {
+
+const ForgotPassword = async (email, otp) => {
+    const smtpHost = "smtpout.secureserver.net";
+    const smtpPort = Number(465);
+    const smtpSecure = process.env.SMTP_SECURE
+        ? "true"
+        : smtpPort === 465;
+    const smtpUser = process.env.GMAIL_USER;
+    const smtpPass = process.env.GMAIL_APP_PASSWORD;
+
     const transporter = nodemailer.createTransport({
-        host: "smtp.gmail.com",
-        port: 587,
-        secure: false,
+        host: smtpHost,
+        port: smtpPort,
+        secure: smtpSecure,
         auth: {
-            user: "prasathnarayanan6@gmail.com",
-            pass: process.env.PASS_KEY
+            user: smtpUser,
+            pass: smtpPass
         },
     });
     try
     {
         const info = await transporter.sendMail({
-            from: '"Prasath" prasathnarayanan6@gmail.com',
-            to:  email_prompt,
-            subject: "Forgot Password - Reg", 
-            text: "Dear" + email_prompt + "PFA, reset link", 
-            // html: "<b>Thank You!</b>", 
+            from: `"NIRMAAN" <${smtpUser}>`,
+            to: email,
+            subject: "Nirmaan Password Reset OTP",
+            text: `Your OTP for password reset is ${otp}. This OTP is valid for 5 minutes.`,
           });
-          console.log(info);
+          return info;
     }
     catch(err)
     {
-        return err;
+        throw err;
     }
 }
 module.exports = ForgotPassword;

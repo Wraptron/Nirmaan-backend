@@ -13,7 +13,11 @@ const GetAllResumeController = require("../controller/Admin/Resume/GetAllResumeC
 const ResumeUpload = require("../controller/Admin/Resume/ResumeUpload.js");
 const Resumedata = require("../controller/Admin/Resume/Resumedata.js");
 const ApprovalRequest = require("../controller/Admin/Resume/ApporvalRequest.js");
-const ForgotRequest = require("../controller/Admin/LoginController/ForgotRequest.js");
+const {
+  requestForgotPasswordOtp,
+  resendForgotPasswordOtp,
+  verifyForgotPasswordOtp,
+} = require("../controller/Admin/LoginController/ForgotRequest.js");
 const {
   Profile,
   ProfilePhoto,
@@ -109,7 +113,7 @@ const Authenticate = require("../utils/Authenticate.js");
 const { AddMentor} = require("../controller/Admin/Mentors/AddMentor.js");
 router.get("/prof", ProfilePhoto);
 router.put("/update-status", UpdateStatus);
-router.get("/startup/:id", IndividualStartups);
+router.get("/startup/:id", Authenticate, IndividualStartups);
 router.put(
   "/edit-startupdata/personal-info", Authenticate,
   upload.fields([
@@ -139,7 +143,10 @@ router.get("/mentor/count", MentorCount);
 router.post("/mentor/request-speaker", RequestSpeaker);
 router.post("/login", LoginController);
 router.post("/send-message", AddMessage);
-router.post("/forgot-password", ForgotRequest);
+router.post("/forgot-password", requestForgotPasswordOtp);
+router.post("/forgot-password/request-otp", requestForgotPasswordOtp);
+router.post("/forgot-password/resend-otp", resendForgotPasswordOtp);
+router.post("/forgot-password/verify-otp", verifyForgotPasswordOtp);
 router.post("/work-request", WorkController);
 router.get("/download/:filename", ResumeController);
 router.get("/getdata", GetAllResumeController);

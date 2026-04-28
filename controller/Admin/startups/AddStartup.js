@@ -238,9 +238,23 @@ const SyncStartupFromIncubation = async (req, res) => {
       ipDetails
     );
 
+    const generatedPassword = generatePassword();
+    const startup_id = result?.rows?.[0]?.user_id;
+
+    await CreateTeamUser(
+      official_email_address,
+      generatedPassword,
+      founder?.founder_name || basic?.startup_name || "Startup User",
+      founder?.founder_number || "",
+      founder?.founder_email || official_email_address,
+      startup_id
+    );
+
+    await sendStartupCredentials(official_email_address, generatedPassword);
+
     return res.status(200).json({
       status: "synced",
-      message: "Startup synced to test_startup successfully",
+      message: "Startup synced and credentials sent successfully",
       result,
     });
   } catch (err) {
@@ -302,6 +316,19 @@ const UpdateStatus = async (req, res) => {
 const IndividualStartups = async (req, res) => {
   const { id } = req.params;
   try {
+    const requester = req.user;
+
+    // Role 2 (admin) can access any startup profile.
+    // Role 5 (startup user) can only access their own startup profile.
+    if (
+      requester?.role === 5 &&
+      String(requester.startup_id) !== String(id)
+    ) {
+      return res.status(403).json({
+        message: "Forbidden: You can only access your own startup profile",
+      });
+    }
+
     const result = await IndividualStarupModel(id);
     const IndStartupData = {
       generalData: result.GeneralData.rows,
