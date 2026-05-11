@@ -238,23 +238,53 @@ const SyncStartupFromIncubation = async (req, res) => {
       ipDetails
     );
 
+    // AddStartupModel can return duplicate_skipped with user_id when startup_name exists.
+    // In that case we should not attempt user/email creation again.
+    if (result?.status === "duplicate_skipped") {
+      return res.status(200).json({
+        status: "already_exists",
+        message: "Startup already exists (matched by startup name)",
+      });
+    }
+
     const generatedPassword = generatePassword();
-    const startup_id = result?.rows?.[0]?.user_id;
+    const startup_id = result?.rows?.[0]?.user_id || result?.user_id;
 
-    await CreateTeamUser(
-      official_email_address,
-      generatedPassword,
-      founder?.founder_name || basic?.startup_name || "Startup User",
-      founder?.founder_number || "",
-      founder?.founder_email || official_email_address,
-      startup_id
-    );
+    if (!startup_id) {
+      return res.status(500).json({
+        error: "Startup created but startup_id missing from DB response",
+      });
+    }
 
-    await sendStartupCredentials(official_email_address, generatedPassword);
+    try {
+      await CreateTeamUser(
+        official_email_address,
+        generatedPassword,
+        founder?.founder_name || basic?.startup_name || "Startup User",
+        founder?.founder_number || "",
+        founder?.founder_email || official_email_address,
+        startup_id
+      );
+    } catch (createUserErr) {
+      // If user already exists in user_data, treat sync as idempotent success.
+      if (createUserErr?.code !== "23505") {
+        throw createUserErr;
+      }
+    }
+
+    // Email delivery should not fail the sync once DB state is created.
+    try {
+      await sendStartupCredentials(official_email_address, generatedPassword);
+    } catch (mailErr) {
+      console.warn(
+        "Sync startup: credentials email failed:",
+        mailErr?.message || mailErr
+      );
+    }
 
     return res.status(200).json({
       status: "synced",
-      message: "Startup synced and credentials sent successfully",
+      message: "Startup synced successfully",
       result,
     });
   } catch (err) {
