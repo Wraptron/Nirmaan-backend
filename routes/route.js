@@ -107,6 +107,9 @@ const {
 const {
   ScheduleMentorMeeting,
 } = require("../controller/Admin/Mentorship/Mentorship.js");
+const {
+  createMentorSessionRequest,
+} = require("../controller/Admin/Mentorship/MentorSessionRequest.js");
 const IPdataUpload = require("../controller/Office/IPdata.js");
 const { AddFundingProject, FetchFundingProject, FetchFundingProjectData, UpdateFundingProjectData } = require("../controller/Finance/AddFundingProject.js");
 const Authenticate = require("../utils/Authenticate.js");
@@ -126,6 +129,7 @@ router.put("/edit-startup/mentordetails", UpdateStartupMentorDetails);
 router.delete("delete-startup/:id", DeleteStartupData);
 router.put("/edit-startup/about", UpdateStartupAbout);
 router.post("/schedule-meeting", ScheduleMentorMeeting);
+router.post("/mentor/session-request", Authenticate, createMentorSessionRequest);
 router.post("/finance/addfunding", upload.none(), AddFunding);
 router.get("/finance/funding_amount", FetchFundingAmount);
 router.get("/finance/funding", FetchFundingData);

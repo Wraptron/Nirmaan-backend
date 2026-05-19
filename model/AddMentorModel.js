@@ -118,6 +118,26 @@ const FetchMentorDataModel = () => {
     });
   });
 };
+
+const FetchMentorNameByIdModel = (mentor_id) => {
+  return new Promise((resolve, reject) => {
+    if (!mentor_id) {
+      resolve(null);
+      return;
+    }
+    client.query(
+      "SELECT mentor_name FROM add_mentor WHERE mentor_id = $1 LIMIT 1",
+      [mentor_id],
+      (err, result) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(result.rows[0]?.mentor_name || null);
+        }
+      }
+    );
+  });
+};
 const MentorCountData = () => {
   return new Promise((resolve, reject) => {
     client.query(
@@ -389,6 +409,7 @@ module.exports = {
   AddMentorModel,
   UpdateMentorModel,
   FetchMentorDataModel,
+  FetchMentorNameByIdModel,
   MentorCountData,
   MentorDeleteData,
   MentorScheduleModel,
