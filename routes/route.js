@@ -105,6 +105,9 @@ const {
   FetchStartupDataDetail,
 } = require("../controller/Finance/AddFunding.js");
 const {
+  getNotifications,
+} = require("../controller/Notification/NotificationController.js");
+const {
   ScheduleMentorMeeting,
 } = require("../controller/Admin/Mentorship/Mentorship.js");
 const {
@@ -214,7 +217,7 @@ router.post("/customer/raise-request", RaiseRequest);
 router.post("/customer/apply-mentor", AddMentorHour);
 router.get("/customer/fetch-mentor", FetchDataMentor);
 router.post("/customer/add-job", AddJob);
-router.get("/notification", updateFundingNotif);
+router.get("/notification", getNotifications);
 router.delete("/delete-mentor/:id", DeleteMentorData);
 router.delete("/delete-startup/:id", DeleteStartupData);
 router.delete("/delete-connection", DeleteConnection);
