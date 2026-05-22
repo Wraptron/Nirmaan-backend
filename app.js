@@ -708,7 +708,7 @@ app.use("*", (req, res) => {
 
 // Server configuration
 const EXPRESS_PORT = process.env.EXPRESS_PORT || 3003;
-const SOCKET_PORT = process.env.SOCKET_PORT || 5000;
+const SOCKET_PORT = process.env.SOCKET_PORT || 5001 ;
 
 // Start Express server
 app.listen(EXPRESS_PORT, '0.0.0.0', () => {

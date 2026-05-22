@@ -228,7 +228,8 @@ const FetchMeetingsWithMentorDetailsModel = () => {
         sm.startup_id,
         md.mentor_id,
         md.mentor_name,
-        md.mentor_logo
+        md.mentor_logo,
+        md.tag
       FROM schedule_meetings sm
       JOIN add_mentor md
         ON TRIM(sm.mentor_reference_id) = TRIM(md.mentor_id)
