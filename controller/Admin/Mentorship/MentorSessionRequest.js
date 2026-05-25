@@ -5,7 +5,10 @@ const {
   insertMentorSessionRequest,
   updateMentorSessionRequestStatus,
 } = require("../../../model/MentorSessionRequestModel");
-
+const {
+  notifyMentorshipSessionPending,
+  notifyMentorshipSessionRejected,
+} = require("../../../utils/notificationFanout");
 const createMentorSessionRequest = async (req, res) => {
   try {
     const {
@@ -55,6 +58,22 @@ const createMentorSessionRequest = async (req, res) => {
       requested_by: req.user?.user_mail || null,
     });
 
+    const fullRow = {
+      id: row.id,
+      startup_id: startupId,
+      startup_name: startupName,
+      mentor_id: mentorId || null,
+      mentor_name: resolvedMentorName,
+      requested_date: date,
+      requested_time: time,
+      duration: Number(duration),
+      session_mode: mode,
+      agenda: agenda || "",
+      status: row.status,
+      created_at: row.created_at,
+    };
+    await notifyMentorshipSessionPending(fullRow);
+
     res.status(201).json({
       requestId: String(row.id),
       status: row.status,
@@ -85,6 +104,10 @@ const updateMentorSessionRequest = async (req, res) => {
       return res.status(404).json({
         message: "Request not found or already processed.",
       });
+    }
+
+    if (status === "rejected") {
+      await notifyMentorshipSessionRejected(row);
     }
 
     res.status(200).json({ request: row });

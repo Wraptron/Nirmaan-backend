@@ -114,9 +114,8 @@ const DeleteMentorData = async (req, res) => {
   }
 };
 
-const {
-  updateMentorSessionRequestStatus,
-} = require("../../../model/MentorSessionRequestModel");
+const { scheduleMeetingAndAcceptSession } = require("../../../model/AppNotificationModel");
+const { notifyMentorshipSessionAccepted } = require("../../../utils/notificationFanout");
 
 const Meetings = async (req, res) => {
   try {
@@ -141,24 +140,40 @@ const Meetings = async (req, res) => {
       });
     }
 
-    const result = await MentorScheduleModel(
-      mentor_reference_id,
-      startup_name,
-      founder_name,
-      meeting_mode,
-      meeting_link,
-      meeting_location,
-      participants,
-      date,
-      time,
-      meeting_duration,
-      meeting_agenda,
-      startup_id
+    const { meetingResult, sessionRow } = await scheduleMeetingAndAcceptSession(
+      {
+        mentor_reference_id,
+        startup_name,
+        founder_name,
+        meeting_mode,
+        meeting_link,
+        meeting_location,
+        participants,
+        date,
+        time,
+        meeting_duration,
+        meeting_agenda,
+        startup_id,
+      },
+      sessionRequestId || null
     );
-    res.status(201).json({ message: "Meeting scheduled successfully", result });
+
+    if (sessionRow) {
+      await notifyMentorshipSessionAccepted(sessionRow, date, time);
+    }
+
+    res.status(201).json({
+      message: "Meeting scheduled successfully",
+      result: meetingResult,
+    });
   } catch (err) {
     console.error("Backend Error (meeting):", err);
-    res.status(500).json({ error: err.message || "Something went wrong" });
+    const msg = err.message || "Something went wrong";
+    const status =
+      msg.includes("not found") || msg.includes("already processed")
+        ? 404
+        : 500;
+    res.status(status).json({ error: msg });
   }
 };
 

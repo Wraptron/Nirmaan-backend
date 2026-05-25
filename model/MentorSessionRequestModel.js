@@ -93,6 +93,42 @@ const fetchPendingMentorSessionRequests = () => {
   });
 };
 
+const fetchMentorSessionRequestUpdatesForMentor = (mentorId) => {
+  return new Promise((resolve, reject) => {
+    client.query(
+      `SELECT *
+       FROM mentor_session_requests
+       WHERE status IN ('accepted', 'rejected')
+         AND mentor_id::text = $1
+       ORDER BY created_at DESC
+       LIMIT 50`,
+      [String(mentorId)],
+      (err, result) => {
+        if (err) reject(err);
+        else resolve(result.rows);
+      }
+    );
+  });
+};
+
+const fetchMentorSessionRequestUpdatesForStartup = (startupId) => {
+  return new Promise((resolve, reject) => {
+    client.query(
+      `SELECT *
+       FROM mentor_session_requests
+       WHERE status IN ('accepted', 'rejected')
+         AND startup_id = $1
+       ORDER BY created_at DESC
+       LIMIT 50`,
+      [toIntegerOrNull(startupId)],
+      (err, result) => {
+        if (err) reject(err);
+        else resolve(result.rows);
+      }
+    );
+  });
+};
+
 const updateMentorSessionRequestStatus = (id, status) => {
   return new Promise((resolve, reject) => {
     client.query(
@@ -118,5 +154,7 @@ module.exports = {
   fetchStartupNameById,
   insertMentorSessionRequest,
   fetchPendingMentorSessionRequests,
+  fetchMentorSessionRequestUpdatesForMentor,
+  fetchMentorSessionRequestUpdatesForStartup,
   updateMentorSessionRequestStatus,
 };

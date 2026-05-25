@@ -106,7 +106,9 @@ const {
 } = require("../controller/Finance/AddFunding.js");
 const {
   getNotifications,
+  markNotificationsRead,
 } = require("../controller/Notification/NotificationController.js");
+const requireRole = require("../utils/requireRole.js");
 const {
   ScheduleMentorMeeting,
 } = require("../controller/Admin/Mentorship/Mentorship.js");
@@ -184,7 +186,7 @@ router.post(
   AddMentor
 );
 router.put("/mentor/update", upload.fields([{ name: "mentor_logo", maxCount: 1 }]), UpdateMentor);
-router.post("/mentor/meeting", Meetings);
+router.post("/mentor/meeting", Authenticate, requireRole(2), Meetings);
 router.get("/mentor/fetch-meeting/:mentor_id", FetchMeetings);
 router.get("/mentor/fetch-mentor_meeting/",FetchMeetingsDetailsWithMentor);
 router.delete("/mentor/delete-meeting/:id",DeleteMeetings);
@@ -222,7 +224,8 @@ router.post("/customer/raise-request", RaiseRequest);
 router.post("/customer/apply-mentor", AddMentorHour);
 router.get("/customer/fetch-mentor", FetchDataMentor);
 router.post("/customer/add-job", AddJob);
-router.get("/notification", getNotifications);
+router.get("/notification", Authenticate, getNotifications);
+router.patch("/notification/read", Authenticate, markNotificationsRead);
 router.delete("/delete-mentor/:id", DeleteMentorData);
 router.delete("/delete-startup/:id", DeleteStartupData);
 router.delete("/delete-connection", DeleteConnection);
