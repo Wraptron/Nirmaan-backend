@@ -17,15 +17,10 @@ const formatTimeSlot = (time_slot) => {
   return value.length >= 5 ? value.slice(0, 5) : value;
 };
 
-const toIntegerOrNull = (value) => {
-  if (value === null || value === undefined || value === "") return null;
-  const n = Number(value);
-  return Number.isNaN(n) ? null : n;
-};
 
 const fetchStartupNameById = (startupId) => {
   return new Promise((resolve, reject) => {
-    const id = toIntegerOrNull(startupId);
+    const id = startupId;
     if (id === null) {
       resolve(null);
       return;
@@ -70,16 +65,16 @@ const insertMentorSessionRequest = (payload) => {
       ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 'pending')
       RETURNING id, status, created_at`,
       [
-        toIntegerOrNull(startup_id),
+        startup_id,
         startup_name,
-        mentor_id || null,
-        mentor_name || null,
+        mentor_id,
+        mentor_name,
         requested_date,
         requested_time,
         duration,
         session_mode,
         agenda || "",
-        requested_by || null,
+        requested_by,
       ],
       (err, result) => {
         if (err) {

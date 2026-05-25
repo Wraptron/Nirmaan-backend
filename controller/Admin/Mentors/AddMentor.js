@@ -55,7 +55,7 @@ const AddMentor = async (req, res) => {
     } catch (err) {
       if (
         err.STATUS.code === "23505" &&
-        err.STATUS.constraint === "add_mentor_pkey"
+        err.STATUS.constraint === "mentors_pkey"
       ) {
         return res.status(409).json({ Error: "Email already registered" });
       }else if (

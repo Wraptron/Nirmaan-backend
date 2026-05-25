@@ -401,7 +401,7 @@ const FetchFundingDatainNumbers = require("./routes/route");
 const IPDetails = require("./routes/route");
 const saveAvailability = require("./routes/route");
 const getAvailability = require("./routes/route");
-
+const fetchMentorSessionRequestsForStartupController = require("./routes/route");
 
 
 // Import utilities
@@ -526,6 +526,7 @@ app.use(responseTime());
 // API Routes
 app.use("/api/v1/", saveAvailability);
 app.use("/api/v1/", getAvailability);
+app.use("/api/v1/", fetchMentorSessionRequestsForStartupController);
 app.use("/api/v1/", LoginController);
 app.use("/api/v1/", ForgotRequest);
 app.use("/api/v1/", Profile);

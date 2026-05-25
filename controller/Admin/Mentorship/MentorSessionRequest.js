@@ -1,4 +1,3 @@
-const { FetchMentorNameByIdModel } = require("../../../model/AddMentorModel");
 const { mentorSlotExists } = require("../../../model/MentorAvailabilityModel");
 const {
   fetchStartupNameById,
@@ -10,54 +9,60 @@ const {
   notifyMentorshipSessionPending,
   notifyMentorshipSessionRejected,
 } = require("../../../utils/notificationFanout");
+
+
+
 const createMentorSessionRequest = async (req, res) => {
   try {
-    const {
-      mentorId,
-      mentorName,
-      date,
-      time,
-      duration,
-      mode,
-      agenda,
-    } = req.body;
+    const { mentor_id, mentor_name, date, time, duration, mode, agenda } =
+      req.body;
 
-    if (!date || !time || !duration || !mode) {
-      return res.status(400).json({ message: "Date, time, duration, and mode are required." });
+    // Auth
+    const startupId = req.user?.startup_id
+    if (startupId === null) {
+      return res.status(403).json({
+        message: "Startup identity required. Log in as a startup account.",
+      });
     }
 
-    if (mentorId) {
-      const slotAvailable = await mentorSlotExists(mentorId, date, time);
+    // Fetch startup name
+    const startup_name = await fetchStartupNameById(startupId);
+    if (!startup_name?.trim()) {
+      return res.status(400).json({ message: "Startup profile not found." });
+    }
+
+    // Validation
+    if (!date || !time || !duration || !mode) {
+      return res.status(400).json({
+        message: "Date, time, duration, and mode are required.",
+      });
+    }
+
+    // Slot check
+    if (mentor_id) {
+      const slotAvailable = await mentorSlotExists(mentor_id, date, time);
       if (!slotAvailable) {
         return res.status(400).json({
-          message: "Selected date and time are not in this mentor's published availability.",
+          message:
+            "Selected date and time are not in this mentor's published availability.",
         });
       }
 
-      const slotTaken = await mentorSlotIsTaken(mentorId, date, time);
+      const slotTaken = await mentorSlotIsTaken(mentor_id, date, time);
       if (slotTaken) {
         return res.status(409).json({
-          message: "This time slot is no longer available. Another startup has already requested it.",
+          message:
+            "This time slot is no longer available. Another startup has already requested it.",
         });
       }
     }
 
-    const startupId = req.user?.startup_id || null;
-    let startupName = await fetchStartupNameById(startupId);
-    if (!startupName) {
-      startupName = req.body.startupName || "Unknown startup";
-    }
-
-    let resolvedMentorName = mentorName || null;
-    if (mentorId && !resolvedMentorName) {
-      resolvedMentorName = await FetchMentorNameByIdModel(mentorId);
-    }
-
+    // Insert
     const row = await insertMentorSessionRequest({
       startup_id: startupId,
-      startup_name: startupName,
-      mentor_id: mentorId || null,
-      mentor_name: resolvedMentorName,
+      startup_name,
+      mentor_id: mentor_id || null,
+      mentor_name: mentor_name || null,
       requested_date: date,
       requested_time: time,
       duration: Number(duration),
@@ -66,12 +71,13 @@ const createMentorSessionRequest = async (req, res) => {
       requested_by: req.user?.user_mail || null,
     });
 
+    // Notify
     const fullRow = {
       id: row.id,
       startup_id: startupId,
-      startup_name: startupName,
-      mentor_id: mentorId || null,
-      mentor_name: resolvedMentorName,
+      startup_name,
+      mentor_id: mentor_id || null,
+      mentor_name: mentor_name || null,
       requested_date: date,
       requested_time: time,
       duration: Number(duration),

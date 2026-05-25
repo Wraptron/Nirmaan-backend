@@ -68,7 +68,7 @@ const UpdateMentor = async (req, res) => {
   } catch (err) {
    if (
         err.code === "23505" &&
-        err.constraint === "add_mentor_pkey"
+        err.constraint === "mentors_pkey"
       ) {
         return res.status(409).json({ Error: "Email already registered" });
       }else if (
@@ -165,12 +165,8 @@ const Meetings = async (req, res) => {
       result: meetingResult,
     });
   } catch (err) {
-    const msg = err.message || "Something went wrong";
-    const status =
-      msg.includes("not found") || msg.includes("already processed")
-        ? 404
-        : 500;
-    res.status(status).json({ error: msg });
+    console.error("Error in Meetings", err);
+    res.status(500).send(err);
   }
 };
 
