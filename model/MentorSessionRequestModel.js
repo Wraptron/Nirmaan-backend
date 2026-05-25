@@ -1,5 +1,22 @@
 const client = require("../utils/conn");
 
+const formatDateKey = (value) => {
+  if (!value) return "";
+  if (typeof value === "string") return value.slice(0, 10);
+  if (value instanceof Date) {
+    const y = value.getFullYear();
+    const m = String(value.getMonth() + 1).padStart(2, "0");
+    const d = String(value.getDate()).padStart(2, "0");
+    return `${y}-${m}-${d}`;
+  }
+  return String(value).slice(0, 10);
+};
+
+const formatTimeSlot = (time_slot) => {
+  const value = String(time_slot);
+  return value.length >= 5 ? value.slice(0, 5) : value;
+};
+
 const toIntegerOrNull = (value) => {
   if (value === null || value === undefined || value === "") return null;
   const n = Number(value);
@@ -129,6 +146,53 @@ const fetchMentorSessionRequestUpdatesForStartup = (startupId) => {
   });
 };
 
+/** Slots held by pending or accepted session requests (rejected frees the slot). */
+const fetchBookedSlotsByMentorId = (mentorId) => {
+  return new Promise((resolve, reject) => {
+    client.query(
+      `SELECT requested_date, requested_time
+       FROM mentor_session_requests
+       WHERE mentor_id::text = $1
+         AND status IN ('pending', 'accepted')
+       ORDER BY requested_date ASC, requested_time ASC`,
+      [String(mentorId)],
+      (err, result) => {
+        if (err) {
+          reject(err);
+          return;
+        }
+        const grouped = {};
+        result.rows.forEach((row) => {
+          const dateKey = formatDateKey(row.requested_date);
+          if (!grouped[dateKey]) grouped[dateKey] = [];
+          grouped[dateKey].push(formatTimeSlot(row.requested_time));
+        });
+        resolve(grouped);
+      }
+    );
+  });
+};
+
+const mentorSlotIsTaken = (mentorId, requestedDate, requestedTime) => {
+  const normalized = formatTimeSlot(requestedTime);
+  return new Promise((resolve, reject) => {
+    client.query(
+      `SELECT 1
+       FROM mentor_session_requests
+       WHERE mentor_id::text = $1
+         AND requested_date = $2
+         AND LEFT(requested_time::text, 5) = $3
+         AND status IN ('pending', 'accepted')
+       LIMIT 1`,
+      [String(mentorId), requestedDate, normalized],
+      (err, result) => {
+        if (err) reject(err);
+        else resolve(result.rowCount > 0);
+      }
+    );
+  });
+};
+
 const updateMentorSessionRequestStatus = (id, status) => {
   return new Promise((resolve, reject) => {
     client.query(
@@ -156,5 +220,7 @@ module.exports = {
   fetchPendingMentorSessionRequests,
   fetchMentorSessionRequestUpdatesForMentor,
   fetchMentorSessionRequestUpdatesForStartup,
+  fetchBookedSlotsByMentorId,
+  mentorSlotIsTaken,
   updateMentorSessionRequestStatus,
 };

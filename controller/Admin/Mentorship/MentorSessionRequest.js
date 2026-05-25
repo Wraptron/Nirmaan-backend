@@ -3,6 +3,7 @@ const { mentorSlotExists } = require("../../../model/MentorAvailabilityModel");
 const {
   fetchStartupNameById,
   insertMentorSessionRequest,
+  mentorSlotIsTaken,
   updateMentorSessionRequestStatus,
 } = require("../../../model/MentorSessionRequestModel");
 const {
@@ -30,6 +31,13 @@ const createMentorSessionRequest = async (req, res) => {
       if (!slotAvailable) {
         return res.status(400).json({
           message: "Selected date and time are not in this mentor's published availability.",
+        });
+      }
+
+      const slotTaken = await mentorSlotIsTaken(mentorId, date, time);
+      if (slotTaken) {
+        return res.status(409).json({
+          message: "This time slot is no longer available. Another startup has already requested it.",
         });
       }
     }

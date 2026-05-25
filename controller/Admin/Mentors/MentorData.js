@@ -19,8 +19,6 @@ const { uploadToS3 } = require("../../../utils/s3Upload");
 
 const UpdateMentor = async (req, res) => {
   try {
-    console.log(req.body);
-    console.log(req.files);
     let mentor_logo_url = null;
 
     // If new image uploaded → upload to S3
@@ -80,7 +78,7 @@ const UpdateMentor = async (req, res) => {
           .json({ Error: "Description cannot exceed 200 words" });
         }
         return res.status(500).json({ Error: "Failed to update Mentor details" });
-    console.log(err);
+
   }
 };
 
@@ -167,7 +165,6 @@ const Meetings = async (req, res) => {
       result: meetingResult,
     });
   } catch (err) {
-    console.error("Backend Error (meeting):", err);
     const msg = err.message || "Something went wrong";
     const status =
       msg.includes("not found") || msg.includes("already processed")
@@ -183,7 +180,6 @@ const FetchMeetings = async (req, res) => {
     const result = await FetchMeetingsModel(mentor_id);
     res.status(200).send(result);
   } catch (err) {
-    console.log(err);
     res.status(500).send(err);
   }
 };
@@ -193,7 +189,6 @@ const FetchMeetingsDetailsWithMentor = async (req, res) => {
     const result = await FetchMeetingsWithMentorDetailsModel();
     res.status(200).json(result);
   } catch (err) {
-    console.log(err);
     res.send(err);
   }
 };
@@ -228,7 +223,6 @@ const Testimonial = async (req, res) => {
       result,
     });
   } catch (err) {
-    console.error("Error inTestimonial :", err);
     res.status(500).json({ error: "Failed to update Testimonial details" });
   }
 };
@@ -244,7 +238,6 @@ const FetchTestimonial = async (req, res) => {
 
 const UpdateTestimonial = async (req, res) => {
   try {
-    console.log(req.body);
     const { name, role, description, id } = req.body;
 
     const result = await UpdateTestimonialModel(name, role, description, id);
@@ -254,7 +247,6 @@ const UpdateTestimonial = async (req, res) => {
       result,
     });
   } catch (err) {
-    console.error("Error in UpdateTestimonial:", err);
     res.status(500).json({ error: "Failed to update Testimonial details" });
   }
 };
@@ -266,7 +258,6 @@ const DeleteTestimonial = async (req, res) => {
       const result = await DeleteTestimonialModel(id);
       res.status(200).send(result);
     } catch (err) {
-      console.log(err);
       res.status(500).send(err);
     }
   } else {
@@ -277,8 +268,6 @@ const DeleteTestimonial = async (req, res) => {
 const MeetingFeedback = async (req, res) => {
   try {
     const { meet_id, mentor_id, startup_id, feedback_text } = req.body;
-
-    console.log(req.body)
 
     const result = await MeetingFeedbackModel(
       meet_id,
@@ -291,7 +280,6 @@ const MeetingFeedback = async (req, res) => {
       result,
     });
   } catch (err) {
-    console.error("Error in Feedback :", err);
     res.status(500).json({ error: "Failed to save Feedback" });
   }
 };
@@ -306,7 +294,6 @@ const UpdateFeedback = async (req, res) => {
     );
     res.status(200).json({ message: "Feedback Updated successfully", result });
   } catch (err) {
-    console.error("Backend Error (feedback update):", err);
     res.status(500).json({ error: err.message || "Something went wrong" });
   }
 };
@@ -317,7 +304,6 @@ const FetchMeetingFeedback = async (req, res) => {
     const result = await FetchMeetingFeedbackModel(mentor_id, startup_id);
     res.status(200).json(result.rows);
   } catch (err) {
-    console.log(err);
     res.status(500).send(err);
   }
 };

@@ -6,6 +6,11 @@ const toIntegerOrNull = (value) => {
   return Number.isNaN(n) ? null : n;
 };
 
+const toIdStringOrNull = (value) => {
+  if (value === null || value === undefined || value === "") return null;
+  return String(value);
+};
+
 const insertAppNotifications = (rows) => {
   if (!rows.length) return Promise.resolve([]);
 
@@ -19,7 +24,7 @@ const insertAppNotifications = (rows) => {
         row.title,
         row.body || null,
         row.recipient_role ?? null,
-        toIntegerOrNull(row.recipient_startup_id),
+        toIdStringOrNull(row.recipient_startup_id),
         row.recipient_mentor_id != null ? String(row.recipient_mentor_id) : null,
         row.recipient_user_mail || null,
         row.source_table || null,
@@ -48,11 +53,8 @@ const insertAppNotifications = (rows) => {
 
 const fetchAppNotificationsForUser = (user) => {
   const role = toIntegerOrNull(user?.role);
-  const startupId = toIntegerOrNull(user?.startup_id);
-  const mentorId =
-    user?.mentor_id != null && user?.mentor_id !== ""
-      ? String(user.mentor_id)
-      : null;
+  const startupId = toIdStringOrNull(user?.startup_id);
+  const mentorId = toIdStringOrNull(user?.mentor_id);
   const userMail = user?.user_mail || null;
 
   return new Promise((resolve, reject) => {
@@ -62,7 +64,7 @@ const fetchAppNotificationsForUser = (user) => {
        WHERE read_at IS NULL
          AND (
            ($1::int IS NOT NULL AND recipient_role = $1)
-           OR ($2::int IS NOT NULL AND recipient_startup_id = $2)
+           OR ($2::text IS NOT NULL AND recipient_startup_id::text = $2)
            OR ($3::text IS NOT NULL AND recipient_mentor_id::text = $3)
            OR ($4::text IS NOT NULL AND recipient_user_mail = $4)
          )
@@ -79,11 +81,8 @@ const fetchAppNotificationsForUser = (user) => {
 
 const markNotificationsReadForUser = (user) => {
   const role = toIntegerOrNull(user?.role);
-  const startupId = toIntegerOrNull(user?.startup_id);
-  const mentorId =
-    user?.mentor_id != null && user?.mentor_id !== ""
-      ? String(user.mentor_id)
-      : null;
+  const startupId = toIdStringOrNull(user?.startup_id);
+  const mentorId = toIdStringOrNull(user?.mentor_id);
   const userMail = user?.user_mail || null;
 
   return new Promise((resolve, reject) => {
@@ -93,7 +92,7 @@ const markNotificationsReadForUser = (user) => {
        WHERE read_at IS NULL
          AND (
            ($1::int IS NOT NULL AND recipient_role = $1)
-           OR ($2::int IS NOT NULL AND recipient_startup_id = $2)
+           OR ($2::text IS NOT NULL AND recipient_startup_id::text = $2)
            OR ($3::text IS NOT NULL AND recipient_mentor_id::text = $3)
            OR ($4::text IS NOT NULL AND recipient_user_mail = $4)
          )

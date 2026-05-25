@@ -3,6 +3,19 @@ const {
   fetchMentorAvailabilityByMentorId,
   groupAvailabilityByDate,
 } = require("../../../model/MentorAvailabilityModel");
+const { fetchBookedSlotsByMentorId } = require("../../../model/MentorSessionRequestModel");
+
+const subtractBookedSlots = (availability, bookedByDate) => {
+  const open = {};
+  Object.entries(availability).forEach(([dateKey, slots]) => {
+    const booked = new Set(bookedByDate[dateKey] || []);
+    const remaining = slots.filter((slot) => !booked.has(slot));
+    if (remaining.length > 0) {
+      open[dateKey] = remaining;
+    }
+  });
+  return open;
+};
 
 const saveAvailability = async (req, res) => {
   try {
@@ -45,6 +58,14 @@ const getAvailability = async (req, res) => {
 
     const rows = await fetchMentorAvailabilityByMentorId(mentor_id);
     const availability = groupAvailabilityByDate(rows);
+
+    const forBooking =
+      req.query.forBooking === "true" || req.query.forBooking === "1";
+    if (forBooking) {
+      const bookedByDate = await fetchBookedSlotsByMentorId(mentor_id);
+      res.status(200).json(subtractBookedSlots(availability, bookedByDate));
+      return;
+    }
 
     res.status(200).json(availability);
   } catch (err) {
