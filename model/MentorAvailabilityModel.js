@@ -96,8 +96,28 @@ const groupAvailabilityByDate = (rows) => {
   return grouped;
 };
 
+const mentorSlotExists = (mentor_id, avail_date, time_slot) => {
+  const normalized = formatTimeSlot(time_slot);
+  return new Promise((resolve, reject) => {
+    client.query(
+      `SELECT 1
+       FROM mentor_availability
+       WHERE mentor_id = $1
+         AND avail_date = $2
+         AND LEFT(time_slot::text, 5) = $3
+       LIMIT 1`,
+      [mentor_id, avail_date, normalized],
+      (err, result) => {
+        if (err) reject(err);
+        else resolve(result.rowCount > 0);
+      }
+    );
+  });
+};
+
 module.exports = {
   saveMentorAvailability,
   fetchMentorAvailabilityByMentorId,
   groupAvailabilityByDate,
+  mentorSlotExists,
 };

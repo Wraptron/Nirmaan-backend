@@ -114,6 +114,10 @@ const DeleteMentorData = async (req, res) => {
   }
 };
 
+const {
+  updateMentorSessionRequestStatus,
+} = require("../../../model/MentorSessionRequestModel");
+
 const Meetings = async (req, res) => {
   try {
     const {
@@ -129,6 +133,7 @@ const Meetings = async (req, res) => {
       meeting_duration,
       meeting_agenda,
       startup_id,
+      sessionRequestId,
     } = req.body;
     if (!startup_name || !founder_name || !meeting_mode || !date || !time) {
       return res.status(400).json({

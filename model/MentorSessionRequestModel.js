@@ -93,8 +93,30 @@ const fetchPendingMentorSessionRequests = () => {
   });
 };
 
+const updateMentorSessionRequestStatus = (id, status) => {
+  return new Promise((resolve, reject) => {
+    client.query(
+      `UPDATE mentor_session_requests
+       SET status = $2
+       WHERE id = $1 AND status = 'pending'
+       RETURNING *`,
+      [id, status],
+      (err, result) => {
+        if (err) {
+          reject(err);
+        } else if (!result.rows.length) {
+          resolve(null);
+        } else {
+          resolve(result.rows[0]);
+        }
+      }
+    );
+  });
+};
+
 module.exports = {
   fetchStartupNameById,
   insertMentorSessionRequest,
   fetchPendingMentorSessionRequests,
+  updateMentorSessionRequestStatus,
 };
