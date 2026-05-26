@@ -59,18 +59,51 @@ const fetchAppNotificationsForUser = (user) => {
 
   return new Promise((resolve, reject) => {
     client.query(
-      `SELECT *
-       FROM app_notifications
-       WHERE read_at IS NULL
+      `SELECT n.*
+       FROM app_notifications n
+       LEFT JOIN mentor_session_requests msr
+         ON n.source_table = 'mentor_session_requests'
+         AND n.source_id::text = msr.id::text
+       WHERE n.read_at IS NULL
          AND (
-           ($1::int IS NOT NULL AND recipient_role = $1)
-           OR ($2::text IS NOT NULL AND recipient_startup_id::text = $2)
-           OR ($3::text IS NOT NULL AND recipient_mentor_id::text = $3)
-           OR ($4::text IS NOT NULL AND recipient_user_mail = $4)
+           ($1::int IS NOT NULL AND n.recipient_role = $1)
+           OR ($2::text IS NOT NULL AND n.recipient_startup_id::text = $2)
+           OR ($3::text IS NOT NULL AND n.recipient_mentor_id::text = $3)
+           OR ($4::text IS NOT NULL AND n.recipient_user_mail = $4)
          )
-       ORDER BY created_at DESC
+         AND NOT (
+           n.recipient_role = 2
+           AND n.type = 'mentorship'
+           AND n.event = 'pending'
+           AND msr.id IS NOT NULL
+           AND msr.status <> 'pending'
+         )
+       ORDER BY n.created_at DESC
        LIMIT 50`,
       [role, startupId, mentorId, userMail],
+      (err, result) => {
+        if (err) reject(err);
+        else resolve(result.rows);
+      }
+    );
+  });
+};
+
+/** Clear admin inbox items for a processed mentor session request. */
+const markAdminMentorshipSessionNotificationsRead = (sessionRequestId) => {
+  const sourceId = toIdStringOrNull(sessionRequestId);
+  if (!sourceId) return Promise.resolve([]);
+
+  return new Promise((resolve, reject) => {
+    client.query(
+      `UPDATE app_notifications
+       SET read_at = CURRENT_TIMESTAMP
+       WHERE read_at IS NULL
+         AND recipient_role = 2
+         AND source_table = 'mentor_session_requests'
+         AND source_id::text = $1
+       RETURNING id`,
+      [sourceId],
       (err, result) => {
         if (err) reject(err);
         else resolve(result.rows);
@@ -189,6 +222,7 @@ const scheduleMeetingAndAcceptSession = (meetingParams, sessionRequestId) => {
 module.exports = {
   insertAppNotifications,
   fetchAppNotificationsForUser,
+  markAdminMentorshipSessionNotificationsRead,
   markNotificationsReadForUser,
   scheduleMeetingAndAcceptSession,
 };

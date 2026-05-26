@@ -1,4 +1,7 @@
-const { insertAppNotifications } = require("../model/AppNotificationModel");
+const {
+  insertAppNotifications,
+  markAdminMentorshipSessionNotificationsRead,
+} = require("../model/AppNotificationModel");
 
 const ROLES = { ADMIN: 2, STARTUP: 5, MENTOR: 6 };
 
@@ -37,7 +40,17 @@ const notifyMentorshipSessionPending = async (row) => {
   }
 };
 
+const dismissAdminPendingSessionNotification = async (row) => {
+  if (!row?.id) return;
+  try {
+    await markAdminMentorshipSessionNotificationsRead(row.id);
+  } catch (err) {
+    console.error("dismissAdminPendingSessionNotification:", err);
+  }
+};
+
 const notifyMentorshipSessionRejected = async (row) => {
+  await dismissAdminPendingSessionNotification(row);
   const meta = sessionMetadata({ ...row, status: "rejected" });
   const rows = [];
   if (row.mentor_id) {
@@ -72,6 +85,7 @@ const notifyMentorshipSessionRejected = async (row) => {
 };
 
 const notifyMentorshipSessionAccepted = async (row, meetingDate, meetingTime) => {
+  await dismissAdminPendingSessionNotification(row);
   const meta = sessionMetadata({
     ...row,
     status: "accepted",
