@@ -1,0 +1,26 @@
+const {
+  fetchAppNotificationsForUser,
+  markNotificationsReadForUser,
+} = require("../../model/AppNotificationModel");
+
+const getNotifications = async (req, res) => {
+  try {
+    const notifications = await fetchAppNotificationsForUser(req.user);
+    res.status(200).json({ notifications });
+  } catch (err) {
+    console.error("getNotifications:", err);
+    res.status(500).json({ message: "Failed to load notifications." });
+  }
+};
+
+const markNotificationsRead = async (req, res) => {
+  try {
+    const marked = await markNotificationsReadForUser(req.user);
+    res.status(200).json({ markedCount: marked.length });
+  } catch (err) {
+    console.error("markNotificationsRead:", err);
+    res.status(500).json({ message: "Failed to update notifications." });
+  }
+};
+
+module.exports = { getNotifications, markNotificationsRead };

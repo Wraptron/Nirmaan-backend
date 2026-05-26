@@ -20,7 +20,7 @@ const AddMentorModel = (
   const mentorId = uuidv4();
   return new Promise(async(resolve, reject) => {
    const check = await client.query(
-     "SELECT 1 FROM add_mentor WHERE email_address = $1",
+     "SELECT 1 FROM mentors WHERE email_address = $1",
      [email_address] // the email you want to insert
    );
 
@@ -32,7 +32,7 @@ const AddMentorModel = (
    }
 
     client.query(
-      "INSERT INTO add_mentor(mentor_id, mentor_name,mentor_logo,mento_description, years_of_exp, area_of_expertise, designation, institution, qualification, year_of_passing_out, startup_assoc, contact_num, email_address, linkedIn_id, password, hashkey, user_role) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16,$17)",
+      "INSERT INTO mentors(mentor_id, mentor_name,mentor_logo,mento_description, years_of_exp, area_of_expertise, designation, institution, qualification, year_of_passing_out, startup_assoc, contact_num, email_address, linkedIn_id, password, hashkey, user_role) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16,$17)",
       [
         mentorId,
         mentor_name,
@@ -80,7 +80,7 @@ const UpdateMentorModel = async (
 ) => {
   return new Promise((resolve, reject) => {
     client.query(
-      "UPDATE add_mentor SET mentor_name=$1,mento_description=$2, years_of_exp=$3, area_of_expertise=$4,designation=$5,institution=$6,qualification=$7,year_of_passing_out=$8,startup_assoc=$9,contact_num=$10,email_address=$11, linkedIn_id=$12, mentor_logo=$13 where mentor_id=$14",
+      "UPDATE mentors SET mentor_name=$1,mento_description=$2, years_of_exp=$3, area_of_expertise=$4,designation=$5,institution=$6,qualification=$7,year_of_passing_out=$8,startup_assoc=$9,contact_num=$10,email_address=$11, linkedIn_id=$12, mentor_logo=$13 where mentor_id=$14",
       [
         mentor_name,
         mentor_description,
@@ -109,7 +109,7 @@ const UpdateMentorModel = async (
 };
 const FetchMentorDataModel = () => {
   return new Promise((resolve, reject) => {
-    client.query("SELECT * FROM add_mentor", (err, result) => {
+    client.query("SELECT * FROM mentors", (err, result) => {
       if (err) {
         reject({ STATUS: err });
       } else {
@@ -118,10 +118,30 @@ const FetchMentorDataModel = () => {
     });
   });
 };
+
+const FetchMentorNameByIdModel = (mentor_id) => {
+  return new Promise((resolve, reject) => {
+    if (!mentor_id) {
+      resolve(null);
+      return;
+    }
+    client.query(
+      "SELECT mentor_name FROM mentors WHERE mentor_id = $1 LIMIT 1",
+      [mentor_id],
+      (err, result) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(result.rows[0]?.mentor_name || null);
+        }
+      }
+    );
+  });
+};
 const MentorCountData = () => {
   return new Promise((resolve, reject) => {
     client.query(
-      "SELECT COUNT(email_address) AS count FROM add_mentor",
+      "SELECT COUNT(email_address) AS count FROM mentors",
       (err, result) => {
         if (err) {
           reject(err);
@@ -136,7 +156,7 @@ const MentorCountData = () => {
 const MentorDeleteData = (id) => {
   return new Promise((resolve, reject) => {
     client.query(
-      `DELETE FROM add_mentor WHERE mentor_id=$1`,
+      `DELETE FROM mentors WHERE mentor_id=$1`,
       [id],
       (err, result) => {
         if (err) {
@@ -202,7 +222,7 @@ const MentorScheduleModel = (
 const FetchMeetingsModel = (mentor_id) => {
   return new Promise((resolve, reject) => {
     client.query(
-      "select * from  schedule_meetings WHERE trim(mentor_reference_id) = trim($1)",
+      "SELECT * FROM schedule_meetings WHERE mentor_reference_id = $1",
       [mentor_id],
       (err, result) => {
         if (err) {
@@ -230,8 +250,8 @@ const FetchMeetingsWithMentorDetailsModel = () => {
         md.mentor_name,
         md.mentor_logo
       FROM schedule_meetings sm
-      JOIN add_mentor md
-        ON TRIM(sm.mentor_reference_id) = TRIM(md.mentor_id)
+      JOIN mentors md
+        ON sm.mentor_reference_id = md.mentor_id
       ORDER BY sm.date DESC
     `;
 
@@ -389,6 +409,7 @@ module.exports = {
   AddMentorModel,
   UpdateMentorModel,
   FetchMentorDataModel,
+  FetchMentorNameByIdModel,
   MentorCountData,
   MentorDeleteData,
   MentorScheduleModel,

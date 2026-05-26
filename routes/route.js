@@ -105,12 +105,22 @@ const {
   FetchStartupDataDetail,
 } = require("../controller/Finance/AddFunding.js");
 const {
+  getNotifications,
+  markNotificationsRead,
+} = require("../controller/Notification/NotificationController.js");
+const requireRole = require("../utils/requireRole.js");
+const {
   ScheduleMentorMeeting,
 } = require("../controller/Admin/Mentorship/Mentorship.js");
+const {
+  createMentorSessionRequest,
+  updateMentorSessionRequest,
+} = require("../controller/Admin/Mentorship/MentorSessionRequest.js");
 const IPdataUpload = require("../controller/Office/IPdata.js");
 const { AddFundingProject, FetchFundingProject, FetchFundingProjectData, UpdateFundingProjectData } = require("../controller/Finance/AddFundingProject.js");
 const Authenticate = require("../utils/Authenticate.js");
 const { AddMentor} = require("../controller/Admin/Mentors/AddMentor.js");
+const { saveAvailability, getAvailability } = require("../controller/Admin/Mentors/AvailabilitySlot.js");
 router.get("/prof", ProfilePhoto);
 router.put("/update-status", UpdateStatus);
 router.get("/startup/:id", Authenticate, IndividualStartups);
@@ -126,6 +136,10 @@ router.put("/edit-startup/mentordetails", UpdateStartupMentorDetails);
 router.delete("delete-startup/:id", DeleteStartupData);
 router.put("/edit-startup/about", UpdateStartupAbout);
 router.post("/schedule-meeting", ScheduleMentorMeeting);
+router.post("/mentor/session-request", Authenticate, createMentorSessionRequest);
+router.patch("/mentor/session-request/:id", Authenticate, updateMentorSessionRequest);
+router.post("/availability/save", saveAvailability);
+router.get("/availability/:mentor_id", getAvailability);
 router.post("/finance/addfunding", upload.none(), AddFunding);
 router.get("/finance/funding_amount", FetchFundingAmount);
 router.get("/finance/funding", FetchFundingData);
@@ -172,7 +186,7 @@ router.post(
   AddMentor
 );
 router.put("/mentor/update", upload.fields([{ name: "mentor_logo", maxCount: 1 }]), UpdateMentor);
-router.post("/mentor/meeting", Meetings);
+router.post("/mentor/meeting", Authenticate, requireRole(2), Meetings);
 router.get("/mentor/fetch-meeting/:mentor_id", FetchMeetings);
 router.get("/mentor/fetch-mentor_meeting/",FetchMeetingsDetailsWithMentor);
 router.delete("/mentor/delete-meeting/:id",DeleteMeetings);
@@ -210,7 +224,8 @@ router.post("/customer/raise-request", RaiseRequest);
 router.post("/customer/apply-mentor", AddMentorHour);
 router.get("/customer/fetch-mentor", FetchDataMentor);
 router.post("/customer/add-job", AddJob);
-router.get("/notification", updateFundingNotif);
+router.get("/notification", Authenticate, getNotifications);
+router.patch("/notification/read", Authenticate, markNotificationsRead);
 router.delete("/delete-mentor/:id", DeleteMentorData);
 router.delete("/delete-startup/:id", DeleteStartupData);
 router.delete("/delete-connection", DeleteConnection);
