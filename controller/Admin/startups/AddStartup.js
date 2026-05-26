@@ -272,15 +272,15 @@ const SyncStartupFromIncubation = async (req, res) => {
       }
     }
 
-    // Email delivery should not fail the sync once DB state is created.
-    try {
-      await sendStartupCredentials(official_email_address, generatedPassword);
-    } catch (mailErr) {
-      console.warn(
-        "Sync startup: credentials email failed:",
-        mailErr?.message || mailErr
-      );
-    }
+    // Email delivery disabled for incubation → Nirmaan sync.
+    // try {
+    //   await sendStartupCredentials(official_email_address, generatedPassword);
+    // } catch (mailErr) {
+    //   console.warn(
+    //     "Sync startup: credentials email failed:",
+    //     mailErr?.message || mailErr
+    //   );
+    // }
 
     return res.status(200).json({
       status: "synced",
