@@ -44,6 +44,8 @@ const UpdateMentor = async (req, res) => {
       email_address,
       linkedin_iD,
       mentor_id,
+      tag,
+      representing_from,
     } = req.body;
 
     const result = await UpdateMentorModel(
@@ -60,7 +62,9 @@ const UpdateMentor = async (req, res) => {
       email_address,
       linkedin_iD,
       mentor_logo_url,
-      mentor_id
+      mentor_id,
+      tag,
+      representing_from
     );
 
     res.status(200).json({
