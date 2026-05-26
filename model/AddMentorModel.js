@@ -15,7 +15,9 @@ const AddMentorModel = (
   contact_number,
   email_address,
   linkedIn_ID,
-  password
+  password,
+  tag,
+  representing_from
 ) => {
   const mentorId = uuidv4();
   return new Promise(async(resolve, reject) => {
@@ -51,6 +53,8 @@ const AddMentorModel = (
         password,
         "1",
         "1",
+        tag || null,
+        representing_from || null,
       ],
       (err, result) => {
         if (err) {
@@ -76,7 +80,9 @@ const UpdateMentorModel = async (
   email_address,
   linkedin_iD,
   mentor_logo,
-  mentor_id
+  mentor_id,
+  tag,
+  representing_from
 ) => {
   return new Promise((resolve, reject) => {
     client.query(
@@ -95,6 +101,8 @@ const UpdateMentorModel = async (
         email_address,
         linkedin_iD,
         mentor_logo,
+        tag || null,
+        representing_from || null,
         mentor_id,
       ],
       (err, result) => {
@@ -248,7 +256,8 @@ const FetchMeetingsWithMentorDetailsModel = () => {
         sm.startup_id,
         md.mentor_id,
         md.mentor_name,
-        md.mentor_logo
+        md.mentor_logo,
+        md.tag
       FROM schedule_meetings sm
       JOIN mentors md
         ON sm.mentor_reference_id = md.mentor_id

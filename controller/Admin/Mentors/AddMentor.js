@@ -18,6 +18,8 @@ const AddMentor = async (req, res) => {
     qualification,
     year_of_passing_out,
     startup_associated,
+    tag,
+    representing_from,
   } = professional;
   const { contact_number, email_address, linkedIn_ID, password } = contact;
 
@@ -49,7 +51,9 @@ const AddMentor = async (req, res) => {
         contact_number,
         email_address,
         linkedIn_ID,
-        password
+        password,
+        tag,
+        representing_from
       );
       res.status(200).send(result);
     } catch (err) {
