@@ -1,5 +1,4 @@
 const LoginModel = require('../../../model/LoginModel');
-const jwt = require('jsonwebtoken');
 const LoginController = async(req, res) => {
     const{user_mail, user_password} = req.body;
     if(user_mail && user_password)
@@ -13,8 +12,19 @@ const LoginController = async(req, res) => {
                         httpOnly: true,
                         maxAge: 5 * 60 * 1000
                     });
+                    res.status(200).json({
+                        result: {
+                            accessToken: result.accessToken,
+                            role: result.role,
+                            startup_id: result.startup_id,
+                            mentor_id: result.mentor_id,
+                            user_name: result.user_name,
+                            status: result.status,
+                        },
+                    });
+                    return;
             }
-            res.status(200).json({result}); 
+            res.status(200).json({ result: { status: result.status } });
         } 
         catch (err)
         {
