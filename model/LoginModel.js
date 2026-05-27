@@ -1,13 +1,10 @@
 const client = require('../utils/conn');
-const jwt = require('jsonwebtoken');
 const path = require('path');
 require('dotenv').config({ path: path.resolve(__dirname, '../../.env') });
-const nodeCache = require('node-cache');
 const bcrypt = require("bcrypt");
+const { signAccessToken, signRefreshToken } = require('../utils/tokens');
 
 const LoginModel = (user_mail, user_password) => {
-    const cache = new nodeCache();
-    
     return new Promise((resolve, reject) => {
         client.query(
             `SELECT user_password, user_role, startup_id, mentor_id, user_name
@@ -32,18 +29,17 @@ const LoginModel = (user_mail, user_password) => {
                     const startup_id = row.startup_id;
                     const mentor_id = row.mentor_id;
                     const user_name = row.user_name;
-                    const accessToken = jwt.sign(
-                        { user_mail, role, startup_id, mentor_id },
-                        process.env.ACCESS_TOKEN_SECRET,
-                        { expiresIn: '30m' }
-                    );
+                    const accessToken = signAccessToken(user_mail);
+                    const refreshToken = signRefreshToken(user_mail);
 
                     resolve({
                         accessToken,
+                        refreshToken,
                         role,
                         startup_id,
                         mentor_id,
                         user_name,
+                        user_mail,
                         status: 'Login Authenticated',
                     });
                     

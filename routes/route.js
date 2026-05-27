@@ -7,6 +7,8 @@ const multer = require("multer");
 const storage = multer.memoryStorage(); // important for S3 upload
 const upload = multer({ storage });
 const LoginController = require("../controller/Admin/LoginController/LoginController");
+const RefreshController = require("../controller/Admin/LoginController/RefreshController");
+const LogoutController = require("../controller/Admin/LoginController/LogoutController");
 const WorkController = require("../controller/Admin/WorkRequestController/WorkRequestController");
 const ResumeController = require("../controller/Admin/Resume/ResumeController.js");
 const GetAllResumeController = require("../controller/Admin/Resume/GetAllResumeController.js");
@@ -156,6 +158,8 @@ router.get("/count-startupdata", FetchStartupDatainNumbers);
 router.get("/mentor/count", MentorCount);
 router.post("/mentor/request-speaker", RequestSpeaker);
 router.post("/login", LoginController);
+router.post("/auth/refresh", RefreshController);
+router.post("/auth/logout", LogoutController);
 router.post("/send-message", AddMessage);
 router.post("/forgot-password", requestForgotPasswordOtp);
 router.post("/forgot-password/request-otp", requestForgotPasswordOtp);
