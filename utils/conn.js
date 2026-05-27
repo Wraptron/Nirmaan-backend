@@ -1,7 +1,8 @@
 const { Client } = require("pg");
+const dotenv = require("dotenv");
+dotenv.config();
 
-//const connectionString = "postgres://postgres:Supabase%401234@db.rcoyvhpccbezoprhqhwy.supabase.co:5432/postgres";
-const connectionString = "postgresql://postgres.rcoyvhpccbezoprhqhwy:Supabase%401234@aws-1-ap-south-1.pooler.supabase.com:5432/postgres";
+const connectionString = process.env.DATABASE_URL;
 const client = new Client({
   connectionString,
 });

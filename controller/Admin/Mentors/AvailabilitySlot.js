@@ -5,6 +5,14 @@ const {
 } = require("../../../model/MentorAvailabilityModel");
 const { fetchBookedSlotsByMentorId } = require("../../../model/MentorSessionRequestModel");
 
+const canManageMentorAvailability = (requester, mentorId) => {
+  if (!requester || mentorId == null || mentorId === "") return false;
+  const role = Number(requester.role);
+  if (role === 2) return true;
+  if (role === 6 && String(requester.mentor_id) === String(mentorId)) return true;
+  return false;
+};
+
 const subtractBookedSlots = (availability, bookedByDate) => {
   const open = {};
   Object.entries(availability).forEach(([dateKey, slots]) => {
@@ -25,6 +33,13 @@ const saveAvailability = async (req, res) => {
       return res.status(400).json({
         success: false,
         message: "mentor_id and date are required.",
+      });
+    }
+
+    if (!canManageMentorAvailability(req.user, mentor_id)) {
+      return res.status(403).json({
+        success: false,
+        message: "Forbidden: You can only update your own availability.",
       });
     }
 
