@@ -1,5 +1,10 @@
 const client = require("../utils/conn");
 
+const normalizeStartupId = (value) => {
+  if (value === null || value === undefined || value === "") return null;
+  return value;
+};
+
 const formatDateKey = (value) => {
   if (!value) return "";
   if (typeof value === "string") return value.slice(0, 10);
@@ -132,7 +137,28 @@ const fetchMentorSessionRequestUpdatesForStartup = (startupId) => {
          AND startup_id = $1
        ORDER BY created_at DESC
        LIMIT 50`,
-      [toIntegerOrNull(startupId)],
+      [normalizeStartupId(startupId)],
+      (err, result) => {
+        if (err) reject(err);
+        else resolve(result.rows);
+      }
+    );
+  });
+};
+
+const fetchMentorSessionRequestsByStartupId = (startupId) => {
+  return new Promise((resolve, reject) => {
+    const id = normalizeStartupId(startupId);
+    if (id === null) {
+      resolve([]);
+      return;
+    }
+    client.query(
+      `SELECT *
+       FROM mentor_session_requests
+       WHERE startup_id::text = $1::text
+       ORDER BY created_at DESC`,
+      [String(id)],
       (err, result) => {
         if (err) reject(err);
         else resolve(result.rows);
@@ -231,6 +257,7 @@ module.exports = {
   fetchPendingMentorSessionRequests,
   fetchMentorSessionRequestUpdatesForMentor,
   fetchMentorSessionRequestUpdatesForStartup,
+  fetchMentorSessionRequestsByStartupId,
   fetchBookedSlotsByMentorId,
   mentorSlotIsTaken,
   updateMentorSessionRequestStatus,

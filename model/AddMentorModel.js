@@ -235,6 +235,30 @@ const FetchMeetingsModel = (mentor_id) => {
   });
 };
 
+const FetchMeetingsByStartupIdModel = (startup_id) => {
+  return new Promise((resolve, reject) => {
+    if (startup_id == null || startup_id === "") {
+      resolve([]);
+      return;
+    }
+    client.query(
+      `SELECT sm.*, md.mentor_name
+       FROM schedule_meetings sm
+       LEFT JOIN mentors md ON sm.mentor_reference_id::text = md.mentor_id::text
+       WHERE sm.startup_id::text = $1::text
+       ORDER BY sm.date DESC, sm.time DESC`,
+      [String(startup_id)],
+      (err, result) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(result.rows);
+        }
+      }
+    );
+  });
+};
+
 // Fetch meetings WITH mentor name & image
 const FetchMeetingsWithMentorDetailsModel = () => {
   return new Promise((resolve, reject) => {
@@ -414,6 +438,7 @@ module.exports = {
   MentorDeleteData,
   MentorScheduleModel,
   FetchMeetingsModel,
+  FetchMeetingsByStartupIdModel,
   FetchMeetingsWithMentorDetailsModel,
   TestimonialModel,
   FetchTestimonialModel,

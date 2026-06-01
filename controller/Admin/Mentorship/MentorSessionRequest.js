@@ -5,9 +5,13 @@ const {
 const {
   fetchStartupNameById,
   insertMentorSessionRequest,
+  fetchMentorSessionRequestsByStartupId,
   mentorSlotIsTaken,
   updateMentorSessionRequestStatus,
 } = require("../../../model/MentorSessionRequestModel");
+const {
+  FetchMeetingsByStartupIdModel,
+} = require("../../../model/AddMentorModel");
 const {
   notifyMentorshipSessionPending,
   notifyMentorshipSessionRejected,
@@ -21,8 +25,8 @@ const createMentorSessionRequest = async (req, res) => {
       req.body;
 
     // Auth
-    const startupId = req.user?.startup_id
-    if (startupId === null) {
+    const startupId = req.user?.startup_id;
+    if (startupId == null || startupId === "") {
       return res.status(403).json({
         message: "Startup identity required. Log in as a startup account.",
       });
@@ -145,4 +149,35 @@ const updateMentorSessionRequest = async (req, res) => {
   }
 };
 
-module.exports = { createMentorSessionRequest, updateMentorSessionRequest };
+const listStartupMyMeetings = async (req, res) => {
+  try {
+    const startupId = req.user?.startup_id;
+    if (startupId === null || startupId === undefined) {
+      return res.status(403).json({
+        message: "Startup account required.",
+      });
+    }
+
+    const sessionRequests = await fetchMentorSessionRequestsByStartupId(
+      startupId
+    );
+
+    let meetings = [];
+    try {
+      meetings = await FetchMeetingsByStartupIdModel(startupId);
+    } catch (meetingsErr) {
+      console.error("FetchMeetingsByStartupIdModel:", meetingsErr);
+    }
+
+    res.status(200).json({ sessionRequests, meetings });
+  } catch (err) {
+    console.error("listStartupMyMeetings:", err);
+    res.status(500).json({ message: "Failed to load meetings." });
+  }
+};
+
+module.exports = {
+  createMentorSessionRequest,
+  updateMentorSessionRequest,
+  listStartupMyMeetings,
+};

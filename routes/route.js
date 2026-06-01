@@ -117,6 +117,7 @@ const {
 const {
   createMentorSessionRequest,
   updateMentorSessionRequest,
+  listStartupMyMeetings,
 } = require("../controller/Admin/Mentorship/MentorSessionRequest.js");
 const IPdataUpload = require("../controller/Office/IPdata.js");
 const { AddFundingProject, FetchFundingProject, FetchFundingProjectData, UpdateFundingProjectData } = require("../controller/Finance/AddFundingProject.js");
@@ -125,6 +126,7 @@ const { AddMentor} = require("../controller/Admin/Mentors/AddMentor.js");
 const { saveAvailability, getAvailability } = require("../controller/Admin/Mentors/AvailabilitySlot.js");
 router.get("/prof", ProfilePhoto);
 router.put("/update-status", UpdateStatus);
+router.get("/startup/my-meetings", Authenticate, listStartupMyMeetings);
 router.get("/startup/:id", Authenticate, IndividualStartups);
 router.put(
   "/edit-startupdata/personal-info", Authenticate,
