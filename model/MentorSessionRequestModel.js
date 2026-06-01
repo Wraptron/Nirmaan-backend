@@ -145,7 +145,7 @@ const fetchMentorSessionRequestUpdatesForStartup = (startupId) => {
 const fetchBookedSlotsByMentorId = (mentorId) => {
   return new Promise((resolve, reject) => {
     client.query(
-      `SELECT requested_date, requested_time
+      `SELECT requested_date, requested_time, session_mode
        FROM mentor_session_requests
        WHERE mentor_id::text = $1
          AND status IN ('pending', 'accepted')
@@ -160,7 +160,10 @@ const fetchBookedSlotsByMentorId = (mentorId) => {
         result.rows.forEach((row) => {
           const dateKey = formatDateKey(row.requested_date);
           if (!grouped[dateKey]) grouped[dateKey] = [];
-          grouped[dateKey].push(formatTimeSlot(row.requested_time));
+          grouped[dateKey].push({
+            time_slot: formatTimeSlot(row.requested_time),
+            mode: normalizeSessionMode(row.session_mode),
+          });
         });
         resolve(grouped);
       }
@@ -168,8 +171,20 @@ const fetchBookedSlotsByMentorId = (mentorId) => {
   });
 };
 
-const mentorSlotIsTaken = (mentorId, requestedDate, requestedTime) => {
+const normalizeSessionMode = (mode) => {
+  const value = String(mode || "").trim();
+  if (value === "In-person" || value.toLowerCase() === "in-person") {
+    return "In-person";
+  }
+  if (value === "Offline" || value.toLowerCase() === "offline") {
+    return "In-person";
+  }
+  return "Online";
+};
+
+const mentorSlotIsTaken = (mentorId, requestedDate, requestedTime, mode) => {
   const normalized = formatTimeSlot(requestedTime);
+  const normalizedMode = normalizeSessionMode(mode);
   return new Promise((resolve, reject) => {
     client.query(
       `SELECT 1
@@ -177,9 +192,10 @@ const mentorSlotIsTaken = (mentorId, requestedDate, requestedTime) => {
        WHERE mentor_id::text = $1
          AND requested_date = $2
          AND LEFT(requested_time::text, 5) = $3
+         AND session_mode = $4
          AND status IN ('pending', 'accepted')
        LIMIT 1`,
-      [String(mentorId), requestedDate, normalized],
+      [String(mentorId), requestedDate, normalized, normalizedMode],
       (err, result) => {
         if (err) reject(err);
         else resolve(result.rowCount > 0);

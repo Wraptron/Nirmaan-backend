@@ -1,4 +1,7 @@
-const { mentorSlotExists } = require("../../../model/MentorAvailabilityModel");
+const {
+  mentorSlotExists,
+  normalizeMode,
+} = require("../../../model/MentorAvailabilityModel");
 const {
   fetchStartupNameById,
   insertMentorSessionRequest,
@@ -40,15 +43,26 @@ const createMentorSessionRequest = async (req, res) => {
 
     // Slot check
     if (mentor_id) {
-      const slotAvailable = await mentorSlotExists(mentor_id, date, time);
+      const normalizedMode = normalizeMode(mode);
+      const slotAvailable = await mentorSlotExists(
+        mentor_id,
+        date,
+        time,
+        normalizedMode
+      );
       if (!slotAvailable) {
         return res.status(400).json({
           message:
-            "Selected date and time are not in this mentor's published availability.",
+            "Selected date, time, and session mode are not in this mentor's published availability.",
         });
       }
 
-      const slotTaken = await mentorSlotIsTaken(mentor_id, date, time);
+      const slotTaken = await mentorSlotIsTaken(
+        mentor_id,
+        date,
+        time,
+        normalizedMode
+      );
       if (slotTaken) {
         return res.status(409).json({
           message:
@@ -66,7 +80,7 @@ const createMentorSessionRequest = async (req, res) => {
       requested_date: date,
       requested_time: time,
       duration: Number(duration),
-      session_mode: mode,
+      session_mode: normalizeMode(mode),
       agenda: agenda || "",
       requested_by: req.user?.user_mail || null,
     });
@@ -81,7 +95,7 @@ const createMentorSessionRequest = async (req, res) => {
       requested_date: date,
       requested_time: time,
       duration: Number(duration),
-      session_mode: mode,
+      session_mode: normalizeMode(mode),
       agenda: agenda || "",
       status: row.status,
       created_at: row.created_at,

@@ -1,5 +1,36 @@
 const client = require("../utils/conn");
 
+const VALID_MODES = ["Online", "In-person"];
+
+const normalizeMode = (mode) => {
+  const value = String(mode || "").trim();
+  if (value === "In-person" || value.toLowerCase() === "in-person") {
+    return "In-person";
+  }
+  if (value === "Offline" || value.toLowerCase() === "offline") {
+    return "In-person";
+  }
+  return "Online";
+};
+
+const normalizeSlotEntry = (entry) => {
+  if (typeof entry === "string") {
+    return { time_slot: formatTimeSlot(entry), mode: "Online" };
+  }
+  if (entry && typeof entry === "object") {
+    const time =
+      entry.time_slot ?? entry.time ?? entry.slot ?? entry.timeSlot ?? "";
+    return {
+      time_slot: formatTimeSlot(time),
+      mode: normalizeMode(entry.mode ?? entry.session_mode),
+    };
+  }
+  return { time_slot: "", mode: "Online" };
+};
+
+const slotEntryKey = (entry) =>
+  `${normalizeSlotEntry(entry).time_slot}|${normalizeSlotEntry(entry).mode}`;
+
 const deleteMentorAvailabilityForDate = (mentor_id, avail_date) => {
   return new Promise((resolve, reject) => {
     client.query(
@@ -15,7 +46,11 @@ const deleteMentorAvailabilityForDate = (mentor_id, avail_date) => {
 };
 
 const insertMentorAvailabilitySlots = (mentor_id, avail_date, slots) => {
-  if (!slots.length) {
+  const normalized = slots
+    .map(normalizeSlotEntry)
+    .filter((entry) => entry.time_slot);
+
+  if (!normalized.length) {
     return Promise.resolve({ rowCount: 0 });
   }
 
@@ -23,15 +58,17 @@ const insertMentorAvailabilitySlots = (mentor_id, avail_date, slots) => {
   const params = [];
   let paramIndex = 1;
 
-  slots.forEach((time_slot) => {
-    values.push(`($${paramIndex}, $${paramIndex + 1}, $${paramIndex + 2})`);
-    params.push(mentor_id, avail_date, time_slot);
-    paramIndex += 3;
+  normalized.forEach((entry) => {
+    values.push(
+      `($${paramIndex}, $${paramIndex + 1}, $${paramIndex + 2}, $${paramIndex + 3})`
+    );
+    params.push(mentor_id, avail_date, entry.time_slot, entry.mode);
+    paramIndex += 4;
   });
 
   return new Promise((resolve, reject) => {
     client.query(
-      `INSERT INTO mentor_availability (mentor_id, avail_date, time_slot)
+      `INSERT INTO mentor_availability (mentor_id, avail_date, time_slot, session_mode)
        VALUES ${values.join(", ")}`,
       params,
       (err, result) => {
@@ -71,10 +108,10 @@ const formatTimeSlot = (time_slot) => {
 const fetchMentorAvailabilityByMentorId = (mentor_id) => {
   return new Promise((resolve, reject) => {
     client.query(
-      `SELECT avail_date, time_slot
+      `SELECT avail_date, time_slot, session_mode
        FROM mentor_availability
        WHERE mentor_id = $1
-       ORDER BY avail_date ASC, time_slot ASC`,
+       ORDER BY avail_date ASC, time_slot ASC, session_mode ASC`,
       [mentor_id],
       (err, result) => {
         if (err) reject(err);
@@ -91,13 +128,17 @@ const groupAvailabilityByDate = (rows) => {
     if (!grouped[dateKey]) {
       grouped[dateKey] = [];
     }
-    grouped[dateKey].push(formatTimeSlot(row.time_slot));
+    grouped[dateKey].push({
+      time_slot: formatTimeSlot(row.time_slot),
+      mode: normalizeMode(row.session_mode),
+    });
   });
   return grouped;
 };
 
-const mentorSlotExists = (mentor_id, avail_date, time_slot) => {
-  const normalized = formatTimeSlot(time_slot);
+const mentorSlotExists = (mentor_id, avail_date, time_slot, mode) => {
+  const normalizedTime = formatTimeSlot(time_slot);
+  const normalizedMode = normalizeMode(mode);
   return new Promise((resolve, reject) => {
     client.query(
       `SELECT 1
@@ -105,8 +146,9 @@ const mentorSlotExists = (mentor_id, avail_date, time_slot) => {
        WHERE mentor_id = $1
          AND avail_date = $2
          AND LEFT(time_slot::text, 5) = $3
+         AND session_mode = $4
        LIMIT 1`,
-      [mentor_id, avail_date, normalized],
+      [mentor_id, avail_date, normalizedTime, normalizedMode],
       (err, result) => {
         if (err) reject(err);
         else resolve(result.rowCount > 0);
@@ -116,6 +158,10 @@ const mentorSlotExists = (mentor_id, avail_date, time_slot) => {
 };
 
 module.exports = {
+  VALID_MODES,
+  normalizeMode,
+  normalizeSlotEntry,
+  slotEntryKey,
   saveMentorAvailability,
   fetchMentorAvailabilityByMentorId,
   groupAvailabilityByDate,

@@ -2,6 +2,9 @@ const {
   saveMentorAvailability,
   fetchMentorAvailabilityByMentorId,
   groupAvailabilityByDate,
+  normalizeSlotEntry,
+  slotEntryKey,
+  VALID_MODES,
 } = require("../../../model/MentorAvailabilityModel");
 const { fetchBookedSlotsByMentorId } = require("../../../model/MentorSessionRequestModel");
 
@@ -16,8 +19,10 @@ const canManageMentorAvailability = (requester, mentorId) => {
 const subtractBookedSlots = (availability, bookedByDate) => {
   const open = {};
   Object.entries(availability).forEach(([dateKey, slots]) => {
-    const booked = new Set(bookedByDate[dateKey] || []);
-    const remaining = slots.filter((slot) => !booked.has(slot));
+    const booked = new Set(
+      (bookedByDate[dateKey] || []).map((entry) => slotEntryKey(entry))
+    );
+    const remaining = slots.filter((slot) => !booked.has(slotEntryKey(slot)));
     if (remaining.length > 0) {
       open[dateKey] = remaining;
     }
@@ -44,12 +49,23 @@ const saveAvailability = async (req, res) => {
     }
 
     const slotList = Array.isArray(slots) ? slots : [];
+    const normalized = slotList.map(normalizeSlotEntry).filter((s) => s.time_slot);
 
-    await saveMentorAvailability(mentor_id, date, slotList);
+    const invalidMode = normalized.find(
+      (entry) => !VALID_MODES.includes(entry.mode)
+    );
+    if (invalidMode) {
+      return res.status(400).json({
+        success: false,
+        message: `Invalid session mode. Use one of: ${VALID_MODES.join(", ")}.`,
+      });
+    }
+
+    await saveMentorAvailability(mentor_id, date, normalized);
 
     res.status(200).json({
       success: true,
-      saved: slotList.length,
+      saved: normalized.length,
     });
   } catch (err) {
     console.error("saveAvailability:", err);
