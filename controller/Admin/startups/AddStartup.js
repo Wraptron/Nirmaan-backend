@@ -914,13 +914,13 @@ const AddFounder = async (req, res) => {
 };
 
 const FetchFounder = async (req, res) => {
-  const userId = parseInt(req.params.userId);
+  const identifier = String(req.params.userId || "").trim();
 
-  if (isNaN(userId)) {
-    return res.status(400).json({ message: "Invalid user ID" });
+  if (!identifier) {
+    return res.status(400).json({ message: "Invalid founder identifier" });
   }
   try {
-    const allFounderData = await FetchFounderModel(userId);
+    const allFounderData = await FetchFounderModel(identifier);
     res.status(200).json(allFounderData);
   } catch (err) {
     // console.error("Error in FetchFundingAmount:", err.stack || err);

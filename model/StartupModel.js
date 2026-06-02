@@ -828,7 +828,7 @@ const AddFounderModel = async (startup_id, foundersArray) => {
   });
 };
 
-const FetchFounderModel = (userId) => {
+const FetchFounderModel = (identifier) => {
   return new Promise((resolve, reject) => {
     const query = `
     SELECT 
@@ -847,9 +847,9 @@ FROM test_startup ts,
          ELSE jsonb_build_array(ts.founder)
        END
      ) AS f(value)
-WHERE ts.user_id = $1
+WHERE ts.user_id::text = $1
 `;
-    client.query(query, [userId], (err, result) => {
+    client.query(query, [identifier], (err, result) => {
       if (err) {
         console.error("Database query failed:", err); // log for debugging
         reject(new Error("Database query failed"));
