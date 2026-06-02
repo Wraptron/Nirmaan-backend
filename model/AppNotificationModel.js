@@ -11,6 +11,58 @@ const toIdStringOrNull = (value) => {
   return String(value);
 };
 
+const clampLimit = (value, fallback = 20) => {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed)) return fallback;
+  return Math.min(Math.max(Math.trunc(parsed), 1), 50);
+};
+
+const buildRecipientParams = (user) => ({
+  role: toIntegerOrNull(user?.role),
+  startupId: toIdStringOrNull(user?.startup_id),
+  mentorId: toIdStringOrNull(user?.mentor_id),
+  userMail: user?.user_mail || null,
+});
+
+const audienceFilterSql = (tableAlias = "") => {
+  const prefix = tableAlias ? `${tableAlias}.` : "";
+  return `(
+    ($1::int = 2 AND ${prefix}recipient_role = 2)
+    OR (
+      $1::int = 5
+      AND (
+        ${prefix}recipient_startup_id::text = $2
+        OR (
+          $4::text IS NOT NULL
+          AND ${prefix}recipient_user_mail = $4
+          AND (${prefix}recipient_role IS NULL OR ${prefix}recipient_role = 5)
+        )
+      )
+    )
+    OR (
+      $1::int = 6
+      AND (
+        ${prefix}recipient_mentor_id::text = $3
+        OR (
+          $4::text IS NOT NULL
+          AND ${prefix}recipient_user_mail = $4
+          AND (${prefix}recipient_role IS NULL OR ${prefix}recipient_role = 6)
+        )
+      )
+    )
+    OR (
+      $1::int IS NOT NULL
+      AND $1::int NOT IN (2, 5, 6)
+      AND (
+        ${prefix}recipient_role = $1
+        OR ${prefix}recipient_startup_id::text = $2
+        OR ${prefix}recipient_mentor_id::text = $3
+        OR ($4::text IS NOT NULL AND ${prefix}recipient_user_mail = $4)
+      )
+    )
+  )`;
+};
+
 const insertAppNotifications = (rows) => {
   if (!rows.length) return Promise.resolve([]);
 
@@ -51,11 +103,11 @@ const insertAppNotifications = (rows) => {
   });
 };
 
-const fetchAppNotificationsForUser = (user) => {
-  const role = toIntegerOrNull(user?.role);
-  const startupId = toIdStringOrNull(user?.startup_id);
-  const mentorId = toIdStringOrNull(user?.mentor_id);
-  const userMail = user?.user_mail || null;
+const fetchAppNotificationsForUser = (user, options = {}) => {
+  const { role, startupId, mentorId, userMail } = buildRecipientParams(user);
+  const limit = clampLimit(options.limit, 20);
+  const beforeCreatedAt = options.beforeCreatedAt || null;
+  const pageLimit = limit + 1;
 
   return new Promise((resolve, reject) => {
     client.query(
@@ -64,13 +116,8 @@ const fetchAppNotificationsForUser = (user) => {
        LEFT JOIN mentor_session_requests msr
          ON n.source_table = 'mentor_session_requests'
          AND n.source_id::text = msr.id::text
-       WHERE n.read_at IS NULL
-         AND (
-           ($1::int IS NOT NULL AND n.recipient_role = $1)
-           OR ($2::text IS NOT NULL AND n.recipient_startup_id::text = $2)
-           OR ($3::text IS NOT NULL AND n.recipient_mentor_id::text = $3)
-           OR ($4::text IS NOT NULL AND n.recipient_user_mail = $4)
-         )
+       WHERE ${audienceFilterSql("n")}
+         AND ($5::timestamptz IS NULL OR n.created_at < $5::timestamptz)
          AND NOT (
            n.recipient_role = 2
            AND n.type = 'mentorship'
@@ -79,11 +126,52 @@ const fetchAppNotificationsForUser = (user) => {
            AND msr.status <> 'pending'
          )
        ORDER BY n.created_at DESC
-       LIMIT 50`,
-      [role, startupId, mentorId, userMail],
-      (err, result) => {
-        if (err) reject(err);
-        else resolve(result.rows);
+       LIMIT $6`,
+      [role, startupId, mentorId, userMail, beforeCreatedAt, pageLimit],
+      (listErr, listResult) => {
+        if (listErr) {
+          reject(listErr);
+          return;
+        }
+
+        client.query(
+          `SELECT COUNT(*)::int AS unread_count
+           FROM app_notifications n
+           LEFT JOIN mentor_session_requests msr
+             ON n.source_table = 'mentor_session_requests'
+             AND n.source_id::text = msr.id::text
+           WHERE n.read_at IS NULL
+             AND ${audienceFilterSql("n")}
+             AND NOT (
+               n.recipient_role = 2
+               AND n.type = 'mentorship'
+               AND n.event = 'pending'
+               AND msr.id IS NOT NULL
+               AND msr.status <> 'pending'
+             )`,
+          [role, startupId, mentorId, userMail],
+          (countErr, countResult) => {
+            if (countErr) {
+              reject(countErr);
+              return;
+            }
+
+            const rows = Array.isArray(listResult.rows) ? listResult.rows : [];
+            const hasMore = rows.length > limit;
+            const notifications = hasMore ? rows.slice(0, limit) : rows;
+            const last = notifications[notifications.length - 1];
+
+            resolve({
+              notifications,
+              unreadCount: countResult.rows?.[0]?.unread_count || 0,
+              pagination: {
+                limit,
+                hasMore,
+                nextCursor: hasMore && last ? last.created_at : null,
+              },
+            });
+          }
+        );
       }
     );
   });
@@ -113,22 +201,14 @@ const markAdminMentorshipSessionNotificationsRead = (sessionRequestId) => {
 };
 
 const markNotificationsReadForUser = (user) => {
-  const role = toIntegerOrNull(user?.role);
-  const startupId = toIdStringOrNull(user?.startup_id);
-  const mentorId = toIdStringOrNull(user?.mentor_id);
-  const userMail = user?.user_mail || null;
+  const { role, startupId, mentorId, userMail } = buildRecipientParams(user);
 
   return new Promise((resolve, reject) => {
     client.query(
       `UPDATE app_notifications
        SET read_at = CURRENT_TIMESTAMP
        WHERE read_at IS NULL
-         AND (
-           ($1::int IS NOT NULL AND recipient_role = $1)
-           OR ($2::text IS NOT NULL AND recipient_startup_id::text = $2)
-           OR ($3::text IS NOT NULL AND recipient_mentor_id::text = $3)
-           OR ($4::text IS NOT NULL AND recipient_user_mail = $4)
-         )
+         AND ${audienceFilterSql("")}
        RETURNING id`,
       [role, startupId, mentorId, userMail],
       (err, result) => {

@@ -5,8 +5,11 @@ const {
 
 const getNotifications = async (req, res) => {
   try {
-    const notifications = await fetchAppNotificationsForUser(req.user);
-    res.status(200).json({ notifications });
+    const payload = await fetchAppNotificationsForUser(req.user, {
+      limit: req.query.limit,
+      beforeCreatedAt: req.query.before,
+    });
+    res.status(200).json(payload);
   } catch (err) {
     console.error("getNotifications:", err);
     res.status(500).json({ message: "Failed to load notifications." });
