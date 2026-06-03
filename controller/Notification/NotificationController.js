@@ -8,6 +8,9 @@ const getNotifications = async (req, res) => {
     const payload = await fetchAppNotificationsForUser(req.user, {
       limit: req.query.limit,
       beforeCreatedAt: req.query.before,
+      days: req.query.days,
+      unreadOnly: req.query.unreadOnly,
+      countOnly: req.query.countOnly,
     });
     res.status(200).json(payload);
   } catch (err) {

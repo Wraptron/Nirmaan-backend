@@ -17,6 +17,25 @@ const clampLimit = (value, fallback = 20) => {
   return Math.min(Math.max(Math.trunc(parsed), 1), 50);
 };
 
+const DEFAULT_RETENTION_DAYS = 90;
+
+const clampDays = (value, fallback = DEFAULT_RETENTION_DAYS) => {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed)) return fallback;
+  return Math.min(Math.max(Math.trunc(parsed), 1), 365);
+};
+
+const parseBooleanQuery = (value) =>
+  value === true || value === "true" || value === "1";
+
+const stalePendingFilterSql = (tableAlias = "n") => `NOT (
+  ${tableAlias}.recipient_role = 2
+  AND ${tableAlias}.type = 'mentorship'
+  AND ${tableAlias}.event = 'pending'
+  AND msr.id IS NOT NULL
+  AND msr.status <> 'pending'
+)`;
+
 const buildRecipientParams = (user) => ({
   role: toIntegerOrNull(user?.role),
   startupId: toIdStringOrNull(user?.startup_id),
@@ -103,13 +122,54 @@ const insertAppNotifications = (rows) => {
   });
 };
 
+const countUnreadNotificationsForUser = (user, days = DEFAULT_RETENTION_DAYS) => {
+  const { role, startupId, mentorId, userMail } = buildRecipientParams(user);
+  const retentionDays = clampDays(days);
+
+  return new Promise((resolve, reject) => {
+    client.query(
+      `SELECT COUNT(*)::int AS unread_count
+       FROM app_notifications n
+       LEFT JOIN mentor_session_requests msr
+         ON n.source_table = 'mentor_session_requests'
+         AND n.source_id::text = msr.id::text
+       WHERE n.read_at IS NULL
+         AND ${audienceFilterSql("n")}
+         AND n.created_at >= NOW() - ($5::integer * INTERVAL '1 day')
+         AND ${stalePendingFilterSql("n")}`,
+      [role, startupId, mentorId, userMail, retentionDays],
+      (countErr, countResult) => {
+        if (countErr) reject(countErr);
+        else resolve(countResult.rows?.[0]?.unread_count || 0);
+      }
+    );
+  });
+};
+
 const fetchAppNotificationsForUser = (user, options = {}) => {
   const { role, startupId, mentorId, userMail } = buildRecipientParams(user);
   const limit = clampLimit(options.limit, 20);
   const beforeCreatedAt = options.beforeCreatedAt || null;
+  const retentionDays = clampDays(options.days);
+  const unreadOnly = parseBooleanQuery(options.unreadOnly);
+  const countOnly = parseBooleanQuery(options.countOnly);
   const pageLimit = limit + 1;
 
   return new Promise((resolve, reject) => {
+    if (countOnly) {
+      countUnreadNotificationsForUser(user, retentionDays)
+        .then((unreadCount) => {
+          resolve({
+            notifications: [],
+            unreadCount,
+            retentionDays,
+            pagination: { limit: 0, hasMore: false, nextCursor: null },
+          });
+        })
+        .catch(reject);
+      return;
+    }
+
     client.query(
       `SELECT n.*
        FROM app_notifications n
@@ -118,60 +178,46 @@ const fetchAppNotificationsForUser = (user, options = {}) => {
          AND n.source_id::text = msr.id::text
        WHERE ${audienceFilterSql("n")}
          AND ($5::timestamptz IS NULL OR n.created_at < $5::timestamptz)
-         AND NOT (
-           n.recipient_role = 2
-           AND n.type = 'mentorship'
-           AND n.event = 'pending'
-           AND msr.id IS NOT NULL
-           AND msr.status <> 'pending'
-         )
+         AND n.created_at >= NOW() - ($7::integer * INTERVAL '1 day')
+         AND ($8::boolean IS FALSE OR n.read_at IS NULL)
+         AND ${stalePendingFilterSql("n")}
        ORDER BY n.created_at DESC
        LIMIT $6`,
-      [role, startupId, mentorId, userMail, beforeCreatedAt, pageLimit],
+      [
+        role,
+        startupId,
+        mentorId,
+        userMail,
+        beforeCreatedAt,
+        pageLimit,
+        retentionDays,
+        unreadOnly,
+      ],
       (listErr, listResult) => {
         if (listErr) {
           reject(listErr);
           return;
         }
 
-        client.query(
-          `SELECT COUNT(*)::int AS unread_count
-           FROM app_notifications n
-           LEFT JOIN mentor_session_requests msr
-             ON n.source_table = 'mentor_session_requests'
-             AND n.source_id::text = msr.id::text
-           WHERE n.read_at IS NULL
-             AND ${audienceFilterSql("n")}
-             AND NOT (
-               n.recipient_role = 2
-               AND n.type = 'mentorship'
-               AND n.event = 'pending'
-               AND msr.id IS NOT NULL
-               AND msr.status <> 'pending'
-             )`,
-          [role, startupId, mentorId, userMail],
-          (countErr, countResult) => {
-            if (countErr) {
-              reject(countErr);
-              return;
-            }
+        const rows = Array.isArray(listResult.rows) ? listResult.rows : [];
+        const hasMore = rows.length > limit;
+        const notifications = hasMore ? rows.slice(0, limit) : rows;
+        const last = notifications[notifications.length - 1];
 
-            const rows = Array.isArray(listResult.rows) ? listResult.rows : [];
-            const hasMore = rows.length > limit;
-            const notifications = hasMore ? rows.slice(0, limit) : rows;
-            const last = notifications[notifications.length - 1];
-
+        countUnreadNotificationsForUser(user, retentionDays)
+          .then((unreadCount) => {
             resolve({
               notifications,
-              unreadCount: countResult.rows?.[0]?.unread_count || 0,
+              unreadCount,
+              retentionDays,
               pagination: {
                 limit,
                 hasMore,
                 nextCursor: hasMore && last ? last.created_at : null,
               },
             });
-          }
-        );
+          })
+          .catch(reject);
       }
     );
   });
@@ -301,8 +347,10 @@ const scheduleMeetingAndAcceptSession = (meetingParams, sessionRequestId) => {
 
 module.exports = {
   insertAppNotifications,
+  countUnreadNotificationsForUser,
   fetchAppNotificationsForUser,
   markAdminMentorshipSessionNotificationsRead,
   markNotificationsReadForUser,
   scheduleMeetingAndAcceptSession,
+  DEFAULT_RETENTION_DAYS,
 };
