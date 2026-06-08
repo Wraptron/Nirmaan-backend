@@ -61,6 +61,20 @@ const saveAvailability = async (req, res) => {
       });
     }
 
+    const seenTimes = new Set();
+    const duplicateTime = normalized.find((entry) => {
+      if (seenTimes.has(entry.time_slot)) return true;
+      seenTimes.add(entry.time_slot);
+      return false;
+    });
+    if (duplicateTime) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Each time slot can only be offered in one session mode (Online or In-person).",
+      });
+    }
+
     await saveMentorAvailability(mentor_id, date, normalized);
 
     res.status(200).json({
