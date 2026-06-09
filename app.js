@@ -89,7 +89,7 @@ const IPDetails = require("./routes/route");
 const saveAvailability = require("./routes/route");
 const getAvailability = require("./routes/route");
 const fetchMentorSessionRequestsForStartupController = require("./routes/route");
-
+const { globalRateLimit, authRateLimit } = require("./helpers/ExpressRateLimit.js");
 
 // Import utilities
 // const Authenticate = require("./utils/Authenticate.js");
@@ -192,6 +192,12 @@ app.use(cookieParser());
 app.use(bodyParser.json({ limit: "50mb" }));
 app.use(bodyParser.urlencoded({ extended: true, limit: "50mb" }));
 app.use(responseTime());
+
+app.use("/api/v1/login", authRateLimit);
+app.use("/api/v1/auth/refresh", authRateLimit);
+app.use("/api/v1/forgot-password", authRateLimit);
+app.use("/api/v1/", globalRateLimit);
+
 // File upload routes (uncomment if using S3)
 // app.get('/images/:key', (req, res) => {
 //   const fileKey = req.params.key;
