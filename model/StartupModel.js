@@ -371,30 +371,33 @@ const TopStartupsSectors = (id) => {
   });
 };
 const StartupDeleteData = async (user_id) => {
+  const db = await client.connect();
   try {
-    await client.query('BEGIN'); // Start transaction
+    await db.query("BEGIN");
 
-    // Soft delete (Flag)
-    await client.query(
+    await db.query(
       `UPDATE test_startup 
        SET isdeleted = TRUE
        WHERE user_id = $1;`,
       [user_id]
     );
 
-    // Delete related records from user_data
-    await client.query(
+    await db.query(
       `DELETE FROM user_data 
-       WHERE startup_id = $1;`,  
+       WHERE startup_id = $1;`,
       [user_id]
     );
 
-    await client.query('COMMIT'); // Apply all changes
-    return { success: true, message: 'Startup and related user data deleted successfully.' };
-
+    await db.query("COMMIT");
+    return {
+      success: true,
+      message: "Startup and related user data deleted successfully.",
+    };
   } catch (err) {
-    await client.query('ROLLBACK'); // Undo changes if error
+    await db.query("ROLLBACK");
     throw err;
+  } finally {
+    db.release();
   }
 };
 
