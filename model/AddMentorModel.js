@@ -1,4 +1,3 @@
-const { resolveContent } = require("nodemailer/lib/shared");
 const client = require("../utils/conn");
 const { v4: uuidv4 } = require("uuid");
 const AddMentorModel = (
@@ -14,8 +13,7 @@ const AddMentorModel = (
   startup_associated,
   contact_number,
   email_address,
-  linkedIn_ID,
-  password
+  linkedIn_ID
 ) => {
   const mentorId = uuidv4();
   return new Promise(async(resolve, reject) => {
@@ -32,7 +30,7 @@ const AddMentorModel = (
    }
 
     client.query(
-      "INSERT INTO mentors(mentor_id, mentor_name,mentor_logo,mento_description, years_of_exp, area_of_expertise, designation, institution, qualification, year_of_passing_out, startup_assoc, contact_num, email_address, linkedIn_id, password, hashkey, user_role) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16,$17)",
+      "INSERT INTO mentors(mentor_id, mentor_name,mentor_logo,mento_description, years_of_exp, area_of_expertise, designation, institution, qualification, year_of_passing_out, startup_assoc, contact_num, email_address, linkedIn_id, hashkey, user_role) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)",
       [
         mentorId,
         mentor_name,
@@ -48,7 +46,6 @@ const AddMentorModel = (
         contact_number,
         email_address,
         linkedIn_ID,
-        password,
         "1",
         "1",
       ],

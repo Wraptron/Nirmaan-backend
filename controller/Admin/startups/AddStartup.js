@@ -28,6 +28,7 @@ const sendStartupCredentials = require("../../../components/SendStartupCredentia
 const { v4: uuidv4 } = require("uuid");
 const md5 = require("md5");
 const { uploadToS3 } = require("../../../utils/s3Upload");
+const { sendErrorResponse } = require("../../../utils/sendErrorResponse");
 
 // const AddStartup = async(req, res) => {
 //     const {basic, official, founder, description} = req.body;
@@ -184,11 +185,7 @@ if (existingUser) {
       result: result,
     });
   } catch (err) {
-    // console.error("Error in AddStartup:", err);
-    res.status(500).json({
-      error: err.message || err,
-      details: "Server Error: Something went wrong. Please try again.",
-    });
+    sendErrorResponse(res, 500, "Server Error: Something went wrong. Please try again.", err);
   }
 };
 
@@ -288,9 +285,7 @@ const SyncStartupFromIncubation = async (req, res) => {
       result,
     });
   } catch (err) {
-    return res.status(500).json({
-      error: err.message || "Failed to sync startup",
-    });
+    return sendErrorResponse(res, 500, "Failed to sync startup", err);
   }
 };
 
@@ -326,7 +321,7 @@ const FetchStartupData = async (req, res) => {
     const result = await FetchStartupsModel();
     res.status(200).json(result);
   } catch (err) {
-    res.status(500).json(err);
+    sendErrorResponse(res, 500, "Internal Server Error", err);
   }
 };
 
@@ -339,7 +334,7 @@ const UpdateStatus = async (req, res) => {
     );
     res.status(200).json(result);
   } catch (err) {
-    res.status(500).json(err);
+    sendErrorResponse(res, 500, "Internal Server Error", err);
   }
 };
 
@@ -366,7 +361,7 @@ const IndividualStartups = async (req, res) => {
     };
     res.status(200).json(IndStartupData);
   } catch (err) {
-    res.status(500).json(err.message);
+    sendErrorResponse(res, 500, "Internal Server Error", err);
   }
 };
 
@@ -376,7 +371,7 @@ const TopStartupsSectorsCont = async (req, res) => {
     const result = await TopStartupsSectors(id);
     res.send(result);
   } catch (err) {
-    res.status(500).json(err);
+    sendErrorResponse(res, 500, "Internal Server Error", err);
   }
 };
 
@@ -384,7 +379,7 @@ const TeamDocuments = async (req, res) => {
   try {
     res.send("Hello");
   } catch (err) {
-    res.status(500).json(err);
+    sendErrorResponse(res, 500, "Internal Server Error", err);
   }
 };
 
@@ -397,11 +392,10 @@ const DeleteStartupData = async (req, res) => {
       const result = await StartupDeleteData(id);
       res.status(200).json(result);
     } catch (err) {
-      // console.error("Delete error:", err);
-      res.status(500).send(err);
+      sendErrorResponse(res, 500, "Failed to delete startup", err);
     }
   } else {
-    res.status(400).send("Params missing");
+    res.status(400).json({ error: "Params missing" });
   }
 };
 
@@ -447,7 +441,7 @@ const FetchStartupProfile = async (req, res) => {
 
     res.status(200).json(profile);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    sendErrorResponse(res, 500, "Internal Server Error", err);
   }
 };
 
@@ -824,7 +818,7 @@ const AddAward = async (req, res) => {
     res.status(201).json({ message: "Award added successfully", result });
   } catch (err) {
     console.error("Backend Error (addAward):", err);
-    res.status(500).json({ error: err.message || "Something went wrong" });
+    sendErrorResponse(res, 500, "Something went wrong", err);
   }
 };
 
@@ -833,7 +827,7 @@ const FetchAwardData = async (req, res) => {
     const result = await FetchAwardModel();
     res.status(200).json(result);
   } catch (error) {
-    res.send(error);
+    sendErrorResponse(res, 500, "Internal Server Error", error);
   }
 };
 
@@ -876,10 +870,10 @@ const DeleteAward = async (req, res) => {
       const result = await DeleteAwardModal(id);
       res.status(200).send(result);
     } catch (err) {
-      res.status(500).send(err);
+      sendErrorResponse(res, 500, "Internal Server Error", err);
     }
   } else {
-    res.status(400).send("params missing");
+    res.status(400).json({ error: "params missing" });
   }
 };
 
@@ -909,7 +903,7 @@ const AddFounder = async (req, res) => {
       .json({ message: "Founder added successfully", data: result });
   } catch (err) {
     // console.error('Error in AddFounder controller:', err);
-    res.status(500).json({ error: err.message || "Something went wrong" });
+    sendErrorResponse(res, 500, "Something went wrong", err);
   }
 };
 
@@ -989,7 +983,7 @@ const DeleteFounder = async (req, res) => {
 
     return res.status(200).json({ message: 'Founder deleted successfully', result });
   } catch (err) {
-    return res.status(500).json({ message: 'Internal server error', error: err.message });
+    return sendErrorResponse(res, 500, "Internal server error", err);
   }
 };
 

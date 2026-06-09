@@ -3,6 +3,7 @@ const EmailValid = require('../../../validation/EmailValid');
 const {Decrypted} = require('../../../helpers/Encryption');
 const PhoneNumberValid = require('../../../validation/PhoneNumberValid')
 const {AddConnectionModel, ViewConnectionModel, EstablishConnectionModel, DeleteConnectionModel}  = require('../../../model/ConnectionModel');
+const { sendErrorResponse } = require('../../../utils/sendErrorResponse');
 const AddConnections = async(req, res) => {
     const{name, designation, organisation, connect_for, contact_number, email_address} = req.body;
     if(!name || !designation || !organisation || !connect_for || !contact_number || !email_address)
@@ -65,7 +66,7 @@ const EstablishConnection = async(req, res) => {
     }
     catch(err)
     {
-        res.send(err);
+        sendErrorResponse(res, 500, 'Internal Server Error', err);
     }
 }
 

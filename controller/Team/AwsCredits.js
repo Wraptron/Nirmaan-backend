@@ -1,4 +1,5 @@
 const {AwsCreditsModel, ViewLastQueryTime} = require('../../model/CustomerModel/AwsCreditsModel');
+const { sendErrorResponse } = require('../../utils/sendErrorResponse');
 const EmailValid = require('../../validation/EmailValid');
 const {Encryption, Decrypted} = require('../../helpers/Encryption.js');
 const {Server} = require("socket.io");
@@ -48,7 +49,7 @@ const AwsCredits = async(req, res) => {
                }
                else 
                {
-                   res.status(406).send(err);
+                   sendErrorResponse(res, 500, "Internal Server Error", err);
                }
            }
         }

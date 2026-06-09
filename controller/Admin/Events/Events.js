@@ -1,5 +1,6 @@
 const {CreateEventsModel, FetchEventsModel, RequestSpeakerModel, DeleteEventModal, UpdateEventModel} = require('../../../model/Admin/EventsModel');
 const { uploadToS3 } = require('../../../utils/s3Upload');
+const { sendErrorResponse } = require('../../../utils/sendErrorResponse');
 const CreateEvents = async (req, res) => {
   try {
     const {
@@ -36,10 +37,7 @@ const CreateEvents = async (req, res) => {
       data: result,
     });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({
-      error: err.message,
-    });
+    sendErrorResponse(res, 500, "Failed to create event", err);
   }
 };
 
@@ -52,7 +50,7 @@ const FetchEvents = async(req, res) => {
     }
     catch(err)
     {
-        console.log(err);
+        sendErrorResponse(res, 500, "Failed to fetch events", err);
     }
 }
 const DeleteEvent = async (req, res) => {
@@ -63,10 +61,10 @@ const DeleteEvent = async (req, res) => {
       const result = await DeleteEventModal(id);
       res.status(200).send(result);
     } catch (err) {
-      res.status(500).send(err);
+      sendErrorResponse(res, 500, "Failed to delete event", err);
     }
   } else {
-    res.status(400).send("params missing");
+    res.status(400).json({ error: "params missing" });
   }
 };
 
@@ -132,7 +130,7 @@ const RequestSpeaker = async(req, res) => {
         }
         catch(err)
         {
-            console.log(err);
+            sendErrorResponse(res, 500, "Failed to submit speaker request", err);
         }
     }
 }

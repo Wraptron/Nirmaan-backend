@@ -19,7 +19,7 @@ const AddMentor = async (req, res) => {
     year_of_passing_out,
     startup_associated,
   } = professional;
-  const { contact_number, email_address, linkedIn_ID, password } = contact;
+  const { contact_number, email_address, linkedIn_ID } = contact;
 
   let mentor_logo_url = null;
 
@@ -27,7 +27,7 @@ const AddMentor = async (req, res) => {
     mentor_logo_url = await uploadToS3(req.files.mentor_logo[0], "mentor_logo");
   }
 
-  if (!mentor_name || !contact_number || !email_address || !password) {
+  if (!mentor_name || !contact_number || !email_address) {
     return res.status(400).send("All fields are required");
   } else if (!EmailValid(email_address)) {
     return res.status(401).send("Email is not Valid");
@@ -48,8 +48,7 @@ const AddMentor = async (req, res) => {
         startup_associated,
         contact_number,
         email_address,
-        linkedIn_ID,
-        password
+        linkedIn_ID
       );
       res.status(200).send(result);
     } catch (err) {

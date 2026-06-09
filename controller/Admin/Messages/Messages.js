@@ -1,4 +1,6 @@
-const {SendMessageModel, ViewMessageModel} = require("../../../model/Messages")
+const {SendMessageModel, ViewMessageModel} = require("../../../model/Messages");
+const { sendErrorResponse } = require("../../../utils/sendErrorResponse");
+
 const AddMessage = async(req, res) => {
     try 
     {
@@ -8,7 +10,7 @@ const AddMessage = async(req, res) => {
     }
     catch(err)
     {
-        res.status(400).send(err);
+        sendErrorResponse(res, 400, 'Failed to send message', err);
     }
 }
 const ViewMessage = async(req, res) => {
@@ -20,7 +22,7 @@ const ViewMessage = async(req, res) => {
       }
       catch(err)
       {
-        res.send(err);
+        sendErrorResponse(res, 500, 'Internal Server Error', err);
       }
 }
 module.exports = {AddMessage, ViewMessage}
