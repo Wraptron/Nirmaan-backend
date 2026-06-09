@@ -289,6 +289,38 @@ const FetchMeetingsWithMentorDetailsModel = () => {
   });
 };
 
+const MEETING_CANCEL_NOTICE_MS = 24 * 60 * 60 * 1000;
+
+const formatMeetingDateKey = (value) => {
+  if (!value) return "";
+  if (typeof value === "string") return value.slice(0, 10);
+  if (value instanceof Date) {
+    const y = value.getFullYear();
+    const m = String(value.getMonth() + 1).padStart(2, "0");
+    const d = String(value.getDate()).padStart(2, "0");
+    return `${y}-${m}-${d}`;
+  }
+  return String(value).slice(0, 10);
+};
+
+const getMeetingStartTimestamp = (date, time) => {
+  const dateKey = formatMeetingDateKey(date);
+  if (!dateKey) return NaN;
+  const timePart = String(time || "00:00:00");
+  const [hours = 0, minutes = 0, seconds = 0] = timePart
+    .split(":")
+    .map((part) => Number(part));
+  const [year, month, day] = dateKey.split("-").map(Number);
+  if (!year || !month || !day) return NaN;
+  return new Date(year, month - 1, day, hours, minutes, seconds || 0).getTime();
+};
+
+const isMeetingCancellationTooLate = (date, time) => {
+  const startMs = getMeetingStartTimestamp(date, time);
+  if (!Number.isFinite(startMs)) return true;
+  return startMs - Date.now() < MEETING_CANCEL_NOTICE_MS;
+};
+
 const DeleteMeetingModal = (id) => {
   return new Promise((resolve, reject) => {
     client.query(
@@ -302,6 +334,114 @@ const DeleteMeetingModal = (id) => {
         }
       },
     );
+  });
+};
+
+const cancelScheduledMeetingByMentorModel = ({
+  meetingId,
+  mentorId,
+  reason,
+  cancelledBy,
+}) => {
+  return new Promise((resolve, reject) => {
+    client.query("BEGIN", async (beginErr) => {
+      if (beginErr) return reject(beginErr);
+      try {
+        const existingMeeting = await new Promise((res, rej) => {
+          client.query(
+            `SELECT *
+             FROM schedule_meetings
+             WHERE meet_id = $1
+               AND mentor_reference_id::text = $2::text
+               AND COALESCE(status, 'scheduled') = 'scheduled'
+             LIMIT 1`,
+            [meetingId, String(mentorId)],
+            (err, result) => (err ? rej(err) : res(result))
+          );
+        });
+
+        if (!existingMeeting.rows.length) {
+          throw new Error("Meeting not found or already cancelled.");
+        }
+
+        const scheduledMeeting = existingMeeting.rows[0];
+        if (isMeetingCancellationTooLate(scheduledMeeting.date, scheduledMeeting.time)) {
+          throw new Error("CANCELLATION_TOO_LATE");
+        }
+
+        const meetingResult = await new Promise((res, rej) => {
+          client.query(
+            `UPDATE schedule_meetings
+             SET status = 'cancelled',
+                 cancellation_reason = $3,
+                 cancelled_at = NOW(),
+                 cancelled_by = $4
+             WHERE meet_id = $1
+               AND mentor_reference_id::text = $2::text
+               AND COALESCE(status, 'scheduled') = 'scheduled'
+             RETURNING *`,
+            [meetingId, String(mentorId), reason, cancelledBy || null],
+            (err, result) => (err ? rej(err) : res(result))
+          );
+        });
+
+        if (!meetingResult.rows.length) {
+          throw new Error("Meeting not found or already cancelled.");
+        }
+
+        const meeting = meetingResult.rows[0];
+        let sessionRow = null;
+
+        if (meeting.session_request_id) {
+          const byId = await new Promise((res, rej) => {
+            client.query(
+              `UPDATE mentor_session_requests
+               SET status = 'cancelled'
+               WHERE id = $1
+                 AND status = 'accepted'
+               RETURNING *`,
+              [meeting.session_request_id],
+              (err, result) => (err ? rej(err) : res(result))
+            );
+          });
+          sessionRow = byId.rows[0] || null;
+        }
+
+        if (!sessionRow) {
+          const fallback = await new Promise((res, rej) => {
+            client.query(
+              `UPDATE mentor_session_requests
+               SET status = 'cancelled'
+               WHERE mentor_id::text = $1::text
+                 AND startup_id::text = $2::text
+                 AND requested_date = $3
+                 AND LEFT(requested_time::text, 5) = LEFT($4::text, 5)
+                 AND status = 'accepted'
+               RETURNING *`,
+              [
+                String(mentorId),
+                meeting.startup_id != null ? String(meeting.startup_id) : "",
+                meeting.date,
+                meeting.time,
+              ],
+              (err, result) => (err ? rej(err) : res(result))
+            );
+          });
+          sessionRow = fallback.rows[0] || null;
+        }
+
+        await new Promise((res, rej) => {
+          client.query("COMMIT", (err) => (err ? rej(err) : res()));
+        });
+
+        resolve({ meeting, sessionRow });
+      } catch (error) {
+        await new Promise((res) => {
+          client.query("ROLLBACK", () => res());
+        });
+        reject(error);
+      }
+    });
   });
 };
 
@@ -447,5 +587,6 @@ module.exports = {
   MeetingFeedbackModel,
   UpdateFeedbackModel,
   FetchMeetingFeedbackModel,
-  DeleteMeetingModal
+  DeleteMeetingModal,
+  cancelScheduledMeetingByMentorModel,
 };

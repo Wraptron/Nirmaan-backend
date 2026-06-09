@@ -124,8 +124,66 @@ const notifyMentorshipSessionAccepted = async (row, meetingDate, meetingTime) =>
   }
 };
 
+const notifyMentorshipSessionCancelled = async ({
+  meeting,
+  sessionRow,
+  reason,
+}) => {
+  const startupName =
+    sessionRow?.startup_name || meeting?.start_up_name || "startup";
+  const mentorName = sessionRow?.mentor_name || "mentor";
+  const meta = {
+    ...sessionMetadata({
+      ...(sessionRow || {}),
+      status: "cancelled",
+      requested_date: meeting?.date || sessionRow?.requested_date,
+      requested_time: meeting?.time || sessionRow?.requested_time,
+    }),
+    meet_id: meeting?.meet_id,
+    cancellation_reason: reason,
+    cancelled_at: meeting?.cancelled_at || null,
+  };
+
+  const rows = [];
+
+  if (sessionRow?.mentor_id || meeting?.mentor_reference_id) {
+    rows.push({
+      type: "mentorship",
+      event: "cancelled",
+      title: "Session cancelled",
+      body: `You cancelled your session with ${startupName}.`,
+      recipient_mentor_id: sessionRow?.mentor_id || meeting?.mentor_reference_id,
+      source_table: "schedule_meetings",
+      source_id: meeting?.meet_id,
+      metadata: meta,
+    });
+  }
+
+  if (sessionRow?.startup_id != null || meeting?.startup_id != null) {
+    rows.push({
+      type: "mentorship",
+      event: "cancelled",
+      title: "Session cancelled by mentor",
+      body: `Your session with ${mentorName} was cancelled.`,
+      recipient_startup_id:
+        sessionRow?.startup_id != null ? sessionRow.startup_id : meeting.startup_id,
+      source_table: "schedule_meetings",
+      source_id: meeting?.meet_id,
+      metadata: meta,
+    });
+  }
+
+  if (!rows.length) return;
+  try {
+    await insertAppNotifications(rows);
+  } catch (err) {
+    console.error("notifyMentorshipSessionCancelled:", err);
+  }
+};
+
 module.exports = {
   notifyMentorshipSessionPending,
   notifyMentorshipSessionRejected,
   notifyMentorshipSessionAccepted,
+  notifyMentorshipSessionCancelled,
 };

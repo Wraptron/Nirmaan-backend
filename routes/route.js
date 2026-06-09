@@ -95,6 +95,7 @@ const {
   UpdateFeedback,
   FetchMeetingsDetailsWithMentor,
   DeleteMeetings,
+  CancelMentorMeeting,
 } = require("../controller/Admin/Mentors/MentorData.js");
 const AddJob = require("../controller/Team/AddJob.js");
 const {
@@ -196,6 +197,12 @@ router.post("/mentor/meeting", Authenticate, requireRole(2), Meetings);
 router.get("/mentor/fetch-meeting/:mentor_id", FetchMeetings);
 router.get("/mentor/fetch-mentor_meeting/",FetchMeetingsDetailsWithMentor);
 router.delete("/mentor/delete-meeting/:id",DeleteMeetings);
+router.patch(
+  "/mentor/cancel-meeting/:id",
+  Authenticate,
+  requireRole(6),
+  CancelMentorMeeting
+);
 router.post("/mentor/feedback", MeetingFeedback);
 router.put("/mentor/update-feedback", UpdateFeedback);
 router.get(
