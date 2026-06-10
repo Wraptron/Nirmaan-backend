@@ -149,12 +149,12 @@ router.post("/finance/addfunding", requireRole(2, 3), upload.none(), AddFunding)
 router.get("/finance/funding_amount", requireRole(2, 3, 5), FetchFundingAmount);
 router.get("/finance/funding", requireRole(3), FetchFundingData);
 router.put("/funding/edit", requireRole(2, 3), UpdateFundingData);
-router.get("/funding", requireRole(3), FetchFundingDatainNumbers);
+router.get("/funding", requireRole(2, 3), FetchFundingDatainNumbers);
 router.post("/finance/funding-project", requireRole(3), AddFundingProject);
 router.get("/finance/fetch-funding-project", requireRole(3), FetchFundingProject);
 router.get("/fetch-funding-project", requireRole(3), FetchFundingProjectData);
 router.put("/update-funding-project", requireRole(3), UpdateFundingProjectData);
-router.get("/finance/startup-data", requireRole(3), FetchStartupDataDetail);
+router.get("/finance/startup-data", requireRole(2, 3), FetchStartupDataDetail);
 router.get("/fetch-startup", requireRole(2, 5), FetchStartupData);
 router.get("/fetchevents", FetchEvents);
 router.get("/count-startupdata", requireRole(2), FetchStartupDatainNumbers);
