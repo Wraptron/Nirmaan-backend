@@ -341,19 +341,6 @@ const UpdateStatus = async (req, res) => {
 const IndividualStartups = async (req, res) => {
   const { id } = req.params;
   try {
-    const requester = req.user;
-
-    // Role 2 (admin) can access any startup profile.
-    // Role 5 (startup user) can only access their own startup profile.
-    if (
-      requester?.role === 5 &&
-      String(requester.startup_id) !== String(id)
-    ) {
-      return res.status(403).json({
-        message: "Forbidden: You can only access your own startup profile",
-      });
-    }
-
     const result = await IndividualStarupModel(id);
     const IndStartupData = {
       generalData: result.GeneralData.rows,

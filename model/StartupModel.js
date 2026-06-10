@@ -306,16 +306,21 @@ const UpdateStartupStatusModel = async (
     );
   });
 };
+const STARTUP_PROFILE_SELECT = `SELECT user_id AS startup_id, basic::jsonb->>'profile_image' AS profile_image, basic::jsonb->>'startup_name' AS startup_name, startup_status AS startup_status, basic::jsonb->>'startup_domain' AS startup_domain, basic::jsonb->>'startup_sector' AS startup_sector, basic::jsonb->>'startup_Community' AS startup_community, basic::jsonb->>'startup_type' AS startup_type, basic::jsonb->>'startup_technology' AS startup_technology, basic::jsonb->>'startup_cohort' AS startup_cohort, basic::jsonb->>'startup_yog' AS startup_yog, basic::jsonb->>'graduated_to' AS graduated_to, basic::jsonb->>'graduated_to_other' AS graduated_to_other, basic::jsonb->>'program' AS program, official::jsonb->>'official_email_address' AS email_address, official::jsonb->>'official_contact_number' AS official_contact_number, official::jsonb->>'role_of_faculty' AS role_of_faculty, official::jsonb->>'cin_registration_number' AS cin_registration_number, official::jsonb->>'funding_stage' AS funding_stage, official::jsonb->>'website_link' AS website_link, official::jsonb->>'dpiit_number' AS dpiit, official::jsonb->>'official_registered' AS register, official::jsonb->>'linkedin_id' AS linkedin, official::jsonb->>'mentor_associated' AS mentor_associated, official::jsonb->>'pia_state' AS pia_state, official::jsonb->>'scheme' AS scheme, founder::jsonb->>'founder_name' AS founder_name, founder::jsonb->>'founder_email' AS founder_email, founder::jsonb->>'founder_number' AS founder_number, founder::jsonb->>'academic_background' AS academic_background, founder::jsonb->>'founder_gender' AS founder_gender, ip_details::jsonb->>'patent' AS patent, ip_details::jsonb->>'design' AS design, ip_details::jsonb->>'trademark' AS trademark, ip_details::jsonb->>'copyright' AS copyright, description::jsonb->>'logo' AS logo, description::jsonb->>'startup_description' AS startup_description`;
+
 const IndividualStarupModel = async (id) => {
+  const lookupId = String(id ?? "").trim();
+
   const GeneralData = () => {
     return new Promise((resolveQuery2, rejectQuery2) => {
       client.query(
-        `select t.basic, t.official, t.founder, t.description, t.official_email_address, t.startup_status, u.startup_name, u.amount, u.funding_type from test_startup t LEFT JOIN update_funding u ON t.official_email_address = u.startup_name WHERE t.official_email_address=$1`,
-        [id],
+        `${STARTUP_PROFILE_SELECT}
+         FROM test_startup
+         WHERE isdeleted = 'f'
+           AND (user_id::text = $1 OR official_email_address = $1)`,
+        [lookupId],
         (err, result) => {
-          //select t.basic, t.official_email_address, u.startup_name, u.amount, u.funding_type from test_startup t JOIN update_funding u ON t.official_email_address = u.startup_name;
           if (err) {
-            //SELECT * FROM test_startup WHERE official_email_address=$1
             rejectQuery2(err);
           } else {
             resolveQuery2(result);
@@ -328,8 +333,13 @@ const IndividualStarupModel = async (id) => {
   const FundingDistributes = () => {
     return new Promise((resolveQuery1, rejectQuery1) => {
       client.query(
-        "select u.funding_type, SUM(CAST(u.amount AS INTEGER)), u.startup_name from update_funding u JOIN test_startup t ON u.startup_name = t.official_email_address WHERE funding_type='Funding Utilized' AND startup_name=$1 GROUP BY u.funding_type, u.startup_name;",
-        [id],
+        `SELECT u.funding_type, SUM(CAST(u.amount AS INTEGER)), u.startup_name
+         FROM update_funding u
+         JOIN test_startup t ON u.startup_name = t.official_email_address
+         WHERE u.funding_type = 'Funding Utilized'
+           AND (t.user_id::text = $1 OR t.official_email_address = $1)
+         GROUP BY u.funding_type, u.startup_name`,
+        [lookupId],
         (err, result) => {
           if (err) {
             rejectQuery1(err);
@@ -599,9 +609,12 @@ const UpdateStartupPersonalInfoModel = async (data, requester) => {
 
   return new Promise((resolve, reject) => {
     // -------- Role-based Access ----------
-    const isPrivileged = [2].includes(Number(requester?.role));
+    const role = Number(requester?.role);
+    const isAdmin = role === 2;
+    const isOwnStartup =
+      role === 5 && String(requester?.startup_id) === String(startup_id);
 
-    if (!isPrivileged) {
+    if (!isAdmin && !isOwnStartup) {
       return resolve({
         status: "Unauthorized",
         code: 401,
