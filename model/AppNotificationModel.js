@@ -171,7 +171,7 @@ const fetchAppNotificationsForUser = (user, options = {}) => {
     }
 
     client.query(
-      `SELECT n.*
+      `SELECT n.*, msr.status AS session_request_status
        FROM app_notifications n
        LEFT JOIN mentor_session_requests msr
          ON n.source_table = 'mentor_session_requests'
@@ -223,17 +223,17 @@ const fetchAppNotificationsForUser = (user, options = {}) => {
   });
 };
 
-/** Clear admin inbox items for a processed mentor session request. */
+/** Remove admin inbox items for a processed mentor session request. */
 const markAdminMentorshipSessionNotificationsRead = (sessionRequestId) => {
   const sourceId = toIdStringOrNull(sessionRequestId);
   if (!sourceId) return Promise.resolve([]);
 
   return new Promise((resolve, reject) => {
     client.query(
-      `UPDATE app_notifications
-       SET read_at = CURRENT_TIMESTAMP
-       WHERE read_at IS NULL
-         AND recipient_role = 2
+      `DELETE FROM app_notifications
+       WHERE recipient_role = 2
+         AND type = 'mentorship'
+         AND event = 'pending'
          AND source_table = 'mentor_session_requests'
          AND source_id::text = $1
        RETURNING id`,
