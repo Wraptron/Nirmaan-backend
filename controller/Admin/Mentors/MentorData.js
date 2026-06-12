@@ -14,6 +14,7 @@ const {
   UpdateFeedbackModel,
   FetchMeetingsWithMentorDetailsModel,
   DeleteMeetingModal,
+  cancelScheduledMeetingByMentorModel,
 } = require("../../../model/AddMentorModel");
 const { uploadToS3 } = require("../../../utils/s3Upload");
 
@@ -117,7 +118,10 @@ const DeleteMentorData = async (req, res) => {
 };
 
 const { scheduleMeetingAndAcceptSession } = require("../../../model/AppNotificationModel");
-const { notifyMentorshipSessionAccepted } = require("../../../utils/notificationFanout");
+const {
+  notifyMentorshipSessionAccepted,
+  notifyMentorshipSessionCancelled,
+} = require("../../../utils/notificationFanout");
 
 const Meetings = async (req, res) => {
   try {
@@ -205,6 +209,53 @@ const DeleteMeetings = async (req, res) => {
     }
   } else {
     res.status(400).send("params missing");
+  }
+};
+
+const CancelMentorMeeting = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const reason = String(req.body?.reason || "").trim();
+    const mentorId = req.user?.mentor_id;
+    const cancelledBy = req.user?.user_mail || null;
+
+    if (!id) {
+      return res.status(400).json({ message: "Meeting id is required." });
+    }
+    if (!mentorId) {
+      return res.status(403).json({ message: "Mentor account required." });
+    }
+    if (reason.length < 5 || reason.length > 500) {
+      return res.status(400).json({
+        message: "Cancellation reason must be between 5 and 500 characters.",
+      });
+    }
+
+    const { meeting, sessionRow } = await cancelScheduledMeetingByMentorModel({
+      meetingId: id,
+      mentorId,
+      reason,
+      cancelledBy,
+    });
+
+    await notifyMentorshipSessionCancelled({ meeting, sessionRow, reason });
+
+    return res.status(200).json({
+      message: "Meeting cancelled successfully.",
+      meeting,
+    });
+  } catch (err) {
+    if (err.message === "Meeting not found or already cancelled.") {
+      return res.status(409).json({ message: err.message });
+    }
+    if (err.message === "CANCELLATION_TOO_LATE") {
+      return res.status(400).json({
+        message:
+          "Cancellation is not allowed within 24 hours of the session start time.",
+      });
+    }
+    console.error("CancelMentorMeeting:", err);
+    return res.status(500).json({ message: "Failed to cancel meeting." });
   }
 };
 
@@ -321,6 +372,7 @@ module.exports = {
   FetchMeetings,
   FetchMeetingsDetailsWithMentor,
   DeleteMeetings,
+  CancelMentorMeeting,
   MeetingFeedback,
   UpdateFeedback,
   FetchMeetingFeedback,

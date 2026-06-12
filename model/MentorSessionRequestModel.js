@@ -1,5 +1,10 @@
 const client = require("../utils/conn");
 
+const normalizeStartupId = (value) => {
+  if (value === null || value === undefined || value === "") return null;
+  return value;
+};
+
 const formatDateKey = (value) => {
   if (!value) return "";
   if (typeof value === "string") return value.slice(0, 10);
@@ -132,7 +137,28 @@ const fetchMentorSessionRequestUpdatesForStartup = (startupId) => {
          AND startup_id = $1
        ORDER BY created_at DESC
        LIMIT 50`,
-      [toIntegerOrNull(startupId)],
+      [normalizeStartupId(startupId)],
+      (err, result) => {
+        if (err) reject(err);
+        else resolve(result.rows);
+      }
+    );
+  });
+};
+
+const fetchMentorSessionRequestsByStartupId = (startupId) => {
+  return new Promise((resolve, reject) => {
+    const id = normalizeStartupId(startupId);
+    if (id === null) {
+      resolve([]);
+      return;
+    }
+    client.query(
+      `SELECT *
+       FROM mentor_session_requests
+       WHERE startup_id::text = $1::text
+       ORDER BY created_at DESC`,
+      [String(id)],
       (err, result) => {
         if (err) reject(err);
         else resolve(result.rows);
@@ -145,7 +171,7 @@ const fetchMentorSessionRequestUpdatesForStartup = (startupId) => {
 const fetchBookedSlotsByMentorId = (mentorId) => {
   return new Promise((resolve, reject) => {
     client.query(
-      `SELECT requested_date, requested_time
+      `SELECT requested_date, requested_time, session_mode
        FROM mentor_session_requests
        WHERE mentor_id::text = $1
          AND status IN ('pending', 'accepted')
@@ -160,7 +186,10 @@ const fetchBookedSlotsByMentorId = (mentorId) => {
         result.rows.forEach((row) => {
           const dateKey = formatDateKey(row.requested_date);
           if (!grouped[dateKey]) grouped[dateKey] = [];
-          grouped[dateKey].push(formatTimeSlot(row.requested_time));
+          grouped[dateKey].push({
+            time_slot: formatTimeSlot(row.requested_time),
+            mode: normalizeSessionMode(row.session_mode),
+          });
         });
         resolve(grouped);
       }
@@ -168,8 +197,20 @@ const fetchBookedSlotsByMentorId = (mentorId) => {
   });
 };
 
-const mentorSlotIsTaken = (mentorId, requestedDate, requestedTime) => {
+const normalizeSessionMode = (mode) => {
+  const value = String(mode || "").trim();
+  if (value === "In-person" || value.toLowerCase() === "in-person") {
+    return "In-person";
+  }
+  if (value === "Offline" || value.toLowerCase() === "offline") {
+    return "In-person";
+  }
+  return "Online";
+};
+
+const mentorSlotIsTaken = (mentorId, requestedDate, requestedTime, mode) => {
   const normalized = formatTimeSlot(requestedTime);
+  const normalizedMode = normalizeSessionMode(mode);
   return new Promise((resolve, reject) => {
     client.query(
       `SELECT 1
@@ -177,9 +218,10 @@ const mentorSlotIsTaken = (mentorId, requestedDate, requestedTime) => {
        WHERE mentor_id::text = $1
          AND requested_date = $2
          AND LEFT(requested_time::text, 5) = $3
+         AND session_mode = $4
          AND status IN ('pending', 'accepted')
        LIMIT 1`,
-      [String(mentorId), requestedDate, normalized],
+      [String(mentorId), requestedDate, normalized, normalizedMode],
       (err, result) => {
         if (err) reject(err);
         else resolve(result.rowCount > 0);
@@ -215,6 +257,7 @@ module.exports = {
   fetchPendingMentorSessionRequests,
   fetchMentorSessionRequestUpdatesForMentor,
   fetchMentorSessionRequestUpdatesForStartup,
+  fetchMentorSessionRequestsByStartupId,
   fetchBookedSlotsByMentorId,
   mentorSlotIsTaken,
   updateMentorSessionRequestStatus,

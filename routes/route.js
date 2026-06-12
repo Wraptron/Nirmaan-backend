@@ -7,7 +7,8 @@ const multer = require("multer");
 const storage = multer.memoryStorage(); // important for S3 upload
 const upload = multer({ storage });
 const LoginController = require("../controller/Admin/LoginController/LoginController");
-const ChangePassword = require("../controller/Admin/LoginController/ChangePassword");
+const RefreshController = require("../controller/Admin/LoginController/RefreshController");
+const LogoutController = require("../controller/Admin/LoginController/LogoutController");
 const WorkController = require("../controller/Admin/WorkRequestController/WorkRequestController");
 const ResumeController = require("../controller/Admin/Resume/ResumeController.js");
 const GetAllResumeController = require("../controller/Admin/Resume/GetAllResumeController.js");
@@ -94,6 +95,7 @@ const {
   UpdateFeedback,
   FetchMeetingsDetailsWithMentor,
   DeleteMeetings,
+  CancelMentorMeeting,
 } = require("../controller/Admin/Mentors/MentorData.js");
 const AddJob = require("../controller/Team/AddJob.js");
 const {
@@ -116,6 +118,7 @@ const {
 const {
   createMentorSessionRequest,
   updateMentorSessionRequest,
+  listStartupMyMeetings,
 } = require("../controller/Admin/Mentorship/MentorSessionRequest.js");
 const IPdataUpload = require("../controller/Office/IPdata.js");
 const { AddFundingProject, FetchFundingProject, FetchFundingProjectData, UpdateFundingProjectData } = require("../controller/Finance/AddFundingProject.js");
@@ -124,6 +127,7 @@ const { AddMentor} = require("../controller/Admin/Mentors/AddMentor.js");
 const { saveAvailability, getAvailability } = require("../controller/Admin/Mentors/AvailabilitySlot.js");
 router.get("/prof", ProfilePhoto);
 router.put("/update-status", UpdateStatus);
+router.get("/startup/my-meetings", Authenticate, listStartupMyMeetings);
 router.get("/startup/:id", Authenticate, IndividualStartups);
 router.put(
   "/edit-startupdata/personal-info", Authenticate,
@@ -157,6 +161,8 @@ router.get("/count-startupdata", FetchStartupDatainNumbers);
 router.get("/mentor/count", MentorCount);
 router.post("/mentor/request-speaker", RequestSpeaker);
 router.post("/login", LoginController);
+router.post("/auth/refresh", RefreshController);
+router.post("/auth/logout", LogoutController);
 router.post("/send-message", AddMessage);
 
 router.post("/change-password", ChangePassword);
@@ -193,6 +199,12 @@ router.post("/mentor/meeting", Authenticate, requireRole(2), Meetings);
 router.get("/mentor/fetch-meeting/:mentor_id", FetchMeetings);
 router.get("/mentor/fetch-mentor_meeting/",FetchMeetingsDetailsWithMentor);
 router.delete("/mentor/delete-meeting/:id",DeleteMeetings);
+router.patch(
+  "/mentor/cancel-meeting/:id",
+  Authenticate,
+  requireRole(6),
+  CancelMentorMeeting
+);
 router.post("/mentor/feedback", MeetingFeedback);
 router.put("/mentor/update-feedback", UpdateFeedback);
 router.get(
