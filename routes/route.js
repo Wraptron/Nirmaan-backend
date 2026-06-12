@@ -20,6 +20,7 @@ const {
   resendForgotPasswordOtp,
   verifyForgotPasswordOtp,
 } = require("../controller/Admin/LoginController/ForgotRequest.js");
+const ChangePassword = require("../controller/Admin/LoginController/ChangePassword");
 const {
   Profile,
   ProfilePhoto,
