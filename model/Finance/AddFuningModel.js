@@ -23,12 +23,11 @@ const AddFundingModel = async (
   purpose,
   funding_date,
   reference_number,
-  document,
-  status
+  document
 ) => {
   return new Promise((resolve, reject) => {
     client.query(
-      "INSERT INTO update_funding(startup_id,startup_name,project_name, funding_type, amount, purpose, funding_date, reference_number, document, status) VALUES($1, $2, $3, $4, $5, $6, $7, $8,$9,$10)",
+      "INSERT INTO update_funding(startup_id,startup_name,project_name, funding_type, amount, purpose, funding_date, reference_number, document) VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9)",
       [
         startup_id,
         startup_name,
@@ -39,7 +38,6 @@ const AddFundingModel = async (
         funding_date,
         reference_number,
         document,
-        status,
       ],
       (err, result) => {
         if (err) {
@@ -138,7 +136,6 @@ const UpdateFundingDataModel = async (
   funding_date,
   reference_number,
   document,
-  status,
   id,
   startup_id
 ) => {
@@ -146,8 +143,8 @@ const UpdateFundingDataModel = async (
     client.query(
       `UPDATE update_funding 
    SET startup_name=$1, funding_type=$2, amount=$3, purpose=$4, 
-       funding_date=$5, reference_number=$6, document=$7, status=$8 
-   WHERE id=$9 AND startup_id=$10`,
+       funding_date=$5, reference_number=$6, document=$7 
+   WHERE id=$8 AND startup_id=$9`,
       [
         startup_name,
         funding_type,
@@ -156,7 +153,6 @@ const UpdateFundingDataModel = async (
         funding_date,
         reference_number,
         document,
-        status,
         id,
         startup_id,
       ],

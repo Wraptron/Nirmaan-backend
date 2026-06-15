@@ -29,7 +29,6 @@ const AddFunding = async (req, res) => {
     funding_date,
     reference_number,
     document,
-    status,
   } = req.body;
   if (
     !startup_id ||
@@ -116,8 +115,7 @@ const AddFunding = async (req, res) => {
           purpose,
           funding_date,
           reference_number,
-          document,
-          status
+          document
         );
 
         // 2️⃣ NOW reduce project amount (ONLY HERE)
@@ -144,11 +142,10 @@ const AddFunding = async (req, res) => {
           purpose,
           funding_date,
           reference_number,
-          document,
-          status
+          document
         );
 
-        // ❌ REMOVED project deduction from here (no error logic changed)
+        // REMOVED project deduction from here (no error logic changed)
         return res.status(200).send(result);
       } else {
         return res.status(400).send("Invalid funding type.");
@@ -211,7 +208,6 @@ const UpdateFundingData = async (req, res) => {
       funding_date,
       reference_number,
       document,
-      status,
       id,
       startup_id,
     } = req.body;
@@ -277,7 +273,6 @@ const UpdateFundingData = async (req, res) => {
         funding_date,
         reference_number,
         document,
-        status,
         id,
         startup_id
       );
@@ -295,7 +290,6 @@ const UpdateFundingData = async (req, res) => {
         funding_date,
         reference_number,
         document,
-        status,
         id,
         startup_id
       );
