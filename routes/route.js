@@ -3,9 +3,13 @@ const express = require("express");
 // const data = require("../pg_db/convert_data.js");
 // 
 const router = express.Router();
-const multer = require("multer");
-const storage = multer.memoryStorage(); // important for S3 upload
-const upload = multer({ storage });
+const {
+  handleDocumentUpload,
+  handleGenericFileUpload,
+  handleStartupImageUpload,
+  handleMentorLogoUpload,
+  handleEventThumbnailUpload,
+} = require("../helpers/upload.js");
 const LoginController = require("../controller/Admin/LoginController/LoginController");
 const RefreshController = require("../controller/Admin/LoginController/RefreshController");
 const LogoutController = require("../controller/Admin/LoginController/LogoutController");
@@ -103,6 +107,7 @@ const {
   FetchFundingAmount,
   FetchFundingData,
   UpdateFundingData,
+  GetFundingDocument,
   FetchFundingDatainNumbers,
   FetchStartupDataDetail,
 } = require("../controller/Finance/AddFunding.js");
@@ -129,11 +134,9 @@ router.put("/update-status", UpdateStatus);
 router.get("/startup/my-meetings", Authenticate, listStartupMyMeetings);
 router.get("/startup/:id", Authenticate, IndividualStartups);
 router.put(
-  "/edit-startupdata/personal-info", Authenticate,
-  upload.fields([
-    { name: "profile_image", maxCount: 1 },
-    { name: "background_image", maxCount: 1 },
-  ]),
+  "/edit-startupdata/personal-info",
+  Authenticate,
+  handleStartupImageUpload,
   UpdateStartupDetails
 );
 router.put("/edit-startup/mentordetails", UpdateStartupMentorDetails);
@@ -144,10 +147,25 @@ router.post("/mentor/session-request", Authenticate, createMentorSessionRequest)
 router.patch("/mentor/session-request/:id", Authenticate, updateMentorSessionRequest);
 router.post("/availability/save", Authenticate, saveAvailability);
 router.get("/availability/:mentor_id", Authenticate, getAvailability);
-router.post("/finance/addfunding", upload.none(), AddFunding);
+router.post(
+  "/finance/addfunding",
+  Authenticate,
+  handleDocumentUpload,
+  AddFunding
+);
 router.get("/finance/funding_amount", FetchFundingAmount);
 router.get("/finance/funding", FetchFundingData);
-router.put("/funding/edit", UpdateFundingData);
+router.put(
+  "/funding/edit",
+  Authenticate,
+  handleDocumentUpload,
+  UpdateFundingData
+);
+router.get(
+  "/finance/funding/document/:id",
+  Authenticate,
+  GetFundingDocument
+);
 router.get("/funding", FetchFundingDatainNumbers);
 router.post("/finance/funding-project",AddFundingProject);
 router.get("/finance/fetch-funding-project",FetchFundingProject);
@@ -176,7 +194,7 @@ router.get("/resume-fetch/:page_data/:page_number", Resumedata);
 router.post("/resume-send", ApprovalRequest);
 router.get("/profile/:mail", Profile);
 router.put("/edit-startupdata/personal-info", UpdateStartupDetails);
-router.post("/addstartup/award", upload.single("document"), AddAward);
+router.post("/addstartup/award", handleDocumentUpload, AddAward);
 router.get("/fetchaward", FetchAwardData);
 router.delete("/delete-award/:id", DeleteAward);
 router.put("/updateaward", UpdateAward);
@@ -186,12 +204,8 @@ router.put("/edit-startup/founder", UpdateStartupFounder);
 router.post("/addfounder", AddFounder);
 router.get("/fetchfounder/:userId", FetchFounder);
 router.put("/deletefounder/:founderid", DeleteFounder);
-router.post(
-  "/mentor/add",
-  upload.fields([{ name: "mentor_logo", maxCount: 1 }]),
-  AddMentor
-);
-router.put("/mentor/update", upload.fields([{ name: "mentor_logo", maxCount: 1 }]), UpdateMentor);
+router.post("/mentor/add", handleMentorLogoUpload, AddMentor);
+router.put("/mentor/update", handleMentorLogoUpload, UpdateMentor);
 router.post("/mentor/meeting", Authenticate, requireRole(2), Meetings);
 router.get("/mentor/fetch-meeting/:mentor_id", FetchMeetings);
 router.get("/mentor/fetch-mentor_meeting/",FetchMeetingsDetailsWithMentor);
@@ -206,12 +220,8 @@ router.post("/mentor/add-testimonial", Testimonial);
 router.get("/mentor/fetch-testimonial", FetchTestimonial);
 router.put("/mentor/update-testimonial", UpdateTestimonial);
 router.delete("/mentor/delete-testimonial/:id", DeleteTestimonial);
-router.post(
-  "/create-events",
-  upload.fields([{ name: "thumbnail", maxCount: 1 }]),
-  CreateEvents,
-);
-router.put("/edit-event/", upload.fields([{ name: "thumbnail", maxCount: 1 }]), UpdateEvent);
+router.post("/create-events", handleEventThumbnailUpload, CreateEvents);
+router.put("/edit-event/", handleEventThumbnailUpload, UpdateEvent);
 router.delete("/delete-event/:id", DeleteEvent);
 router.get("/profile-data/:mail", Authenticate, Profile);
 router.post("/add-sector", Settings);
@@ -235,7 +245,7 @@ router.patch("/notification/read", Authenticate, markNotificationsRead);
 router.delete("/delete-mentor/:id", DeleteMentorData);
 router.delete("/delete-startup/:id", DeleteStartupData);
 router.delete("/delete-connection", DeleteConnection);
-router.post("/ipdataupload", upload.single("file"), IPdataUpload);
+router.post("/ipdataupload", handleGenericFileUpload, IPdataUpload);
 router.get("/st", TopStartupsSectorsCont);
 router.post("/teamdoc-upload", TeamDocuments);
 module.exports = router;

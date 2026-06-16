@@ -797,9 +797,7 @@ const UpdateStartupMentorDetails = async (req, res) => {
 
 
 const AddAward = async (req, res) => {
-
   try {
-    const document_url = req.file ? req.file.path : null;
     const {
       award_name,
       award_org,
@@ -809,6 +807,14 @@ const AddAward = async (req, res) => {
       official_email_address,
       startup_id,
     } = req.body;
+
+    let document_url = null;
+    if (req.file) {
+      document_url = await uploadToS3(
+        req.file,
+        `Awards/${startup_id || "general"}`
+      );
+    }
 
     const result = await AddAwardModel(
       official_email_address,
@@ -914,10 +920,12 @@ const AddFounder = async (req, res) => {
 };
 
 const FetchFounder = async (req, res) => {
-  const userId = parseInt(req.params.userId);
+  const userId = String(req.params.userId || "").trim();
+  const uuidRegex =
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
-  if (isNaN(userId)) {
-    return res.status(400).json({ message: "Invalid user ID" });
+  if (!uuidRegex.test(userId)) {
+    return res.status(400).json({ message: "Invalid startup ID" });
   }
   try {
     const allFounderData = await FetchFounderModel(userId);
