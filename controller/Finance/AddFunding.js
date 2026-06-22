@@ -13,6 +13,8 @@ const {
   FetchFundingTotalNumbers,
   FetchStartupsDetailModel,
   GetStartupProjectBalanceModel,
+  FetchFundingRequestsModel,
+  UpdateFundingRequestStatusModel,
 } = require("../../model/Finance/AddFuningModel");
 
 const {
@@ -26,6 +28,14 @@ const {
   canAccessFundingRecord,
   assertCanModifyFunding,
 } = require("../../utils/requireRole");
+const {
+  notifyFundingUtilizationPending,
+  notifyFundingUtilizationAcceptedByAdmin,
+  notifyFundingUtilizationRejected,
+} = require("../../utils/notificationFanout");
+
+const STARTUP_ROLE = "5";
+const FINANCE_STAFF_ROLES = new Set(["2", "3"]);
 
 const resolveFundingDocument = async (req, existingDocument = null) => {
   if (req.file) {
@@ -132,7 +142,12 @@ const AddFunding = async (req, res) => {
           );
       }
 
-      const result = await AddFundingModel(
+      const isStartupSubmission =
+        String(req.user?.startup_id ?? "") !== "" &&
+        String(req.user?.startup_id) === String(startup_id);
+      const recordStatus = isStartupSubmission ? "pending" : "approved";
+
+      const row = await AddFundingModel(
         startup_id,
         startup_name,
         project_name,
@@ -141,8 +156,19 @@ const AddFunding = async (req, res) => {
         purpose,
         funding_date,
         reference_number,
-        documentKey
+        documentKey,
+        recordStatus
       );
+
+      if (recordStatus === "pending") {
+        await notifyFundingUtilizationPending(row);
+        return res.status(201).json({
+          message: "Funding utilization request submitted for review.",
+          status: "pending",
+          id: row.id,
+          row,
+        });
+      }
 
       await AddFundingProjectModel(
         project_name,
@@ -151,14 +177,14 @@ const AddFunding = async (req, res) => {
         funding_date
       );
 
-      return res.status(200).send(result);
+      return res.status(200).json(row);
     }
 
     if (
       funding_type === "Funding Disbursed" ||
       funding_type === "External Funding"
     ) {
-      const result = await AddFundingModel(
+      const row = await AddFundingModel(
         startup_id,
         startup_name,
         project_name,
@@ -167,10 +193,11 @@ const AddFunding = async (req, res) => {
         purpose,
         funding_date,
         reference_number,
-        documentKey
+        documentKey,
+        "approved"
       );
 
-      return res.status(200).send(result);
+      return res.status(200).json(row);
     }
 
     return res.status(400).send("Invalid funding type.");
@@ -377,6 +404,136 @@ const FetchStartupDataDetail = async (req, res) => {
   }
 };
 
+const listFundingRequests = async (req, res) => {
+  try {
+    const role = String(req.user?.role ?? "");
+    const filters = {};
+    if (req.query.status) filters.status = String(req.query.status).trim();
+    if (req.query.funding_type) filters.funding_type = req.query.funding_type;
+    if (req.query.startup_id) filters.startup_id = req.query.startup_id;
+
+    if (role === STARTUP_ROLE) {
+      filters.startup_id = req.user.startup_id;
+    } else if (!FINANCE_STAFF_ROLES.has(role)) {
+      return res.status(403).json({ message: "You do not have access to funding requests." });
+    }
+
+    const result = await FetchFundingRequestsModel(filters);
+    return res.status(200).json(result);
+  } catch (err) {
+    return res.status(500).json({ message: "Failed to load funding requests." });
+  }
+};
+
+const getFundingRequestById = async (req, res) => {
+  try {
+    const record = await FetchFundingRecordModel(req.params.id);
+    if (!record) {
+      return res.status(404).json({ message: "Funding request not found." });
+    }
+    if (!canAccessFundingRecord(req.user, record)) {
+      return res.status(403).json({ message: "You do not have access to this funding request." });
+    }
+    return res.status(200).json(record);
+  } catch (err) {
+    return res.status(500).json({ message: "Failed to load funding request." });
+  }
+};
+
+const approveFundingRequest = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const existing = await FetchFundingRecordModel(id);
+
+    if (!existing) {
+      return res.status(404).json({ message: "Funding request not found." });
+    }
+    if (existing.status !== "pending") {
+      return res.status(400).json({ message: "Only pending requests can be approved." });
+    }
+    if (existing.funding_type !== "Funding Utilized") {
+      return res.status(400).json({ message: "Only funding utilization requests support approval." });
+    }
+
+    const projectFunding = await GetStartupProjectBalanceModel(
+      existing.startup_id,
+      existing.project_name
+    );
+    if (!projectFunding || Number(projectFunding.disbursed) <= 0) {
+      return res.status(400).json({ message: "No funds disbursed for this project." });
+    }
+
+    const available =
+      Number(projectFunding.disbursed) - Number(projectFunding.utilized || 0);
+    if (Number(existing.amount) > available) {
+      return res.status(400).json({
+        message: `Insufficient funds for ${existing.project_name}. Available: ${available}`,
+      });
+    }
+
+    const updated = await UpdateFundingRequestStatusModel(
+      id,
+      "approved",
+      req.user?.user_mail
+    );
+    if (!updated) {
+      return res.status(409).json({ message: "Request was already processed or not found." });
+    }
+
+    await AddFundingProjectModel(
+      updated.project_name,
+      "Funding Utilized",
+      updated.amount,
+      updated.funding_date
+    );
+
+    await notifyFundingUtilizationAcceptedByAdmin(updated);
+
+    return res.status(200).json({
+      message: "Funding utilization request approved.",
+      status: "approved",
+      row: updated,
+    });
+  } catch (err) {
+    return res.status(500).json({ message: "Failed to approve funding request." });
+  }
+};
+
+const rejectFundingRequest = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { rejection_reason: rejectionReason } = req.body || {};
+    const existing = await FetchFundingRecordModel(id);
+
+    if (!existing) {
+      return res.status(404).json({ message: "Funding request not found." });
+    }
+    if (existing.status !== "pending") {
+      return res.status(400).json({ message: "Only pending requests can be rejected." });
+    }
+
+    const updated = await UpdateFundingRequestStatusModel(
+      id,
+      "rejected",
+      req.user?.user_mail,
+      rejectionReason || null
+    );
+    if (!updated) {
+      return res.status(409).json({ message: "Request was already processed or not found." });
+    }
+
+    await notifyFundingUtilizationRejected(updated, rejectionReason || null);
+
+    return res.status(200).json({
+      message: "Funding utilization request rejected.",
+      status: "rejected",
+      row: updated,
+    });
+  } catch (err) {
+    return res.status(500).json({ message: "Failed to reject funding request." });
+  }
+};
+
 module.exports = {
   AddFunding,
   updateFundingNotif,
@@ -386,4 +543,8 @@ module.exports = {
   GetFundingDocument,
   FetchFundingDatainNumbers,
   FetchStartupDataDetail,
+  listFundingRequests,
+  getFundingRequestById,
+  approveFundingRequest,
+  rejectFundingRequest,
 };

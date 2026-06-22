@@ -1,19 +1,5 @@
 const client = require("../../utils/conn");
-// const DataViewModel = async(startup_id) => {
-//     return new Promise((resolve, reject) => {
-//         client.query(SELECT * FROM update_funding WHERE startup_id = $1 AND funding_type=$2, [startup_id, 'Funding Disbursed'], (err, result) => {
-//             if(err)
-//             {
-//                   console.error("Error in DataViewModel:", err);
-//                 reject(err)
-//             }
-//             else
-//             {
-//                 resolve(result)
-//             }
-//         })
-//     })
-// }
+
 const AddFundingModel = async (
   startup_id,
   startup_name,
@@ -23,11 +9,16 @@ const AddFundingModel = async (
   purpose,
   funding_date,
   reference_number,
-  document
+  document,
+  status = "approved"
 ) => {
   return new Promise((resolve, reject) => {
     client.query(
-      "INSERT INTO update_funding(startup_id,startup_name,project_name, funding_type, amount, purpose, funding_date, reference_number, document) VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9)",
+      `INSERT INTO update_funding(
+        startup_id, startup_name, project_name, funding_type, amount,
+        purpose, funding_date, reference_number, document, status, submitted_at
+      ) VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, CURRENT_TIMESTAMP)
+      RETURNING *`,
       [
         startup_id,
         startup_name,
@@ -38,12 +29,13 @@ const AddFundingModel = async (
         funding_date,
         reference_number,
         document,
+        status,
       ],
       (err, result) => {
         if (err) {
           reject({ err });
         } else {
-          resolve(result);
+          resolve(result.rows[0]);
         }
       }
     );
@@ -69,19 +61,27 @@ const FetchFundingIndividualgDetailsModel = async () => {
   return new Promise((resolve, reject) => {
     const query = `
       SELECT startup_id,
-              SUM(CASE WHEN funding_type = 'Funding Disbursed' THEN amount ELSE 0 END) AS funding_disbursed,
-    SUM(CASE WHEN funding_type = 'Funding Utilized' THEN amount ELSE 0 END) AS funding_utilized,
-    SUM(CASE WHEN funding_type = 'Funding Disbursed' THEN amount ELSE 0 END) -
-    SUM(CASE WHEN funding_type = 'Funding Utilized' THEN amount ELSE 0 END) AS balance,
-     SUM(CASE WHEN funding_type = 'External Funding' THEN amount ELSE 0 END) AS  external_funding
-
+        SUM(CASE WHEN funding_type = 'Funding Disbursed' THEN amount ELSE 0 END) AS funding_disbursed,
+        SUM(
+          CASE
+            WHEN funding_type = 'Funding Utilized' AND status = 'approved'
+            THEN amount ELSE 0
+          END
+        ) AS funding_utilized,
+        SUM(CASE WHEN funding_type = 'Funding Disbursed' THEN amount ELSE 0 END) -
+        SUM(
+          CASE
+            WHEN funding_type = 'Funding Utilized' AND status = 'approved'
+            THEN amount ELSE 0
+          END
+        ) AS balance,
+        SUM(CASE WHEN funding_type = 'External Funding' THEN amount ELSE 0 END) AS external_funding
       FROM update_funding
       GROUP BY startup_id
     `;
 
     client.query(query, (err, result) => {
       if (err) {
-        // console.error("Error fetching funding details:", err);
         reject(err);
       } else {
         const formattedData = {};
@@ -118,7 +118,6 @@ const FetchFundingRecordModel = async (id) => {
       [id],
       (err, result) => {
         if (err) {
-          // console.error("Error fetching funding record:", err);
           reject(err);
         } else {
           resolve(result.rows[0] || null);
@@ -174,19 +173,22 @@ const FetchFundingTotalNumbers = async () => {
         "SELECT COALESCE(SUM(amount), 0)::numeric AS disbursed FROM update_funding WHERE funding_type = 'Funding Disbursed'"
       ),
       client.query(
-        "SELECT COALESCE(SUM(amount), 0)::numeric AS utilized FROM update_funding WHERE funding_type = 'Funding Utilized'"
+        `SELECT COALESCE(SUM(amount), 0)::numeric AS utilized
+         FROM update_funding
+         WHERE funding_type = 'Funding Utilized' AND status = 'approved'`
       ),
       client.query(
         "SELECT COALESCE(SUM(amount), 0)::numeric AS external FROM update_funding WHERE funding_type = 'External Funding'"
-      )
+      ),
     ];
 
-    const [disbursedResult, utilizedResult, externalResult] = await Promise.all(queries);
+    const [disbursedResult, utilizedResult, externalResult] =
+      await Promise.all(queries);
 
     return {
       disbursed: disbursedResult.rows[0].disbursed,
       utilized: utilizedResult.rows[0].utilized,
-      external: externalResult.rows[0].external
+      external: externalResult.rows[0].external,
     };
   } catch (err) {
     throw err;
@@ -214,9 +216,19 @@ const GetStartupProjectBalanceModel = async (startup_id, project_name) => {
       `
       SELECT 
         COALESCE(SUM(CASE WHEN funding_type = 'Funding Disbursed' THEN amount ELSE 0 END),0) AS disbursed,
-        COALESCE(SUM(CASE WHEN funding_type = 'Funding Utilized' THEN amount ELSE 0 END),0) AS utilized,
+        COALESCE(SUM(
+          CASE
+            WHEN funding_type = 'Funding Utilized' AND status IN ('approved', 'pending')
+            THEN amount ELSE 0
+          END
+        ),0) AS utilized,
         COALESCE(SUM(CASE WHEN funding_type = 'Funding Disbursed' THEN amount ELSE 0 END),0) -
-        COALESCE(SUM(CASE WHEN funding_type = 'Funding Utilized' THEN amount ELSE 0 END),0) AS balance
+        COALESCE(SUM(
+          CASE
+            WHEN funding_type = 'Funding Utilized' AND status IN ('approved', 'pending')
+            THEN amount ELSE 0
+          END
+        ),0) AS balance
       FROM update_funding
       WHERE startup_id = $1 AND project_name = $2
       `,
@@ -228,6 +240,73 @@ const GetStartupProjectBalanceModel = async (startup_id, project_name) => {
     );
   });
 };
+
+const FetchFundingRequestsModel = async (filters = {}) => {
+  const conditions = [];
+  const values = [];
+  let paramIndex = 1;
+
+  if (filters.status) {
+    conditions.push(`status = $${paramIndex}`);
+    values.push(filters.status);
+    paramIndex += 1;
+  }
+
+  if (filters.funding_type) {
+    conditions.push(`funding_type = $${paramIndex}`);
+    values.push(filters.funding_type);
+    paramIndex += 1;
+  }
+
+  if (filters.startup_id != null && filters.startup_id !== "") {
+    conditions.push(`startup_id::text = $${paramIndex}`);
+    values.push(String(filters.startup_id));
+    paramIndex += 1;
+  }
+
+  const whereClause = conditions.length
+    ? `WHERE ${conditions.join(" AND ")}`
+    : "";
+
+  return new Promise((resolve, reject) => {
+    client.query(
+      `SELECT *
+       FROM update_funding
+       ${whereClause}
+       ORDER BY COALESCE(submitted_at, NOW()) DESC, id DESC`,
+      values,
+      (err, result) => {
+        if (err) reject(err);
+        else resolve(result);
+      }
+    );
+  });
+};
+
+const UpdateFundingRequestStatusModel = async (
+  id,
+  status,
+  reviewerMail,
+  rejectionReason = null
+) => {
+  return new Promise((resolve, reject) => {
+    client.query(
+      `UPDATE update_funding
+       SET status = $1,
+           reviewed_at = CURRENT_TIMESTAMP,
+           reviewed_by_mail = $2,
+           rejection_reason = $3
+       WHERE id = $4 AND status = 'pending'
+       RETURNING *`,
+      [status, reviewerMail || null, rejectionReason, id],
+      (err, result) => {
+        if (err) reject(err);
+        else resolve(result.rows[0] || null);
+      }
+    );
+  });
+};
+
 module.exports = {
   AddFundingModel,
   FundingNotificationModel,
@@ -238,4 +317,6 @@ module.exports = {
   FetchFundingTotalNumbers,
   FetchStartupsDetailModel,
   GetStartupProjectBalanceModel,
+  FetchFundingRequestsModel,
+  UpdateFundingRequestStatusModel,
 };

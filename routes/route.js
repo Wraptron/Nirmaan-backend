@@ -110,6 +110,10 @@ const {
   GetFundingDocument,
   FetchFundingDatainNumbers,
   FetchStartupDataDetail,
+  listFundingRequests,
+  getFundingRequestById,
+  approveFundingRequest,
+  rejectFundingRequest,
 } = require("../controller/Finance/AddFunding.js");
 const {
   getNotifications,
@@ -165,6 +169,20 @@ router.get(
   "/finance/funding/document/:id",
   Authenticate,
   GetFundingDocument
+);
+router.get("/finance/requests", Authenticate, listFundingRequests);
+router.get("/finance/requests/:id", Authenticate, getFundingRequestById);
+router.patch(
+  "/finance/requests/:id/approve",
+  Authenticate,
+  requireRole(2),
+  approveFundingRequest
+);
+router.patch(
+  "/finance/requests/:id/reject",
+  Authenticate,
+  requireRole(2),
+  rejectFundingRequest
 );
 router.get("/funding", FetchFundingDatainNumbers);
 router.post("/finance/funding-project",AddFundingProject);

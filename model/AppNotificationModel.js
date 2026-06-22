@@ -116,6 +116,9 @@ const fetchAppNotificationsForUser = (user, options = {}) => {
        LEFT JOIN mentor_session_requests msr
          ON n.source_table = 'mentor_session_requests'
          AND n.source_id::text = msr.id::text
+       LEFT JOIN update_funding uf
+         ON n.source_table = 'update_funding'
+         AND n.source_id::text = uf.id::text
        WHERE ${audienceFilterSql("n")}
          AND ($5::timestamptz IS NULL OR n.created_at < $5::timestamptz)
          AND NOT (
@@ -124,6 +127,13 @@ const fetchAppNotificationsForUser = (user, options = {}) => {
            AND n.event = 'pending'
            AND msr.id IS NOT NULL
            AND msr.status <> 'pending'
+         )
+         AND NOT (
+           n.recipient_role = 2
+           AND n.type = 'funding'
+           AND n.event = 'pending'
+           AND uf.id IS NOT NULL
+           AND uf.status <> 'pending'
          )
        ORDER BY n.created_at DESC
        LIMIT $6`,
@@ -140,6 +150,9 @@ const fetchAppNotificationsForUser = (user, options = {}) => {
            LEFT JOIN mentor_session_requests msr
              ON n.source_table = 'mentor_session_requests'
              AND n.source_id::text = msr.id::text
+           LEFT JOIN update_funding uf
+             ON n.source_table = 'update_funding'
+             AND n.source_id::text = uf.id::text
            WHERE n.read_at IS NULL
              AND ${audienceFilterSql("n")}
              AND NOT (
@@ -148,6 +161,13 @@ const fetchAppNotificationsForUser = (user, options = {}) => {
                AND n.event = 'pending'
                AND msr.id IS NOT NULL
                AND msr.status <> 'pending'
+             )
+             AND NOT (
+               n.recipient_role = 2
+               AND n.type = 'funding'
+               AND n.event = 'pending'
+               AND uf.id IS NOT NULL
+               AND uf.status <> 'pending'
              )`,
           [role, startupId, mentorId, userMail],
           (countErr, countResult) => {
@@ -172,6 +192,31 @@ const fetchAppNotificationsForUser = (user, options = {}) => {
             });
           }
         );
+      }
+    );
+  });
+};
+
+/** Clear admin inbox items for a processed funding utilization request. */
+const markAdminPendingFundingNotificationsRead = (fundingRequestId) => {
+  const sourceId = toIdStringOrNull(fundingRequestId);
+  if (!sourceId) return Promise.resolve([]);
+
+  return new Promise((resolve, reject) => {
+    client.query(
+      `UPDATE app_notifications
+       SET read_at = CURRENT_TIMESTAMP
+       WHERE read_at IS NULL
+         AND recipient_role = 2
+         AND type = 'funding'
+         AND event = 'pending'
+         AND source_table = 'update_funding'
+         AND source_id::text = $1
+       RETURNING id`,
+      [sourceId],
+      (err, result) => {
+        if (err) reject(err);
+        else resolve(result.rows);
       }
     );
   });
@@ -302,6 +347,7 @@ const scheduleMeetingAndAcceptSession = (meetingParams, sessionRequestId) => {
 module.exports = {
   insertAppNotifications,
   fetchAppNotificationsForUser,
+  markAdminPendingFundingNotificationsRead,
   markAdminMentorshipSessionNotificationsRead,
   markNotificationsReadForUser,
   scheduleMeetingAndAcceptSession,
