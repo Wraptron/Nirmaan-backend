@@ -412,7 +412,7 @@ const StartupDeleteData = async (user_id) => {
 };
 
 const UpdateStartupAboutModel = async (data) => {
-  const { basic, email_address, description, startup_status } = data;
+  const { basic, description, startup_status, startup_id } = data;
 
   const query = `
     UPDATE test_startup
@@ -434,7 +434,7 @@ const UpdateStartupAboutModel = async (data) => {
                         '{startup_description}', to_jsonb($5::text), true
                       ),
               startup_status = $6
-    WHERE official->>'official_email_address' = $7;
+    WHERE user_id = $7;
   `;
 
   const values = [
@@ -444,7 +444,7 @@ const UpdateStartupAboutModel = async (data) => {
     basic.startup_type || "",
     description.startup_description || "",
     startup_status || "",
-    email_address,
+    startup_id,
   ];
 
   return new Promise((resolve, reject) => {
@@ -616,8 +616,8 @@ const UpdateStartupPersonalInfoModel = async (data, requester) => {
 
     if (!isAdmin && !isOwnStartup) {
       return resolve({
-        status: "Unauthorized",
-        code: 401,
+        status: "Forbidden",
+        code: 403,
         message: "You do not have permission to update this startup.",
       });
     }
@@ -635,7 +635,7 @@ const UpdateStartupPersonalInfoModel = async (data, requester) => {
 };
 
 const UpdateStartupMentorDetailsModel = async (data) => {
-  const { basic, official } = data;
+  const { basic, official, startup_id } = data;
   const query = `
    UPDATE test_startup
 SET
@@ -680,7 +680,7 @@ SET
                  ),
                  '{cin_registration_number}', to_jsonb($13::text), true
                )
-WHERE official->>'official_email_address' = $14;
+WHERE user_id = $14;
   `;
 
   const values = [
@@ -697,7 +697,7 @@ WHERE official->>'official_email_address' = $14;
     official.mentor_associated,
     official.official_registered,
     official.cin_registration_number,
-    official.official_email_address,
+    startup_id,
   ];
 
   return new Promise((resolve, reject) => {
@@ -776,14 +776,15 @@ const UpdateAwardModel = async (
   awarded_date,
   document_url,
   description,
-  id
+  id,
+  startup_id
 ) => {
   return new Promise((resolve, reject) => {
     client.query(
       `UPDATE startup_awards 
        SET award_name=$1, award_org=$2, prize_money=$3, awarded_date=$4, 
            document_url=$5, description=$6
-       WHERE id=$7 RETURNING *`,
+       WHERE id=$7 AND startup_id=$8 RETURNING *`,
       [
         award_name,
         award_org,
@@ -792,6 +793,7 @@ const UpdateAwardModel = async (
         document_url,
         description,
         id,
+        startup_id,
       ],
       (err, result) => {
         if (err) {
@@ -803,11 +805,11 @@ const UpdateAwardModel = async (
     );
   });
 };
-const DeleteAwardModal = (id) => {
+const DeleteAwardModal = (id, startup_id) => {
   return new Promise((resolve, reject) => {
     client.query(
-      "DELETE from startup_awards where id=$1",
-      [id],
+      "DELETE from startup_awards where id=$1 AND startup_id=$2",
+      [id, startup_id],
       (err, result) => {
         if (err) {
           reject(err);
@@ -816,6 +818,42 @@ const DeleteAwardModal = (id) => {
         }
       }
     );
+  });
+};
+
+const GetAwardStartupIdModel = (awardId) => {
+  return new Promise((resolve, reject) => {
+    client.query(
+      "SELECT startup_id FROM startup_awards WHERE id = $1",
+      [awardId],
+      (err, result) => {
+        if (err) reject(err);
+        else resolve(result.rows[0]?.startup_id ?? null);
+      }
+    );
+  });
+};
+
+const GetStartupIdByFounderIdModel = (founderId) => {
+  return new Promise((resolve, reject) => {
+    const query = `
+      SELECT user_id AS startup_id
+      FROM test_startup
+      WHERE EXISTS (
+        SELECT 1
+        FROM jsonb_array_elements(
+          CASE
+            WHEN jsonb_typeof(founder) = 'array' THEN founder
+            ELSE jsonb_build_array(founder)
+          END
+        ) AS f
+        WHERE f->>'founder_id' = $1
+      )
+    `;
+    client.query(query, [founderId], (err, result) => {
+      if (err) reject(err);
+      else resolve(result.rows[0]?.startup_id ?? null);
+    });
   });
 };
 
@@ -877,7 +915,7 @@ WHERE ts.user_id::text = $1
 };
 
 const UpdateStartupFounderModel = async (data) => {
-  const { founder } = data;
+  const { founder, startup_id } = data;
   const query = `
 UPDATE test_startup
 SET founder = (
@@ -900,7 +938,8 @@ SET founder = (
          END
        ) AS f
 )
-WHERE EXISTS (
+WHERE user_id = $6
+AND EXISTS (
   SELECT 1
   FROM jsonb_array_elements(
          CASE 
@@ -917,6 +956,7 @@ WHERE EXISTS (
     founder.founder_designation || "",
     founder.founder_email || "",
     founder.founder_id || "",
+    startup_id,
   ];
   return new Promise((resolve, reject) => {
     client.query(query, values, (err, result) => {
@@ -931,7 +971,7 @@ WHERE EXISTS (
   });
 };
 
-const DeleteStartupFounderModel = async (founderid) => {
+const DeleteStartupFounderModel = async (founderid, startup_id) => {
   const query = `
   UPDATE test_startup
 SET founder = COALESCE(
@@ -942,14 +982,15 @@ SET founder = COALESCE(
   ),
   '[]'::jsonb
 )
-WHERE jsonb_typeof(founder) = 'array'
+WHERE user_id = $2
+  AND jsonb_typeof(founder) = 'array'
   AND EXISTS (
     SELECT 1
     FROM jsonb_array_elements(founder) AS f
     WHERE f->>'founder_id' = $1
   )`;
 
-  const values = [founderid];
+  const values = [founderid, startup_id];
 
   return new Promise((resolve, reject) => {
     client.query(query, values, (err, result) => {
@@ -1022,6 +1063,8 @@ module.exports = {
   AddFounderModel,
   FetchFounderModel,
   DeleteStartupFounderModel,
+  GetAwardStartupIdModel,
+  GetStartupIdByFounderIdModel,
   UpdateAwardModel,
   DeleteAwardModal,
   IPDetailsModel

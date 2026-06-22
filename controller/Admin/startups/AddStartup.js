@@ -20,6 +20,8 @@ const {
   CheckUserByEmail,
   IPDetailsModel,
   DeleteStartupFounderModel,
+  GetAwardStartupIdModel,
+  GetStartupIdByFounderIdModel,
 } = require("../../../model/StartupModel");
 const EmailValid = require("../../../validation/EmailValid");
 const PhoneNumberValid = require("../../../validation/PhoneNumberValid");
@@ -29,6 +31,10 @@ const { v4: uuidv4 } = require("uuid");
 const md5 = require("md5");
 const { uploadToS3 } = require("../../../utils/s3Upload");
 const { sendErrorResponse } = require("../../../utils/sendErrorResponse");
+const {
+  denyUnlessStartupAccess,
+  resolveStartupTarget,
+} = require("../../../utils/startupAccess");
 
 // const AddStartup = async(req, res) => {
 //     const {basic, official, founder, description} = req.body;
@@ -444,8 +450,18 @@ const UpdateStartupDetails = async (req, res) => {
       email_address,
       linkedin,
       website_link,
-      startup_id,
+      startup_id: clientStartupId,
     } = req.body;
+
+    const startup_id = await resolveStartupTarget(requester, {
+      startup_id: clientStartupId,
+      email_address,
+    });
+    if (!startup_id) {
+      return res.status(403).json({
+        message: "You do not have permission to update this startup.",
+      });
+    }
 
     // ---------- IMAGE UPLOADS ----------
     let profile_image_url = null;
@@ -484,9 +500,9 @@ const UpdateStartupDetails = async (req, res) => {
       { basic, official, startup_status, startup_id },
       requester
     );
-    // Handle unauthorized
-    if (result?.code === 401) {
-      return res.status(401).json(result);
+    // Handle forbidden
+    if (result?.code === 403) {
+      return res.status(403).json(result);
     }
 
     return res.status(200).json({
@@ -686,6 +702,7 @@ const UpdateStartupDetails = async (req, res) => {
 
 const UpdateStartupAbout = async (req, res) => {
   try {
+    const requester = req.user;
     const {
       sector,
       program,
@@ -694,10 +711,19 @@ const UpdateStartupAbout = async (req, res) => {
       about,
       startup_status,
       email_address,
+      startup_id,
     } = req.body;
-    if (!email_address) {
-      return res.status(400).json({ error: "Missing email_address" });
+
+    const targetStartupId = await resolveStartupTarget(requester, {
+      startup_id,
+      email_address,
+    });
+    if (!targetStartupId) {
+      return res.status(403).json({
+        message: "You do not have permission to update this startup.",
+      });
     }
+
     const basic = {
       startup_type,
       startup_domain,
@@ -709,11 +735,10 @@ const UpdateStartupAbout = async (req, res) => {
     };
     const result = await UpdateStartupAboutModel({
       basic,
-      email_address,
       description,
       startup_status,
+      startup_id: targetStartupId,
     });
-    console.log(req.body);
     res.status(200).json({
       message: "Startup details updated successfully",
       result,
@@ -724,6 +749,7 @@ const UpdateStartupAbout = async (req, res) => {
 };
 const UpdateStartupMentorDetails = async (req, res) => {
   try {
+    const requester = req.user;
     const {
       mentors,
       role_of_faculty,
@@ -738,12 +764,17 @@ const UpdateStartupMentorDetails = async (req, res) => {
       dpiit_number,
       pia,
       email_address,
+      startup_id,
     } = req.body;
 
-    if (!email_address || email_address.trim() === "") {
-      return res
-        .status(400)
-        .json({ error: "Email address is required for update" });
+    const targetStartupId = await resolveStartupTarget(requester, {
+      startup_id,
+      email_address,
+    });
+    if (!targetStartupId) {
+      return res.status(403).json({
+        message: "You do not have permission to update this startup.",
+      });
     }
 
     const basic = {
@@ -763,10 +794,13 @@ const UpdateStartupMentorDetails = async (req, res) => {
       mentor_associated: mentors || "",
       official_registered: officially_registered || "",
       cin_registration_number: cin_registration_number || "",
-      official_email_address: email_address,
     };
 
-    const result = await UpdateStartupMentorDetailsModel({ basic, official });
+    const result = await UpdateStartupMentorDetailsModel({
+      basic,
+      official,
+      startup_id: targetStartupId,
+    });
     res
       .status(200)
       .json({ message: "Startup details updated successfully", result });
@@ -778,8 +812,8 @@ const UpdateStartupMentorDetails = async (req, res) => {
 
 
 const AddAward = async (req, res) => {
-
   try {
+    const requester = req.user;
     const document_url = req.file ? req.file.path : null;
     const {
       award_name,
@@ -791,6 +825,16 @@ const AddAward = async (req, res) => {
       startup_id,
     } = req.body;
 
+    const targetStartupId = await resolveStartupTarget(requester, {
+      startup_id,
+      email_address: official_email_address,
+    });
+    if (!targetStartupId) {
+      return res.status(403).json({
+        message: "You do not have permission to update this startup.",
+      });
+    }
+
     const result = await AddAwardModel(
       official_email_address,
       award_name,
@@ -799,7 +843,7 @@ const AddAward = async (req, res) => {
       awarded_date,
       document_url,
       description,
-      startup_id
+      targetStartupId
     );
 
     res.status(201).json({ message: "Award added successfully", result });
@@ -820,6 +864,7 @@ const FetchAwardData = async (req, res) => {
 
 const UpdateAward = async (req, res) => {
   try {
+    const requester = req.user;
     const {
       award_name,
       award_org,
@@ -830,6 +875,14 @@ const UpdateAward = async (req, res) => {
       id,
     } = req.body;
 
+    const awardStartupId = await GetAwardStartupIdModel(id);
+    if (!awardStartupId) {
+      return res.status(404).json({ error: "Award not found" });
+    }
+    if (denyUnlessStartupAccess(res, requester, awardStartupId)) {
+      return;
+    }
+
     const result = await UpdateAwardModel(
       award_name,
       award_org,
@@ -837,7 +890,8 @@ const UpdateAward = async (req, res) => {
       awarded_date,
       document_url,
       description,
-      id
+      id,
+      awardStartupId
     );
 
     res.status(200).json({
@@ -850,24 +904,33 @@ const UpdateAward = async (req, res) => {
   }
 };
 const DeleteAward = async (req, res) => {
+  const requester = req.user;
   const id = req.params.id;
 
-  if (id) {
-    try {
-      const result = await DeleteAwardModal(id);
-      res.status(200).send(result);
-    } catch (err) {
-      sendErrorResponse(res, 500, "Internal Server Error", err);
+  if (!id) {
+    return res.status(400).json({ error: "params missing" });
+  }
+
+  try {
+    const awardStartupId = await GetAwardStartupIdModel(id);
+    if (!awardStartupId) {
+      return res.status(404).json({ error: "Award not found" });
     }
-  } else {
-    res.status(400).json({ error: "params missing" });
+    if (denyUnlessStartupAccess(res, requester, awardStartupId)) {
+      return;
+    }
+
+    const result = await DeleteAwardModal(id, awardStartupId);
+    res.status(200).send(result);
+  } catch (err) {
+    sendErrorResponse(res, 500, "Internal Server Error", err);
   }
 };
 
 
 const AddFounder = async (req, res) => {
   try {
-    // console.log('Founder payload:', req.body);
+    const requester = req.user;
     const {
       founder_name,
       founder_designation,
@@ -876,6 +939,13 @@ const AddFounder = async (req, res) => {
       startup_id,
     } = req.body;
 
+    const targetStartupId = await resolveStartupTarget(requester, { startup_id });
+    if (!targetStartupId) {
+      return res.status(403).json({
+        message: "You do not have permission to update this startup.",
+      });
+    }
+
     const founder = {
       founder_name,
       founder_designation,
@@ -883,34 +953,37 @@ const AddFounder = async (req, res) => {
       founder_number,
     };
 
-    const result = await AddFounderModel(startup_id, founder);
+    const result = await AddFounderModel(targetStartupId, founder);
 
     res
       .status(201)
       .json({ message: "Founder added successfully", data: result });
   } catch (err) {
-    // console.error('Error in AddFounder controller:', err);
     sendErrorResponse(res, 500, "Something went wrong", err);
   }
 };
 
 const FetchFounder = async (req, res) => {
+  const requester = req.user;
   const identifier = String(req.params.userId || "").trim();
 
   if (!identifier) {
     return res.status(400).json({ message: "Invalid founder identifier" });
   }
+  if (denyUnlessStartupAccess(res, requester, identifier)) {
+    return;
+  }
   try {
     const allFounderData = await FetchFounderModel(identifier);
     res.status(200).json(allFounderData);
   } catch (err) {
-    // console.error("Error in FetchFundingAmount:", err.stack || err);
     res.status(500).json({ message: "Internal server error" });
   }
 };
 
 const UpdateStartupFounder = async (req, res) => {
   try {
+    const requester = req.user;
     const {
       founder_name,
       founder_email,
@@ -919,8 +992,16 @@ const UpdateStartupFounder = async (req, res) => {
       founder_id,
     } = req.body;
 
-    if (!founder_email) {
-      return res.status(400).json({ error: "Missing founder email" });
+    if (!founder_id) {
+      return res.status(400).json({ error: "Missing founder id" });
+    }
+
+    const founderStartupId = await GetStartupIdByFounderIdModel(founder_id);
+    if (!founderStartupId) {
+      return res.status(404).json({ error: "Founder not found" });
+    }
+    if (denyUnlessStartupAccess(res, requester, founderStartupId)) {
+      return;
     }
 
     const founder = {
@@ -930,19 +1011,31 @@ const UpdateStartupFounder = async (req, res) => {
       founder_designation,
       founder_id,
     };
-    const result = await UpdateStartupFounderModel({ founder });
+    const result = await UpdateStartupFounderModel({
+      founder,
+      startup_id: founderStartupId,
+    });
     res.status(200).json({
       message: "Startup details updated successfully",
       result,
     });
   } catch (err) {
-    // console.error("Backend Error:", err); 
     res.status(500).json({ error: "Failed to update startup details" });
   }
 };
 const IPDetails = async (req, res) => {
   try {
+    const requester = req.user;
     const { patent, design, trademark, copyright, user_id } = req.body;
+
+    const targetStartupId = await resolveStartupTarget(requester, {
+      user_id,
+    });
+    if (!targetStartupId) {
+      return res.status(403).json({
+        message: "You do not have permission to update this startup.",
+      });
+    }
 
     const ip_details = {
       patent: patent || "",
@@ -951,7 +1044,10 @@ const IPDetails = async (req, res) => {
       copyright: copyright || "",
     };
 
-    const result = await IPDetailsModel({ ip_details, user_id });
+    const result = await IPDetailsModel({
+      ip_details,
+      user_id: targetStartupId,
+    });
     res.status(200).json({ message: "IP details added successfully", result });
   } catch (err) {
     console.error("Update failed:", err);
@@ -960,13 +1056,22 @@ const IPDetails = async (req, res) => {
 };
 const DeleteFounder = async (req, res) => {
   try {
+    const requester = req.user;
     const { founderid } = req.params;
 
     if (!founderid) {
-      return res.status(400).json({ message: "Founder email is required" });
+      return res.status(400).json({ message: "Founder id is required" });
     }
 
-    const result = await DeleteStartupFounderModel(founderid);
+    const founderStartupId = await GetStartupIdByFounderIdModel(founderid);
+    if (!founderStartupId) {
+      return res.status(404).json({ message: "Founder not found" });
+    }
+    if (denyUnlessStartupAccess(res, requester, founderStartupId)) {
+      return;
+    }
+
+    const result = await DeleteStartupFounderModel(founderid, founderStartupId);
 
     return res.status(200).json({ message: 'Founder deleted successfully', result });
   } catch (err) {
