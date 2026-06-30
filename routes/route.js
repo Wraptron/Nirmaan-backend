@@ -180,7 +180,7 @@ router.put("/edit-startupdata/personal-info", UpdateStartupDetails);
 router.post("/addstartup/award", upload.single("document"), AddAward);
 router.get("/fetchaward", FetchAwardData);
 router.delete("/delete-award/:id", DeleteAward);
-router.put("/updateaward", UpdateAward);
+router.put("/updateaward", upload.single("document"), UpdateAward);
 router.put("/ipdetails", IPDetails);
 router.delete("/delete-resume/:id", DeleteResume);
 router.put("/edit-startup/founder", UpdateStartupFounder);

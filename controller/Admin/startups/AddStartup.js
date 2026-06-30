@@ -797,9 +797,11 @@ const UpdateStartupMentorDetails = async (req, res) => {
 
 
 const AddAward = async (req, res) => {
-
   try {
-    const document_url = req.file ? req.file.path : null;
+    let document_url = null;
+    if (req.file) {
+      document_url = await uploadToS3(req.file);
+    }
     const {
       award_name,
       award_org,
@@ -844,10 +846,15 @@ const UpdateAward = async (req, res) => {
       award_org,
       prize_money,
       awarded_date,
-      document_url,
+      document_url: existingDocumentUrl,
       description,
       id,
     } = req.body;
+
+    let document_url = existingDocumentUrl || null;
+    if (req.file) {
+      document_url = await uploadToS3(req.file);
+    }
 
     const result = await UpdateAwardModel(
       award_name,
