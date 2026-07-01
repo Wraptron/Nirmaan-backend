@@ -564,7 +564,7 @@ const UpdateStartupPersonalInfoModel = async (data, requester) => {
                   basic,
                   '{startup_name}', to_jsonb($1::text), true
                 ),
-                '{profile_image}', to_jsonb($2::text), true
+                '{profile_image}', to_jsonb(COALESCE($2::text, basic->>'profile_image')), true
               ),
       startup_status = $3,
       official = jsonb_set(
@@ -595,10 +595,13 @@ const UpdateStartupPersonalInfoModel = async (data, requester) => {
   ];
 
   return new Promise((resolve, reject) => {
-    // -------- Role-based Access ----------
-    const isPrivileged = [2].includes(Number(requester?.role));
+    const role = Number(requester?.role);
+    const isAdmin = role === 2;
+    const isOwnStartup =
+      role === 5 &&
+      String(requester?.startup_id) === String(startup_id);
 
-    if (!isPrivileged) {
+    if (!isAdmin && !isOwnStartup) {
       return resolve({
         status: "Unauthorized",
         code: 401,

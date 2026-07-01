@@ -487,8 +487,7 @@ const UpdateStartupDetails = async (req, res) => {
     // ---------- STRUCTURE BASIC + OFFICIAL ----------
     const basic = {
       startup_name: startup_name || "",
-      profile_image: profile_image_url || null,
-      background_image: background_image_url || null,
+      profile_image: profile_image_url,
     };
 
     const official = {
