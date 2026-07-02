@@ -1,3 +1,4 @@
+const { sendErrorResponse } = require("../../utils/sendErrorResponse");
 const{
   AddFundingProjectModel,
    GetTotalUtilizedForProject,
@@ -154,7 +155,7 @@ const AddFunding = async (req, res) => {
         return res.status(400).send("Invalid funding type.");
       }
     } catch (err) {
-      return res.status(500).send(err.message || "Server error");
+      return sendErrorResponse(res, 500, "Server error", err);
     }
   }
 };
@@ -173,7 +174,7 @@ const updateFundingNotif = async (req, res) => {
     const result = await FundingNotificationModel();
     res.status(200).json(result);
   } catch (err) {
-    res.status(500).json(err);
+    sendErrorResponse(res, 500, "Internal Server Error", err);
   }
 };
 
@@ -182,7 +183,7 @@ const FetchFundingData = async (req, res) => {
     const result = await FetchFundingModel();
     res.status(200).json(result);
   } catch (error) {
-    res.send(error);
+    sendErrorResponse(res, 500, "Internal Server Error", error);
   }
 };
 
@@ -304,8 +305,7 @@ const UpdateFundingData = async (req, res) => {
       return res.status(400).send("Invalid funding type.");
     }
   } catch (err) {
-    // console.log(err);
-    return res.status(500).json({ error: err });
+    return sendErrorResponse(res, 500, "Internal Server Error", err);
   }
 };
 

@@ -1,5 +1,6 @@
-const { errorMonitor } = require('node-cache');
-const RaiseRequestModel = require('../../model/CustomerModel/RaiseRequestModel')
+const RaiseRequestModel = require('../../model/CustomerModel/RaiseRequestModel');
+const { sendErrorResponse } = require('../../utils/sendErrorResponse');
+
 const RaiseRequest = async(req, res) => {
     const{team_mail, request_type, description} = req.body;
     try
@@ -16,14 +17,13 @@ const RaiseRequest = async(req, res) => {
     }
     catch(err)
     {
-    
             if(err.code=="23505")
             {
                 res.status(409).send("Error");
             }
             else 
             {
-                res.status(201).send(err);
+                sendErrorResponse(res, 500, "Internal Server Error", err);
             }
     }
 }

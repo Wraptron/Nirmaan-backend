@@ -1,4 +1,5 @@
 const { MentorScheduleModel } = require("../../../model/AddMentorModel");
+const { sendErrorResponse } = require("../../../utils/sendErrorResponse");
 
 const ScheduleMentorMeeting = async(req, res) => {
     const {select_startup, select_mentor, schedule_date, schedule_time, description} = req.body;
@@ -16,7 +17,7 @@ const ScheduleMentorMeeting = async(req, res) => {
     }
     catch(err)
     {
-        res.status(500).json(err);
+        sendErrorResponse(res, 500, "Failed to schedule meeting", err);
     }
 }
 module.exports = {ScheduleMentorMeeting};

@@ -1,5 +1,7 @@
 const {AddMentorHourModel} = require("../../model/CustomerModel/AddMentorHourModel");
 const {FetchMentorData} = require('../../model/CustomerModel/FetchData');
+const { sendErrorResponse } = require('../../utils/sendErrorResponse');
+
 const AddMentorHour = async(req, res) => {
     const {team_mail, startup, mentor, date, time, description} = req.body;
     if(!team_mail || !startup || !mentor || !date || !time || !description)
@@ -11,7 +13,6 @@ const AddMentorHour = async(req, res) => {
         try 
         {
                 const result = await AddMentorHourModel(team_mail, startup, mentor, date, time, description);
-                //res.status(200).json({result});
                 if(result.code == "23505")
                 {
                     res.status(401).send("Request already raised");
@@ -29,7 +30,7 @@ const AddMentorHour = async(req, res) => {
                 } 
                 else 
                 {
-                    res.send(err);
+                    sendErrorResponse(res, 500, 'Internal Server Error', err);
                 }
         }   
     }
@@ -43,7 +44,7 @@ const FetchDataMentor = async(req, res) => {
         }
         catch(err)
         {
-            res.send(err);
+            sendErrorResponse(res, 500, 'Internal Server Error', err);
         }
 }
 module.exports = {AddMentorHour, FetchDataMentor}

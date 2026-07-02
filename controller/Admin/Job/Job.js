@@ -1,15 +1,16 @@
-// const JobModel = require("../../model/jobModel")
+const JobModel = require("../../../model/JobModel");
+const { sendErrorResponse } = require("../../../utils/sendErrorResponse");
+
 const job = async(req, res) => {
     try 
     {
         const {role, duration, jobtype, remuneration, requirements, description} = req.body;
-        // res.send(remuneration);
         const result = await JobModel(role, duration, jobtype, remuneration, requirements, description);
         res.send(result);
     }
     catch(err)
     {
-        res.status(400).send(err);
+        sendErrorResponse(res, 400, "Failed to post job", err);
     }
 }
 module.exports = job;
