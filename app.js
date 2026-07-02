@@ -6,6 +6,7 @@ const responseTime = require("response-time");
 const bodyParser = require("body-parser");
 const cors = require("cors");
 const multer = require("multer");
+const helmet = require("helmet");
 // Import all route controllers
 const LoginController = require("./routes/route");
 const WorkRequestController = require("./routes/route");
@@ -97,6 +98,15 @@ const fetchMentorSessionRequestsForStartupController = require("./routes/route")
 
 // Initialize Express app
 const app = express();
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+      },
+    },
+  })
+);
 
 // Create HTTP server and Socket.IO instance
 const server = http.createServer(app);

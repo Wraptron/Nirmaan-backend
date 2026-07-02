@@ -1,8 +1,14 @@
 const express = require("express");
+const {
+  authLimiter,
+  uploadLimiter,
+  apiLimiter,
+} = require("../helpers/ExpressRateLimit");
 
 // const data = require("../pg_db/convert_data.js");
 // 
 const router = express.Router();
+router.use(apiLimiter);
 const multer = require("multer");
 const storage = multer.memoryStorage(); // important for S3 upload
 const upload = multer({ storage });
@@ -131,6 +137,7 @@ router.get("/startup/my-meetings", Authenticate, listStartupMyMeetings);
 router.get("/startup/:id", Authenticate, IndividualStartups);
 router.put(
   "/edit-startupdata/personal-info", Authenticate,
+  uploadLimiter,
   upload.fields([
     { name: "profile_image", maxCount: 1 },
     { name: "background_image", maxCount: 1 },
@@ -160,27 +167,27 @@ router.get("/fetchevents", FetchEvents);
 router.get("/count-startupdata", FetchStartupDatainNumbers);
 router.get("/mentor/count", MentorCount);
 router.post("/mentor/request-speaker", RequestSpeaker);
-router.post("/login", LoginController);
-router.post("/auth/refresh", RefreshController);
-router.post("/auth/logout", LogoutController);
+router.post("/login", authLimiter, LoginController);
+router.post("/auth/refresh", authLimiter, RefreshController);
+router.post("/auth/logout", authLimiter, LogoutController);
 router.post("/send-message", AddMessage);
-router.post("/forgot-password", requestForgotPasswordOtp);
-router.post("/forgot-password/request-otp", requestForgotPasswordOtp);
-router.post("/forgot-password/resend-otp", resendForgotPasswordOtp);
-router.post("/forgot-password/verify-otp", verifyForgotPasswordOtp);
+router.post("/forgot-password", authLimiter, requestForgotPasswordOtp);
+router.post("/forgot-password/request-otp", authLimiter, requestForgotPasswordOtp);
+router.post("/forgot-password/resend-otp", authLimiter, resendForgotPasswordOtp);
+router.post("/forgot-password/verify-otp", authLimiter, verifyForgotPasswordOtp);
 router.post("/work-request", WorkController);
 router.get("/download/:filename", ResumeController);
 router.get("/getdata", GetAllResumeController);
-router.post("/resumeupload", ResumeUpload);
+router.post("/resumeupload", uploadLimiter, ResumeUpload);
 router.get("/get-mentor-details", FetchMentorData);
 router.get("/resume-fetch/:page_data/:page_number", Resumedata);
 router.post("/resume-send", ApprovalRequest);
 router.get("/profile/:mail", Profile);
-router.put("/edit-startupdata/personal-info", UpdateStartupDetails);
-router.post("/addstartup/award", upload.single("document"), AddAward);
+router.put("/edit-startupdata/personal-info", uploadLimiter, UpdateStartupDetails);
+router.post("/addstartup/award", uploadLimiter, upload.single("document"), AddAward);
 router.get("/fetchaward", FetchAwardData);
 router.delete("/delete-award/:id", DeleteAward);
-router.put("/updateaward", upload.single("document"), UpdateAward);
+router.put("/updateaward", uploadLimiter, upload.single("document"), UpdateAward);
 router.put("/ipdetails", IPDetails);
 router.delete("/delete-resume/:id", DeleteResume);
 router.put("/edit-startup/founder", UpdateStartupFounder);
@@ -189,10 +196,16 @@ router.get("/fetchfounder/:userId", FetchFounder);
 router.put("/deletefounder/:founderid", DeleteFounder);
 router.post(
   "/mentor/add",
+  uploadLimiter,
   upload.fields([{ name: "mentor_logo", maxCount: 1 }]),
   AddMentor
 );
-router.put("/mentor/update", upload.fields([{ name: "mentor_logo", maxCount: 1 }]), UpdateMentor);
+router.put(
+  "/mentor/update",
+  uploadLimiter,
+  upload.fields([{ name: "mentor_logo", maxCount: 1 }]),
+  UpdateMentor
+);
 router.post("/mentor/meeting", Authenticate, requireRole(2), Meetings);
 router.get("/mentor/fetch-meeting/:mentor_id", FetchMeetings);
 router.get("/mentor/fetch-mentor_meeting/",FetchMeetingsDetailsWithMentor);
@@ -215,10 +228,16 @@ router.put("/mentor/update-testimonial", UpdateTestimonial);
 router.delete("/mentor/delete-testimonial/:id", DeleteTestimonial);
 router.post(
   "/create-events",
+  uploadLimiter,
   upload.fields([{ name: "thumbnail", maxCount: 1 }]),
   CreateEvents,
 );
-router.put("/edit-event/", upload.fields([{ name: "thumbnail", maxCount: 1 }]), UpdateEvent);
+router.put(
+  "/edit-event/",
+  uploadLimiter,
+  upload.fields([{ name: "thumbnail", maxCount: 1 }]),
+  UpdateEvent
+);
 router.delete("/delete-event/:id", DeleteEvent);
 router.get("/profile-data/:mail", Authenticate, Profile);
 router.post("/add-sector", Settings);
@@ -242,7 +261,7 @@ router.patch("/notification/read", Authenticate, markNotificationsRead);
 router.delete("/delete-mentor/:id", DeleteMentorData);
 router.delete("/delete-startup/:id", DeleteStartupData);
 router.delete("/delete-connection", DeleteConnection);
-router.post("/ipdataupload", upload.single("file"), IPdataUpload);
+router.post("/ipdataupload", uploadLimiter, upload.single("file"), IPdataUpload);
 router.get("/st", TopStartupsSectorsCont);
-router.post("/teamdoc-upload", TeamDocuments);
+router.post("/teamdoc-upload", uploadLimiter, TeamDocuments);
 module.exports = router;
