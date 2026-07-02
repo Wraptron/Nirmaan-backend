@@ -1,5 +1,6 @@
 const { resolveContent } = require("nodemailer/lib/shared");
 const client = require("../utils/conn");
+const { withTransaction } = client;
 const { v4: uuidv4 } = require("uuid");
 const AddMentorModel = (
   mentor_name,
@@ -337,111 +338,85 @@ const DeleteMeetingModal = (id) => {
   });
 };
 
-const cancelScheduledMeetingByMentorModel = ({
+const cancelScheduledMeetingByMentorModel = async ({
   meetingId,
   mentorId,
   reason,
   cancelledBy,
 }) => {
-  return new Promise((resolve, reject) => {
-    client.query("BEGIN", async (beginErr) => {
-      if (beginErr) return reject(beginErr);
-      try {
-        const existingMeeting = await new Promise((res, rej) => {
-          client.query(
-            `SELECT *
-             FROM schedule_meetings
-             WHERE meet_id = $1
-               AND mentor_reference_id::text = $2::text
-               AND COALESCE(status, 'scheduled') = 'scheduled'
-             LIMIT 1`,
-            [meetingId, String(mentorId)],
-            (err, result) => (err ? rej(err) : res(result))
-          );
-        });
+  return withTransaction(async (tx) => {
+    const existingMeeting = await tx.query(
+      `SELECT *
+       FROM schedule_meetings
+       WHERE meet_id = $1
+         AND mentor_reference_id::text = $2::text
+         AND COALESCE(status, 'scheduled') = 'scheduled'
+       LIMIT 1`,
+      [meetingId, String(mentorId)]
+    );
 
-        if (!existingMeeting.rows.length) {
-          throw new Error("Meeting not found or already cancelled.");
-        }
+    if (!existingMeeting.rows.length) {
+      throw new Error("Meeting not found or already cancelled.");
+    }
 
-        const scheduledMeeting = existingMeeting.rows[0];
-        if (isMeetingCancellationTooLate(scheduledMeeting.date, scheduledMeeting.time)) {
-          throw new Error("CANCELLATION_TOO_LATE");
-        }
+    const scheduledMeeting = existingMeeting.rows[0];
+    if (isMeetingCancellationTooLate(scheduledMeeting.date, scheduledMeeting.time)) {
+      throw new Error("CANCELLATION_TOO_LATE");
+    }
 
-        const meetingResult = await new Promise((res, rej) => {
-          client.query(
-            `UPDATE schedule_meetings
-             SET status = 'cancelled',
-                 cancellation_reason = $3,
-                 cancelled_at = NOW(),
-                 cancelled_by = $4
-             WHERE meet_id = $1
-               AND mentor_reference_id::text = $2::text
-               AND COALESCE(status, 'scheduled') = 'scheduled'
-             RETURNING *`,
-            [meetingId, String(mentorId), reason, cancelledBy || null],
-            (err, result) => (err ? rej(err) : res(result))
-          );
-        });
+    const meetingResult = await tx.query(
+      `UPDATE schedule_meetings
+       SET status = 'cancelled',
+           cancellation_reason = $3,
+           cancelled_at = NOW(),
+           cancelled_by = $4
+       WHERE meet_id = $1
+         AND mentor_reference_id::text = $2::text
+         AND COALESCE(status, 'scheduled') = 'scheduled'
+       RETURNING *`,
+      [meetingId, String(mentorId), reason, cancelledBy || null]
+    );
 
-        if (!meetingResult.rows.length) {
-          throw new Error("Meeting not found or already cancelled.");
-        }
+    if (!meetingResult.rows.length) {
+      throw new Error("Meeting not found or already cancelled.");
+    }
 
-        const meeting = meetingResult.rows[0];
-        let sessionRow = null;
+    const meeting = meetingResult.rows[0];
+    let sessionRow = null;
 
-        if (meeting.session_request_id) {
-          const byId = await new Promise((res, rej) => {
-            client.query(
-              `UPDATE mentor_session_requests
-               SET status = 'cancelled'
-               WHERE id = $1
-                 AND status = 'accepted'
-               RETURNING *`,
-              [meeting.session_request_id],
-              (err, result) => (err ? rej(err) : res(result))
-            );
-          });
-          sessionRow = byId.rows[0] || null;
-        }
+    if (meeting.session_request_id) {
+      const byId = await tx.query(
+        `UPDATE mentor_session_requests
+         SET status = 'cancelled'
+         WHERE id = $1
+           AND status = 'accepted'
+         RETURNING *`,
+        [meeting.session_request_id]
+      );
+      sessionRow = byId.rows[0] || null;
+    }
 
-        if (!sessionRow) {
-          const fallback = await new Promise((res, rej) => {
-            client.query(
-              `UPDATE mentor_session_requests
-               SET status = 'cancelled'
-               WHERE mentor_id::text = $1::text
-                 AND startup_id::text = $2::text
-                 AND requested_date = $3
-                 AND LEFT(requested_time::text, 5) = LEFT($4::text, 5)
-                 AND status = 'accepted'
-               RETURNING *`,
-              [
-                String(mentorId),
-                meeting.startup_id != null ? String(meeting.startup_id) : "",
-                meeting.date,
-                meeting.time,
-              ],
-              (err, result) => (err ? rej(err) : res(result))
-            );
-          });
-          sessionRow = fallback.rows[0] || null;
-        }
+    if (!sessionRow) {
+      const fallback = await tx.query(
+        `UPDATE mentor_session_requests
+         SET status = 'cancelled'
+         WHERE mentor_id::text = $1::text
+           AND startup_id::text = $2::text
+           AND requested_date = $3
+           AND LEFT(requested_time::text, 5) = LEFT($4::text, 5)
+           AND status = 'accepted'
+         RETURNING *`,
+        [
+          String(mentorId),
+          meeting.startup_id != null ? String(meeting.startup_id) : "",
+          meeting.date,
+          meeting.time,
+        ]
+      );
+      sessionRow = fallback.rows[0] || null;
+    }
 
-        await new Promise((res, rej) => {
-          client.query("COMMIT", (err) => (err ? rej(err) : res()));
-        });
-
-        resolve({ meeting, sessionRow });
-      } catch (error) {
-        await new Promise((res) => {
-          client.query("ROLLBACK", () => res());
-        });
-        reject(error);
-      }
-    });
+    return { meeting, sessionRow };
   });
 };
 

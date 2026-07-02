@@ -1,4 +1,5 @@
 const client = require("../utils/conn");
+const { withTransaction } = client;
 var md5 = require("md5");
 const bcrypt = require("bcrypt");
 
@@ -371,31 +372,25 @@ const TopStartupsSectors = (id) => {
   });
 };
 const StartupDeleteData = async (user_id) => {
-  try {
-    await client.query('BEGIN'); // Start transaction
-
-    // Soft delete (Flag)
-    await client.query(
+  return withTransaction(async (tx) => {
+    await tx.query(
       `UPDATE test_startup 
        SET isdeleted = TRUE
        WHERE user_id = $1;`,
       [user_id]
     );
 
-    // Delete related records from user_data
-    await client.query(
+    await tx.query(
       `DELETE FROM user_data 
-       WHERE startup_id = $1;`,  
+       WHERE startup_id = $1;`,
       [user_id]
     );
 
-    await client.query('COMMIT'); // Apply all changes
-    return { success: true, message: 'Startup and related user data deleted successfully.' };
-
-  } catch (err) {
-    await client.query('ROLLBACK'); // Undo changes if error
-    throw err;
-  }
+    return {
+      success: true,
+      message: "Startup and related user data deleted successfully.",
+    };
+  });
 };
 
 const UpdateStartupAboutModel = async (data) => {

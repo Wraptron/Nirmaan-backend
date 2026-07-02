@@ -731,7 +731,6 @@ const UpdateStartupAbout = async (req, res) => {
       description,
       startup_status,
     });
-    console.log(req.body);
     res.status(200).json({
       message: "Startup details updated successfully",
       result,
