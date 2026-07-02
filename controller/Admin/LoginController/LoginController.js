@@ -3,7 +3,6 @@ const {
     setAccessTokenCookie,
     setRefreshTokenCookie,
 } = require('../../../utils/authCookies');
-const { sendErrorResponse } = require('../../../utils/sendErrorResponse');
 
 const LoginController = async(req, res) => {
     const{user_mail, user_password} = req.body;
@@ -32,7 +31,8 @@ const LoginController = async(req, res) => {
         } 
         catch (err)
         {
-            sendErrorResponse(res, 500, 'Internal Server Error', err);
+            
+            res.status(500).json({error: 'Internal Server Error', err: err});
         }
     }
     else 

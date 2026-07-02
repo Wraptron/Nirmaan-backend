@@ -74,7 +74,8 @@ async function start() {
       mapped.startup_assoc,
       mapped.contact_num,
       mapped.email_address,
-      mapped.linkedin_id
+      mapped.linkedin_id,
+      null
     );
 
 

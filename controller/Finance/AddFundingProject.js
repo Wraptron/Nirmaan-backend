@@ -5,7 +5,6 @@ const {
   UpdateFundingProjectDataModel,
   GetTotalUtilizedForProject,
 } = require("../../model/Finance/AddFundingProjectModel");
-const { sendErrorResponse } = require("../../utils/sendErrorResponse");
 
 const AddFundingProject = async (req, res) => {
   const { project_name, funding_type, amount, date } = req.body;
@@ -82,7 +81,7 @@ const FetchFundingProjectData = async (req, res) => {
     const result = await FetchFundingProjectsModel();
     res.status(200).json(result);
   } catch (error) {
-    sendErrorResponse(res, 500, "Internal Server Error", error);
+    res.send(error);
   }
 };
 
@@ -99,7 +98,7 @@ const UpdateFundingProjectData = async (req, res) => {
     );
     res.status(200).json({ message: "Funding Updated successfully", result });
   } catch (err) {
-    sendErrorResponse(res, 500, "Something went wrong", err);
+    res.status(500).json({ error: err.message || "Something went wrong" });
   }
 };
 

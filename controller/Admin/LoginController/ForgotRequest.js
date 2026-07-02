@@ -3,7 +3,6 @@ const {
   resendOtp,
   verifyOtpAndResetPassword,
 } = require("../../../model/ForgotPasswordOtpModel");
-const { sendErrorResponse } = require("../../../utils/sendErrorResponse");
 
 const requestForgotPasswordOtp = async (req, res) => {
   try {
@@ -11,10 +10,8 @@ const requestForgotPasswordOtp = async (req, res) => {
     const result = await requestOtp(email);
     res.status(result.success ? 200 : 400).json(result);
   } catch (err) {
-    sendErrorResponse(res, 500, "Failed to send OTP.", err, {
-      success: false,
-      message: "Failed to send OTP.",
-    });
+    console.log(err);
+    res.status(500).json({ success: false, message: "Failed to send OTP.", error: err.message });
   }
 };
 
@@ -24,10 +21,7 @@ const resendForgotPasswordOtp = async (req, res) => {
     const result = await resendOtp(email);
     res.status(result.success ? 200 : 400).json(result);
   } catch (err) {
-    sendErrorResponse(res, 500, "Failed to resend OTP.", err, {
-      success: false,
-      message: "Failed to resend OTP.",
-    });
+    res.status(500).json({ success: false, message: "Failed to resend OTP.", error: err.message });
   }
 };
 
@@ -37,10 +31,7 @@ const verifyForgotPasswordOtp = async (req, res) => {
     const result = await verifyOtpAndResetPassword(email, otp, new_password);
     res.status(result.success ? 200 : 400).json(result);
   } catch (err) {
-    sendErrorResponse(res, 500, "Failed to reset password.", err, {
-      success: false,
-      message: "Failed to reset password.",
-    });
+    res.status(500).json({ success: false, message: "Failed to reset password.", error: err.message });
   }
 };
 

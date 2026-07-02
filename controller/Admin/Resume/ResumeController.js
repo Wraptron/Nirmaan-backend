@@ -1,5 +1,4 @@
 const AwsModel = require('../../../model/AwsModel');
-const { sendErrorResponse } = require('../../../utils/sendErrorResponse');
 const ResumeController= async(req, res) => {
     const {filename} = req.params;
     if (filename) {
@@ -7,7 +6,7 @@ const ResumeController= async(req, res) => {
             const result = await AwsModel(filename);
             res.status(200).send(result.Body);  // Sending the body of the S3 response
         } catch (err) {
-            sendErrorResponse(res, 400, 'Failed to fetch file', err);
+            res.status(400).json({ error: err.message });
         }
     } else {
         res.status(400).json({ error: "Filename not provided" });

@@ -1,21 +1,23 @@
-const { Pool } = require("pg");
+const { Client } = require("pg");
 const dotenv = require("dotenv");
 dotenv.config();
 
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  max: Number(process.env.PG_POOL_MAX) || 20,
-  idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 5000,
+const connectionString = process.env.DATABASE_URL;
+const client = new Client({
+  connectionString,
 });
 
-pool.on("error", (err) => {
-  console.error("PostgreSQL pool error:", err);
+client.on("error", (err) => {
+  console.error("PostgreSQL client error:", err);
 });
 
-pool
-  .query("SELECT 1")
-  .then(() => console.log("Connected successfully!!"))
-  .catch((err) => console.error("Connection error:", err));
+(async () => {
+  try {
+    await client.connect();
+    console.log("Connected successfully!!");
+  } catch (err) {
+    console.error("Connection error:", err);
+  }
+})();
 
-module.exports = pool;
+module.exports = client;

@@ -1,7 +1,6 @@
 node_modules
 *.rest
 *.lock
-*.sql
 .env.example
 .env
 ./utils/.env

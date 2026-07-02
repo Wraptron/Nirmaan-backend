@@ -1,17 +1,17 @@
 const { ListAdminSingleFile } = require('../../../AWS/ListFiles');
 const ProfileModel = require('../../../model/ProfileModel');
-const { sendErrorResponse } = require('../../../utils/sendErrorResponse');
-
 const Profile = async(req, res) => {
         try
         {
             const{mail} = req.params;
+            //res.send(mail);
             const result = await ProfileModel(mail);
             res.send("d");
+            //console.log()
         } 
         catch(err)
         {
-            sendErrorResponse(res, 500, 'Internal Server Error', err);
+            res.send(err);
         }   
 }
 
@@ -20,6 +20,7 @@ const ProfilePhoto = async(req, res) => {
     {
             const {mail} = req.query
             const result = await ProfileModel(mail);
+            //res.send(result);
             if(result.result.rows[0].user_role==2 && result.result.rows[0].user_department=='MANAGEMENT')
             {
                 let key = result.result.rows[0].profile_photo;
@@ -33,6 +34,7 @@ const ProfilePhoto = async(req, res) => {
                 let dept = 'Office'
                 const response = await ListAdminSingleFile(key, dept)
                 res.status(200).json({Key: response.Key});
+                //res.send(result.result);
             }
             else if(result.result.rows[0].user_role==5 && result.result.rows[0].user_department=='student')
             {
@@ -48,7 +50,7 @@ const ProfilePhoto = async(req, res) => {
     }
     catch(err)
     {
-        sendErrorResponse(res, 500, 'Internal Server Error', err);
+        res.send(err.message)
     }
 }
 module.exports = {Profile, ProfilePhoto};

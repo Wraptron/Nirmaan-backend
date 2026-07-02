@@ -17,7 +17,6 @@ const {
   cancelScheduledMeetingByMentorModel,
 } = require("../../../model/AddMentorModel");
 const { uploadToS3 } = require("../../../utils/s3Upload");
-const { sendErrorResponse } = require("../../../utils/sendErrorResponse");
 
 const UpdateMentor = async (req, res) => {
   try {
@@ -89,7 +88,7 @@ const FetchMentorData = async (req, res) => {
     const result = await FetchMentorDataModel();
     res.status(200).json(result);
   } catch (error) {
-    sendErrorResponse(res, 500, "Internal Server Error", error);
+    res.send(error);
   }
 };
 const MentorCount = async (req, res) => {
@@ -97,7 +96,7 @@ const MentorCount = async (req, res) => {
     const result = await MentorCountData();
     res.status(200).json(result);
   } catch (err) {
-    sendErrorResponse(res, 500, "Internal Server Error", err);
+    res.send(err);
   }
 };
 const DeleteMentorData = async (req, res) => {
@@ -107,10 +106,10 @@ const DeleteMentorData = async (req, res) => {
       const result = await MentorDeleteData(id);
       res.status(200).json(result);
     } catch (err) {
-      sendErrorResponse(res, 500, "Internal Server Error", err);
+      res.send(err);
     }
   } else {
-    res.status(400).json({ error: "Params missing" });
+    res.send("Params missing");
   }
 };
 
@@ -170,7 +169,8 @@ const Meetings = async (req, res) => {
       result: meetingResult,
     });
   } catch (err) {
-    sendErrorResponse(res, 500, "Failed to schedule meeting", err);
+    console.error("Error in Meetings", err);
+    res.status(500).send(err);
   }
 };
 
@@ -180,7 +180,7 @@ const FetchMeetings = async (req, res) => {
     const result = await FetchMeetingsModel(mentor_id);
     res.status(200).send(result);
   } catch (err) {
-    sendErrorResponse(res, 500, "Internal Server Error", err);
+    res.status(500).send(err);
   }
 };
 
@@ -189,7 +189,7 @@ const FetchMeetingsDetailsWithMentor = async (req, res) => {
     const result = await FetchMeetingsWithMentorDetailsModel();
     res.status(200).json(result);
   } catch (err) {
-    sendErrorResponse(res, 500, "Internal Server Error", err);
+    res.send(err);
   }
 };
 
@@ -201,10 +201,10 @@ const DeleteMeetings = async (req, res) => {
       const result = await DeleteMeetingModal(id);
       res.status(200).send(result);
     } catch (err) {
-      sendErrorResponse(res, 500, "Internal Server Error", err);
+      res.status(500).send(err);
     }
   } else {
-    res.status(400).json({ error: "params missing" });
+    res.status(400).send("params missing");
   }
 };
 
@@ -279,7 +279,7 @@ const FetchTestimonial = async (req, res) => {
     const result = await FetchTestimonialModel();
     res.status(200).json(result);
   } catch (error) {
-    sendErrorResponse(res, 500, "Internal Server Error", error);
+    res.send(error);
   }
 };
 
@@ -305,10 +305,10 @@ const DeleteTestimonial = async (req, res) => {
       const result = await DeleteTestimonialModel(id);
       res.status(200).send(result);
     } catch (err) {
-      sendErrorResponse(res, 500, "Internal Server Error", err);
+      res.status(500).send(err);
     }
   } else {
-    res.status(400).json({ error: "id params missing" });
+    res.status(400).send("id params missing");
   }
 };
 
@@ -341,7 +341,7 @@ const UpdateFeedback = async (req, res) => {
     );
     res.status(200).json({ message: "Feedback Updated successfully", result });
   } catch (err) {
-    sendErrorResponse(res, 500, "Something went wrong", err);
+    res.status(500).json({ error: err.message || "Something went wrong" });
   }
 };
 const FetchMeetingFeedback = async (req, res) => {
@@ -351,7 +351,7 @@ const FetchMeetingFeedback = async (req, res) => {
     const result = await FetchMeetingFeedbackModel(mentor_id, startup_id);
     res.status(200).json(result.rows);
   } catch (err) {
-    sendErrorResponse(res, 500, "Internal Server Error", err);
+    res.status(500).send(err);
   }
 };
 

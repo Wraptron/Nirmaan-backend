@@ -20,8 +20,6 @@ const {
   CheckUserByEmail,
   IPDetailsModel,
   DeleteStartupFounderModel,
-  GetAwardStartupIdModel,
-  GetStartupIdByFounderIdModel,
 } = require("../../../model/StartupModel");
 const EmailValid = require("../../../validation/EmailValid");
 const PhoneNumberValid = require("../../../validation/PhoneNumberValid");
@@ -30,11 +28,6 @@ const sendStartupCredentials = require("../../../components/SendStartupCredentia
 const { v4: uuidv4 } = require("uuid");
 const md5 = require("md5");
 const { uploadToS3 } = require("../../../utils/s3Upload");
-const { sendErrorResponse } = require("../../../utils/sendErrorResponse");
-const {
-  denyUnlessStartupAccess,
-  resolveStartupTarget,
-} = require("../../../utils/startupAccess");
 
 // const AddStartup = async(req, res) => {
 //     const {basic, official, founder, description} = req.body;
@@ -191,7 +184,11 @@ if (existingUser) {
       result: result,
     });
   } catch (err) {
-    sendErrorResponse(res, 500, "Server Error: Something went wrong. Please try again.", err);
+    // console.error("Error in AddStartup:", err);
+    res.status(500).json({
+      error: err.message || err,
+      details: "Server Error: Something went wrong. Please try again.",
+    });
   }
 };
 
@@ -291,7 +288,9 @@ const SyncStartupFromIncubation = async (req, res) => {
       result,
     });
   } catch (err) {
-    return sendErrorResponse(res, 500, "Failed to sync startup", err);
+    return res.status(500).json({
+      error: err.message || "Failed to sync startup",
+    });
   }
 };
 
@@ -327,7 +326,7 @@ const FetchStartupData = async (req, res) => {
     const result = await FetchStartupsModel();
     res.status(200).json(result);
   } catch (err) {
-    sendErrorResponse(res, 500, "Internal Server Error", err);
+    res.status(500).json(err);
   }
 };
 
@@ -340,13 +339,26 @@ const UpdateStatus = async (req, res) => {
     );
     res.status(200).json(result);
   } catch (err) {
-    sendErrorResponse(res, 500, "Internal Server Error", err);
+    res.status(500).json(err);
   }
 };
 
 const IndividualStartups = async (req, res) => {
   const { id } = req.params;
   try {
+    const requester = req.user;
+
+    // Role 2 (admin) can access any startup profile.
+    // Role 5 (startup user) can only access their own startup profile.
+    if (
+      requester?.role === 5 &&
+      String(requester.startup_id) !== String(id)
+    ) {
+      return res.status(403).json({
+        message: "Forbidden: You can only access your own startup profile",
+      });
+    }
+
     const result = await IndividualStarupModel(id);
     const IndStartupData = {
       generalData: result.GeneralData.rows,
@@ -354,7 +366,7 @@ const IndividualStartups = async (req, res) => {
     };
     res.status(200).json(IndStartupData);
   } catch (err) {
-    sendErrorResponse(res, 500, "Internal Server Error", err);
+    res.status(500).json(err.message);
   }
 };
 
@@ -364,7 +376,7 @@ const TopStartupsSectorsCont = async (req, res) => {
     const result = await TopStartupsSectors(id);
     res.send(result);
   } catch (err) {
-    sendErrorResponse(res, 500, "Internal Server Error", err);
+    res.status(500).json(err);
   }
 };
 
@@ -372,7 +384,7 @@ const TeamDocuments = async (req, res) => {
   try {
     res.send("Hello");
   } catch (err) {
-    sendErrorResponse(res, 500, "Internal Server Error", err);
+    res.status(500).json(err);
   }
 };
 
@@ -385,10 +397,11 @@ const DeleteStartupData = async (req, res) => {
       const result = await StartupDeleteData(id);
       res.status(200).json(result);
     } catch (err) {
-      sendErrorResponse(res, 500, "Failed to delete startup", err);
+      // console.error("Delete error:", err);
+      res.status(500).send(err);
     }
   } else {
-    res.status(400).json({ error: "Params missing" });
+    res.status(400).send("Params missing");
   }
 };
 
@@ -434,7 +447,7 @@ const FetchStartupProfile = async (req, res) => {
 
     res.status(200).json(profile);
   } catch (err) {
-    sendErrorResponse(res, 500, "Internal Server Error", err);
+    res.status(500).json({ error: err.message });
   }
 };
 
@@ -450,18 +463,8 @@ const UpdateStartupDetails = async (req, res) => {
       email_address,
       linkedin,
       website_link,
-      startup_id: clientStartupId,
+      startup_id,
     } = req.body;
-
-    const startup_id = await resolveStartupTarget(requester, {
-      startup_id: clientStartupId,
-      email_address,
-    });
-    if (!startup_id) {
-      return res.status(403).json({
-        message: "You do not have permission to update this startup.",
-      });
-    }
 
     // ---------- IMAGE UPLOADS ----------
     let profile_image_url = null;
@@ -499,9 +502,9 @@ const UpdateStartupDetails = async (req, res) => {
       { basic, official, startup_status, startup_id },
       requester
     );
-    // Handle forbidden
-    if (result?.code === 403) {
-      return res.status(403).json(result);
+    // Handle unauthorized
+    if (result?.code === 401) {
+      return res.status(401).json(result);
     }
 
     return res.status(200).json({
@@ -701,7 +704,6 @@ const UpdateStartupDetails = async (req, res) => {
 
 const UpdateStartupAbout = async (req, res) => {
   try {
-    const requester = req.user;
     const {
       sector,
       program,
@@ -710,19 +712,10 @@ const UpdateStartupAbout = async (req, res) => {
       about,
       startup_status,
       email_address,
-      startup_id,
     } = req.body;
-
-    const targetStartupId = await resolveStartupTarget(requester, {
-      startup_id,
-      email_address,
-    });
-    if (!targetStartupId) {
-      return res.status(403).json({
-        message: "You do not have permission to update this startup.",
-      });
+    if (!email_address) {
+      return res.status(400).json({ error: "Missing email_address" });
     }
-
     const basic = {
       startup_type,
       startup_domain,
@@ -734,10 +727,11 @@ const UpdateStartupAbout = async (req, res) => {
     };
     const result = await UpdateStartupAboutModel({
       basic,
+      email_address,
       description,
       startup_status,
-      startup_id: targetStartupId,
     });
+    console.log(req.body);
     res.status(200).json({
       message: "Startup details updated successfully",
       result,
@@ -748,7 +742,6 @@ const UpdateStartupAbout = async (req, res) => {
 };
 const UpdateStartupMentorDetails = async (req, res) => {
   try {
-    const requester = req.user;
     const {
       mentors,
       role_of_faculty,
@@ -763,17 +756,12 @@ const UpdateStartupMentorDetails = async (req, res) => {
       dpiit_number,
       pia,
       email_address,
-      startup_id,
     } = req.body;
 
-    const targetStartupId = await resolveStartupTarget(requester, {
-      startup_id,
-      email_address,
-    });
-    if (!targetStartupId) {
-      return res.status(403).json({
-        message: "You do not have permission to update this startup.",
-      });
+    if (!email_address || email_address.trim() === "") {
+      return res
+        .status(400)
+        .json({ error: "Email address is required for update" });
     }
 
     const basic = {
@@ -793,13 +781,10 @@ const UpdateStartupMentorDetails = async (req, res) => {
       mentor_associated: mentors || "",
       official_registered: officially_registered || "",
       cin_registration_number: cin_registration_number || "",
+      official_email_address: email_address,
     };
 
-    const result = await UpdateStartupMentorDetailsModel({
-      basic,
-      official,
-      startup_id: targetStartupId,
-    });
+    const result = await UpdateStartupMentorDetailsModel({ basic, official });
     res
       .status(200)
       .json({ message: "Startup details updated successfully", result });
@@ -826,16 +811,6 @@ const AddAward = async (req, res) => {
       startup_id,
     } = req.body;
 
-    const targetStartupId = await resolveStartupTarget(requester, {
-      startup_id,
-      email_address: official_email_address,
-    });
-    if (!targetStartupId) {
-      return res.status(403).json({
-        message: "You do not have permission to update this startup.",
-      });
-    }
-
     const result = await AddAwardModel(
       official_email_address,
       award_name,
@@ -844,13 +819,13 @@ const AddAward = async (req, res) => {
       awarded_date,
       document_url,
       description,
-      targetStartupId
+      startup_id
     );
 
     res.status(201).json({ message: "Award added successfully", result });
   } catch (err) {
     console.error("Backend Error (addAward):", err);
-    sendErrorResponse(res, 500, "Something went wrong", err);
+    res.status(500).json({ error: err.message || "Something went wrong" });
   }
 };
 
@@ -859,13 +834,12 @@ const FetchAwardData = async (req, res) => {
     const result = await FetchAwardModel();
     res.status(200).json(result);
   } catch (error) {
-    sendErrorResponse(res, 500, "Internal Server Error", error);
+    res.send(error);
   }
 };
 
 const UpdateAward = async (req, res) => {
   try {
-    const requester = req.user;
     const {
       award_name,
       award_org,
@@ -888,8 +862,7 @@ const UpdateAward = async (req, res) => {
       awarded_date,
       document_url,
       description,
-      id,
-      awardStartupId
+      id
     );
 
     res.status(200).json({
@@ -902,33 +875,24 @@ const UpdateAward = async (req, res) => {
   }
 };
 const DeleteAward = async (req, res) => {
-  const requester = req.user;
   const id = req.params.id;
 
-  if (!id) {
-    return res.status(400).json({ error: "params missing" });
-  }
-
-  try {
-    const awardStartupId = await GetAwardStartupIdModel(id);
-    if (!awardStartupId) {
-      return res.status(404).json({ error: "Award not found" });
+  if (id) {
+    try {
+      const result = await DeleteAwardModal(id);
+      res.status(200).send(result);
+    } catch (err) {
+      res.status(500).send(err);
     }
-    if (denyUnlessStartupAccess(res, requester, awardStartupId)) {
-      return;
-    }
-
-    const result = await DeleteAwardModal(id, awardStartupId);
-    res.status(200).send(result);
-  } catch (err) {
-    sendErrorResponse(res, 500, "Internal Server Error", err);
+  } else {
+    res.status(400).send("params missing");
   }
 };
 
 
 const AddFounder = async (req, res) => {
   try {
-    const requester = req.user;
+    // console.log('Founder payload:', req.body);
     const {
       founder_name,
       founder_designation,
@@ -937,13 +901,6 @@ const AddFounder = async (req, res) => {
       startup_id,
     } = req.body;
 
-    const targetStartupId = await resolveStartupTarget(requester, { startup_id });
-    if (!targetStartupId) {
-      return res.status(403).json({
-        message: "You do not have permission to update this startup.",
-      });
-    }
-
     const founder = {
       founder_name,
       founder_designation,
@@ -951,37 +908,34 @@ const AddFounder = async (req, res) => {
       founder_number,
     };
 
-    const result = await AddFounderModel(targetStartupId, founder);
+    const result = await AddFounderModel(startup_id, founder);
 
     res
       .status(201)
       .json({ message: "Founder added successfully", data: result });
   } catch (err) {
-    sendErrorResponse(res, 500, "Something went wrong", err);
+    // console.error('Error in AddFounder controller:', err);
+    res.status(500).json({ error: err.message || "Something went wrong" });
   }
 };
 
 const FetchFounder = async (req, res) => {
-  const requester = req.user;
   const identifier = String(req.params.userId || "").trim();
 
   if (!identifier) {
     return res.status(400).json({ message: "Invalid founder identifier" });
   }
-  if (denyUnlessStartupAccess(res, requester, identifier)) {
-    return;
-  }
   try {
     const allFounderData = await FetchFounderModel(identifier);
     res.status(200).json(allFounderData);
   } catch (err) {
+    // console.error("Error in FetchFundingAmount:", err.stack || err);
     res.status(500).json({ message: "Internal server error" });
   }
 };
 
 const UpdateStartupFounder = async (req, res) => {
   try {
-    const requester = req.user;
     const {
       founder_name,
       founder_email,
@@ -990,16 +944,8 @@ const UpdateStartupFounder = async (req, res) => {
       founder_id,
     } = req.body;
 
-    if (!founder_id) {
-      return res.status(400).json({ error: "Missing founder id" });
-    }
-
-    const founderStartupId = await GetStartupIdByFounderIdModel(founder_id);
-    if (!founderStartupId) {
-      return res.status(404).json({ error: "Founder not found" });
-    }
-    if (denyUnlessStartupAccess(res, requester, founderStartupId)) {
-      return;
+    if (!founder_email) {
+      return res.status(400).json({ error: "Missing founder email" });
     }
 
     const founder = {
@@ -1009,31 +955,19 @@ const UpdateStartupFounder = async (req, res) => {
       founder_designation,
       founder_id,
     };
-    const result = await UpdateStartupFounderModel({
-      founder,
-      startup_id: founderStartupId,
-    });
+    const result = await UpdateStartupFounderModel({ founder });
     res.status(200).json({
       message: "Startup details updated successfully",
       result,
     });
   } catch (err) {
+    // console.error("Backend Error:", err); 
     res.status(500).json({ error: "Failed to update startup details" });
   }
 };
 const IPDetails = async (req, res) => {
   try {
-    const requester = req.user;
     const { patent, design, trademark, copyright, user_id } = req.body;
-
-    const targetStartupId = await resolveStartupTarget(requester, {
-      user_id,
-    });
-    if (!targetStartupId) {
-      return res.status(403).json({
-        message: "You do not have permission to update this startup.",
-      });
-    }
 
     const ip_details = {
       patent: patent || "",
@@ -1042,10 +976,7 @@ const IPDetails = async (req, res) => {
       copyright: copyright || "",
     };
 
-    const result = await IPDetailsModel({
-      ip_details,
-      user_id: targetStartupId,
-    });
+    const result = await IPDetailsModel({ ip_details, user_id });
     res.status(200).json({ message: "IP details added successfully", result });
   } catch (err) {
     console.error("Update failed:", err);
@@ -1054,26 +985,17 @@ const IPDetails = async (req, res) => {
 };
 const DeleteFounder = async (req, res) => {
   try {
-    const requester = req.user;
     const { founderid } = req.params;
 
     if (!founderid) {
-      return res.status(400).json({ message: "Founder id is required" });
+      return res.status(400).json({ message: "Founder email is required" });
     }
 
-    const founderStartupId = await GetStartupIdByFounderIdModel(founderid);
-    if (!founderStartupId) {
-      return res.status(404).json({ message: "Founder not found" });
-    }
-    if (denyUnlessStartupAccess(res, requester, founderStartupId)) {
-      return;
-    }
-
-    const result = await DeleteStartupFounderModel(founderid, founderStartupId);
+    const result = await DeleteStartupFounderModel(founderid);
 
     return res.status(200).json({ message: 'Founder deleted successfully', result });
   } catch (err) {
-    return sendErrorResponse(res, 500, "Internal server error", err);
+    return res.status(500).json({ message: 'Internal server error', error: err.message });
   }
 };
 

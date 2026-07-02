@@ -265,7 +265,7 @@ const markNotificationsReadForUser = (user) => {
   });
 };
 
-const scheduleMeetingAndAcceptSession = async (meetingParams, sessionRequestId) => {
+const scheduleMeetingAndAcceptSession = (meetingParams, sessionRequestId) => {
   const {
     mentor_reference_id,
     startup_name,
@@ -281,56 +281,68 @@ const scheduleMeetingAndAcceptSession = async (meetingParams, sessionRequestId) 
     startup_id,
   } = meetingParams;
 
-  const db = await client.connect();
-  try {
-    await db.query("BEGIN");
+  return new Promise((resolve, reject) => {
+    client.query("BEGIN", async (beginErr) => {
+      if (beginErr) return reject(beginErr);
+      try {
+        const meetingResult = await new Promise((res, rej) => {
+          client.query(
+            `INSERT INTO schedule_meetings (
+              mentor_reference_id, start_up_name, founder_name, meeting_mode,
+              meeting_link, meeting_location, participants, date, time,
+              meeting_duration, meeting_agenda, startup_id
+            ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)
+            RETURNING meet_id`,
+            [
+              mentor_reference_id,
+              startup_name,
+              founder_name,
+              meeting_mode,
+              meeting_link,
+              meeting_location,
+              participants,
+              date,
+              time,
+              meeting_duration,
+              meeting_agenda,
+              startup_id,
+            ],
+            (err, result) => (err ? rej(err) : res(result))
+          );
+        });
 
-    const meetingResult = await db.query(
-      `INSERT INTO schedule_meetings (
-        mentor_reference_id, start_up_name, founder_name, meeting_mode,
-        meeting_link, meeting_location, participants, date, time,
-        meeting_duration, meeting_agenda, startup_id
-      ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)
-      RETURNING meet_id`,
-      [
-        mentor_reference_id,
-        startup_name,
-        founder_name,
-        meeting_mode,
-        meeting_link,
-        meeting_location,
-        participants,
-        date,
-        time,
-        meeting_duration,
-        meeting_agenda,
-        startup_id,
-      ]
-    );
+        let sessionRow = null;
+        if (sessionRequestId) {
+          const upd = await new Promise((res, rej) => {
+            client.query(
+              `UPDATE mentor_session_requests
+               SET status = 'accepted'
+               WHERE id = $1 AND status = 'pending'
+               RETURNING *`,
+              [sessionRequestId],
+              (err, result) => (err ? rej(err) : res(result))
+            );
+          });
+          if (!upd.rows.length) {
+            throw new Error(
+              "Session request not found or already processed."
+            );
+          }
+          sessionRow = upd.rows[0];
+        }
 
-    let sessionRow = null;
-    if (sessionRequestId) {
-      const upd = await db.query(
-        `UPDATE mentor_session_requests
-         SET status = 'accepted'
-         WHERE id = $1 AND status = 'pending'
-         RETURNING *`,
-        [sessionRequestId]
-      );
-      if (!upd.rows.length) {
-        throw new Error("Session request not found or already processed.");
+        await new Promise((res, rej) => {
+          client.query("COMMIT", (err) => (err ? rej(err) : res()));
+        });
+        resolve({ meetingResult, sessionRow });
+      } catch (e) {
+        await new Promise((res) => {
+          client.query("ROLLBACK", () => res());
+        });
+        reject(e);
       }
-      sessionRow = upd.rows[0];
-    }
-
-    await db.query("COMMIT");
-    return { meetingResult, sessionRow };
-  } catch (e) {
-    await db.query("ROLLBACK");
-    throw e;
-  } finally {
-    db.release();
-  }
+    });
+  });
 };
 
 module.exports = {

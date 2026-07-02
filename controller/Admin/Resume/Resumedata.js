@@ -1,6 +1,4 @@
 const ResumeData = require('../../../model/ResumeData');
-const { sendErrorResponse } = require('../../../utils/sendErrorResponse');
-
 const ResumeFetchController = async(req, res) => 
 {
     try
@@ -12,7 +10,7 @@ const ResumeFetchController = async(req, res) =>
     }
     catch(err)
     {
-        sendErrorResponse(res, 500, 'Internal Server Error', err);
+        res.send(err);
     }
 }
 

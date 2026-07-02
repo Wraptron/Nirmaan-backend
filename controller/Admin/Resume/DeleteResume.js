@@ -1,16 +1,16 @@
 const DeleteResumeModel = require("../../../model/DeleteResumeModel");
-const { sendErrorResponse } = require("../../../utils/sendErrorResponse");
 
 const DeleteResume = async(req, res) => {
     try
     {
         const {id} = req.params;
+        // console.log(id);
         const result = await DeleteResumeModel(id);
         res.status(200).json(result);
     }  
     catch(err)
     {
-        sendErrorResponse(res, 500, "Failed to delete resume", err);
+        res.status(401).json(err);
     }  
 }
 module.exports = DeleteResume;

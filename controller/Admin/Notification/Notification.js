@@ -1,7 +1,5 @@
 const {Encryption, Decrypted} = require('../../../helpers/Encryption');
 const {FetchAwsCreditData} = require('../../../model/Admin/NotificationModel');
-const { sendErrorResponse } = require('../../../utils/sendErrorResponse');
-
 const ViewNotification = async(req, res) => {
     try 
     {
@@ -18,7 +16,7 @@ const ViewNotification = async(req, res) => {
     }
     catch(err)
     {
-        sendErrorResponse(res, 400, "Failed to fetch notifications", err);
+        res.status(400).send(err)
     }
 }
 module.exports = {ViewNotification};

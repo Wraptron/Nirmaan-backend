@@ -1,5 +1,4 @@
 const FounderModel = require('../../model/CustomerModel/FounderModel');
-const { sendErrorResponse } = require('../../utils/sendErrorResponse');
 const Founder = async (req, res) => {
     const{session_mail} = req.query;
     const {founder_name,
@@ -31,7 +30,8 @@ const Founder = async (req, res) => {
             }
             catch (err)
             {
-                sendErrorResponse(res, 500, 'Internal Server Error', err);
+                
+                res.status(404).json({error: 'Internal Server Error', err: err});
             }
         }
     }
