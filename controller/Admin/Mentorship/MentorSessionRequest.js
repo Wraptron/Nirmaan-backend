@@ -3,17 +3,21 @@ const {
   normalizeMode,
 } = require("../../../model/MentorAvailabilityModel");
 const {
-  fetchStartupNameById,
+  fetchStartupProfileById,
   insertMentorSessionRequest,
   fetchMentorSessionRequestsByStartupId,
   mentorSlotIsTaken,
   updateMentorSessionRequestStatus,
+  mapSessionModeToMeetingMode,
+  mapDurationToMeetingLabel,
+  normalizeMeetingTime,
 } = require("../../../model/MentorSessionRequestModel");
 const {
   FetchMeetingsByStartupIdModel,
 } = require("../../../model/AddMentorModel");
+const { scheduleMeetingAndAcceptSession } = require("../../../model/AppNotificationModel");
 const {
-  notifyMentorshipSessionPending,
+  notifyMentorshipSessionAccepted,
   notifyMentorshipSessionRejected,
 } = require("../../../utils/notificationFanout");
 
@@ -32,11 +36,18 @@ const createMentorSessionRequest = async (req, res) => {
       });
     }
 
-    // Fetch startup name
-    const startup_name = await fetchStartupNameById(startupId);
+    if (!mentor_id) {
+      return res.status(400).json({ message: "Mentor is required." });
+    }
+
+    // Fetch startup profile
+    const startupProfile = await fetchStartupProfileById(startupId);
+    const startup_name = startupProfile.startup_name;
     if (!startup_name?.trim()) {
       return res.status(400).json({ message: "Startup profile not found." });
     }
+    const founder_name =
+      startupProfile.founder_name?.trim() || startup_name || "Startup User";
 
     // Validation
     if (!date || !time || !duration || !mode) {
@@ -45,34 +56,34 @@ const createMentorSessionRequest = async (req, res) => {
       });
     }
 
-    // Slot check
-    if (mentor_id) {
-      const normalizedMode = normalizeMode(mode);
-      const slotAvailable = await mentorSlotExists(
-        mentor_id,
-        date,
-        time,
-        normalizedMode
-      );
-      if (!slotAvailable) {
-        return res.status(400).json({
-          message:
-            "Selected date, time, and session mode are not in this mentor's published availability.",
-        });
-      }
+    const normalizedMode = normalizeMode(mode);
+    const meetingTime = normalizeMeetingTime(time);
 
-      const slotTaken = await mentorSlotIsTaken(
-        mentor_id,
-        date,
-        time,
-        normalizedMode
-      );
-      if (slotTaken) {
-        return res.status(409).json({
-          message:
-            "This time slot is no longer available. Another startup has already requested it.",
-        });
-      }
+    // Slot check
+    const slotAvailable = await mentorSlotExists(
+      mentor_id,
+      date,
+      time,
+      normalizedMode
+    );
+    if (!slotAvailable) {
+      return res.status(400).json({
+        message:
+          "Selected date, time, and session mode are not in this mentor's published availability.",
+      });
+    }
+
+    const slotTaken = await mentorSlotIsTaken(
+      mentor_id,
+      date,
+      time,
+      normalizedMode
+    );
+    if (slotTaken) {
+      return res.status(409).json({
+        message:
+          "This time slot is no longer available. Another startup has already requested it.",
+      });
     }
 
     // Insert
@@ -89,26 +100,32 @@ const createMentorSessionRequest = async (req, res) => {
       requested_by: req.user?.user_mail || null,
     });
 
-    // Notify
-    const fullRow = {
-      id: row.id,
-      startup_id: startupId,
-      startup_name,
-      mentor_id: mentor_id || null,
-      mentor_name: mentor_name || null,
-      requested_date: date,
-      requested_time: time,
-      duration: Number(duration),
-      session_mode: normalizeMode(mode),
-      agenda: agenda || "",
-      status: row.status,
-      created_at: row.created_at,
-    };
-    await notifyMentorshipSessionPending(fullRow);
+    const { sessionRow } = await scheduleMeetingAndAcceptSession(
+      {
+        mentor_reference_id: mentor_id,
+        startup_name,
+        founder_name,
+        meeting_mode: mapSessionModeToMeetingMode(normalizedMode),
+        meeting_link: "",
+        meeting_location: "",
+        participants: "",
+        date,
+        time: meetingTime,
+        meeting_duration: mapDurationToMeetingLabel(duration),
+        meeting_agenda: agenda || "",
+        startup_id: startupId,
+      },
+      row.id
+    );
+
+    if (sessionRow) {
+      await notifyMentorshipSessionAccepted(sessionRow, date, meetingTime);
+    }
 
     res.status(201).json({
       requestId: String(row.id),
-      status: row.status,
+      status: "accepted",
+      message: "Meeting scheduled successfully",
     });
   } catch (err) {
     console.error("createMentorSessionRequest:", err);

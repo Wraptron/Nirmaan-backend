@@ -93,6 +93,18 @@ const notifyMentorshipSessionAccepted = async (row, meetingDate, meetingTime) =>
     requested_time: meetingTime || row.requested_time,
   });
   const rows = [];
+  rows.push({
+    type: "mentorship",
+    event: "accepted",
+    title: "Meeting scheduled",
+    body: `${row.startup_name || "A startup"} scheduled a session${
+      row.mentor_name ? ` with ${row.mentor_name}` : ""
+    }.`,
+    recipient_role: ROLES.ADMIN,
+    source_table: "mentor_session_requests",
+    source_id: row.id,
+    metadata: meta,
+  });
   if (row.mentor_id) {
     rows.push({
       type: "mentorship",
