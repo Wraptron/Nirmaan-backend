@@ -1,5 +1,6 @@
 const md5 = require("md5");
 const { AddMentorModel } = require("../../../model/AddMentorModel");
+const { invalidateMentorCaches } = require("../../../utils/queryCache");
 const { ExpressValidator, check, checkExact } = require("express-validator");
 const validator = require("validator");
 const EmailValid = require("../../../validation/EmailValid");
@@ -51,6 +52,7 @@ const AddMentor = async (req, res) => {
         linkedIn_ID,
         password
       );
+      invalidateMentorCaches();
       res.status(200).send(result);
     } catch (err) {
       if (

@@ -21,6 +21,11 @@ const {
   IPDetailsModel,
   DeleteStartupFounderModel,
 } = require("../../../model/StartupModel");
+const {
+  CACHE_KEYS,
+  getOrSet,
+  invalidateStartupCaches,
+} = require("../../../utils/queryCache");
 const EmailValid = require("../../../validation/EmailValid");
 const PhoneNumberValid = require("../../../validation/PhoneNumberValid");
 const generatePassword = require("../../../utils/GeneratePassword");
@@ -179,6 +184,8 @@ if (existingUser) {
     // 4. Send credentials email
     await sendStartupCredentials(official_email_address, generatedPassword);
 
+    invalidateStartupCaches();
+
     res.status(200).json({
       status: "Startup created and credentials sent",
       result: result,
@@ -282,6 +289,8 @@ const SyncStartupFromIncubation = async (req, res) => {
     //   );
     // }
 
+    invalidateStartupCaches();
+
     return res.status(200).json({
       status: "synced",
       message: "Startup synced successfully",
@@ -296,24 +305,27 @@ const SyncStartupFromIncubation = async (req, res) => {
 
 const FetchStartupDatainNumbers = async (req, res) => {
   try {
-    const result = await StartupDataModel();
-    const startupData = {
-      startup_total: result?.TotalCountStartups?.rows?.[0]?.startup_total || 0,
-      active_startups: result?.ActiveStartups?.rows?.[0]?.active || 0,
-      dropped_startups: result?.DroppedStartups?.rows?.[0]?.program_count || 0,
-      graduated_startups:
-        result?.GraduatedStartups?.rows?.[0]?.program_count || 0,
-      akshar: result?.AksharStartups?.rows?.[0]?.program_count || 0,
-      pratham: result?.PrathamStartups?.rows?.[0]?.program_count || 0,
-      IITMIC: result?.IITMIC?.rows?.[0]?.program_count || 0,
-      PIA: result?.PIA?.rows?.[0]?.program_count || 0,
-      IP: result?.IP?.rows?.[0]?.total_ip_sum || 0,
-      Mentors: {
-        Session_Total: parseInt(
-          result?.TotalMentoringSessions?.rows?.[0]?.session_total || 0
-        ),
-      },
-    };
+    const startupData = await getOrSet(CACHE_KEYS.STARTUP_COUNTS, async () => {
+      const result = await StartupDataModel();
+      return {
+        startup_total: result?.TotalCountStartups?.rows?.[0]?.startup_total || 0,
+        active_startups: result?.ActiveStartups?.rows?.[0]?.active || 0,
+        dropped_startups:
+          result?.DroppedStartups?.rows?.[0]?.program_count || 0,
+        graduated_startups:
+          result?.GraduatedStartups?.rows?.[0]?.program_count || 0,
+        akshar: result?.AksharStartups?.rows?.[0]?.program_count || 0,
+        pratham: result?.PrathamStartups?.rows?.[0]?.program_count || 0,
+        IITMIC: result?.IITMIC?.rows?.[0]?.program_count || 0,
+        PIA: result?.PIA?.rows?.[0]?.program_count || 0,
+        IP: result?.IP?.rows?.[0]?.total_ip_sum || 0,
+        Mentors: {
+          Session_Total: parseInt(
+            result?.TotalMentoringSessions?.rows?.[0]?.session_total || 0
+          ),
+        },
+      };
+    });
 
     res.status(200).json(startupData);
   } catch (err) {
@@ -323,7 +335,22 @@ const FetchStartupDatainNumbers = async (req, res) => {
 };
 const FetchStartupData = async (req, res) => {
   try {
-    const result = await FetchStartupsModel();
+    const DEFAULT_LIMIT = 25;
+    const MAX_LIMIT = 100;
+
+    const page = Math.max(parseInt(req.query.page, 10) || 1, 1);
+    const limit = Math.min(
+      Math.max(parseInt(req.query.limit, 10) || DEFAULT_LIMIT, 1),
+      MAX_LIMIT
+    );
+
+    // Legacy offset param still accepted alongside page/limit.
+    const offset =
+      req.query.offset !== undefined
+        ? Math.max(parseInt(req.query.offset, 10) || 0, 0)
+        : (page - 1) * limit;
+
+    const result = await FetchStartupsModel({ limit, offset, page });
     res.status(200).json(result);
   } catch (err) {
     res.status(500).json(err);
@@ -337,6 +364,7 @@ const UpdateStatus = async (req, res) => {
       startup_status,
       official_email_address
     );
+    invalidateStartupCaches();
     res.status(200).json(result);
   } catch (err) {
     res.status(500).json(err);
@@ -395,6 +423,7 @@ const DeleteStartupData = async (req, res) => {
   if (id) {
     try {
       const result = await StartupDeleteData(id);
+      invalidateStartupCaches();
       res.status(200).json(result);
     } catch (err) {
       // console.error("Delete error:", err);

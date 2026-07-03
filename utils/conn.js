@@ -3,13 +3,34 @@ const dotenv = require("dotenv");
 
 dotenv.config();
 
+/**
+ * Supavisor transaction pooler (port 6543) multiplexes many app clients onto
+ * fewer Postgres connections. Set DB_USE_TRANSACTION_POOLER=true or use a
+ * DATABASE_URL on port 6543. prepareThreshold: 0 is required because
+ * transaction-mode poolers do not support prepared statements.
+ *
+ * Session-level features NOT used in this codebase: LISTEN/NOTIFY, advisory
+ * locks, temp tables across requests. withTransaction (BEGIN/COMMIT) is
+ * supported on the transaction pooler for a single held client.
+ */
+const useTransactionPooler =
+  process.env.DB_USE_TRANSACTION_POOLER === "true" ||
+  /:6543(\/|$)/.test(process.env.DATABASE_URL || "");
+
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   max: parseInt(process.env.DB_POOL_MAX, 10) || 20,
   idleTimeoutMillis: parseInt(process.env.DB_POOL_IDLE_TIMEOUT_MS, 10) || 30000,
   connectionTimeoutMillis:
     parseInt(process.env.DB_POOL_CONNECTION_TIMEOUT_MS, 10) || 10000,
+  ...(useTransactionPooler && { prepareThreshold: 0 }),
 });
+
+if (useTransactionPooler) {
+  console.log(
+    "PostgreSQL pool: transaction-mode pooler detected (prepared statements disabled)"
+  );
+}
 
 pool.on("error", (err) => {
   console.error("Unexpected PostgreSQL pool error:", err);

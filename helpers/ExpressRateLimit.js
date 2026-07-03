@@ -1,5 +1,8 @@
 const rateLimit = require("express-rate-limit");
 
+// Set LOAD_TEST_MODE=true when running k6 so per-IP limits do not mask capacity.
+const loadTestMode = process.env.LOAD_TEST_MODE === "true";
+
 const AUTH_PATHS = new Set([
   "/login",
   "/forgot-password",
@@ -35,6 +38,7 @@ const authLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   message: { status: "Too many attempts, please try again later." },
+  skip: () => loadTestMode,
 });
 
 const uploadLimiter = rateLimit({
@@ -52,7 +56,9 @@ const apiLimiter = rateLimit({
   legacyHeaders: false,
   message: { status: "Too many requests, please slow down." },
   skip: (req) =>
-    AUTH_PATHS.has(req.path) || isUploadPath(req.path, req.method),
+    loadTestMode ||
+    AUTH_PATHS.has(req.path) ||
+    isUploadPath(req.path, req.method),
 });
 
 module.exports = { authLimiter, uploadLimiter, apiLimiter };

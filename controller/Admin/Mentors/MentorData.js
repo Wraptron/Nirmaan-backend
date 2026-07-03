@@ -16,6 +16,11 @@ const {
   DeleteMeetingModal,
   cancelScheduledMeetingByMentorModel,
 } = require("../../../model/AddMentorModel");
+const {
+  CACHE_KEYS,
+  getOrSet,
+  invalidateMentorCaches,
+} = require("../../../utils/queryCache");
 const { uploadToS3 } = require("../../../utils/s3Upload");
 
 const UpdateMentor = async (req, res) => {
@@ -85,7 +90,20 @@ const UpdateMentor = async (req, res) => {
 
 const FetchMentorData = async (req, res) => {
   try {
-    const result = await FetchMentorDataModel();
+    const rawLimit = req.query.limit;
+    const rawOffset = req.query.offset;
+
+    if (rawLimit !== undefined) {
+      const limit = Math.min(Math.max(parseInt(rawLimit, 10) || 25, 1), 100);
+      const offset = Math.max(parseInt(rawOffset, 10) || 0, 0);
+      const result = await FetchMentorDataModel({ limit, offset });
+      res.status(200).json(result);
+      return;
+    }
+
+    const result = await getOrSet(CACHE_KEYS.MENTOR_LIST, () =>
+      FetchMentorDataModel()
+    );
     res.status(200).json(result);
   } catch (error) {
     res.send(error);
@@ -93,7 +111,9 @@ const FetchMentorData = async (req, res) => {
 };
 const MentorCount = async (req, res) => {
   try {
-    const result = await MentorCountData();
+    const result = await getOrSet(CACHE_KEYS.MENTOR_COUNT, () =>
+      MentorCountData()
+    );
     res.status(200).json(result);
   } catch (err) {
     res.send(err);
@@ -104,6 +124,7 @@ const DeleteMentorData = async (req, res) => {
   if (id) {
     try {
       const result = await MentorDeleteData(id);
+      invalidateMentorCaches();
       res.status(200).json(result);
     } catch (err) {
       res.send(err);

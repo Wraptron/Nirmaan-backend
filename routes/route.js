@@ -114,6 +114,10 @@ const {
   FetchStartupDataDetail,
 } = require("../controller/Finance/AddFunding.js");
 const {
+  DashboardOverviewSummary,
+  DashboardSummary,
+} = require("../controller/Admin/Dashboard/DashboardSummary.js");
+const {
   getNotifications,
   markNotificationsRead,
 } = require("../controller/Notification/NotificationController.js");
@@ -165,6 +169,8 @@ router.get("/finance/startup-data",FetchStartupDataDetail);
 router.get("/fetch-startup", FetchStartupData);
 router.get("/fetchevents", FetchEvents);
 router.get("/count-startupdata", FetchStartupDatainNumbers);
+router.get("/dashboard/overview-summary", DashboardOverviewSummary);
+router.get("/dashboard/summary", DashboardSummary);
 router.get("/mentor/count", MentorCount);
 router.post("/mentor/request-speaker", RequestSpeaker);
 router.post("/login", authLimiter, LoginController);

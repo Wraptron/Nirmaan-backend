@@ -108,14 +108,45 @@ const UpdateMentorModel = async (
     );
   });
 };
-const FetchMentorDataModel = () => {
+const FetchMentorDataModel = ({ limit, offset } = {}) => {
+  if (limit == null) {
+    return new Promise((resolve, reject) => {
+      client.query("SELECT * FROM mentors", (err, result) => {
+        if (err) {
+          reject({ STATUS: err });
+        } else {
+          resolve({ STATUS: result });
+        }
+      });
+    });
+  }
+
+  const safeLimit = Math.min(Math.max(parseInt(limit, 10) || 25, 1), 100);
+  const safeOffset = Math.max(parseInt(offset, 10) || 0, 0);
+
   return new Promise((resolve, reject) => {
-    client.query("SELECT * FROM mentors", (err, result) => {
-      if (err) {
-        reject({ STATUS: err });
-      } else {
-        resolve({ STATUS: result });
+    client.query("SELECT COUNT(*)::int AS total FROM mentors", (countErr, countResult) => {
+      if (countErr) {
+        reject({ STATUS: countErr });
+        return;
       }
+
+      client.query(
+        "SELECT * FROM mentors ORDER BY mentor_id LIMIT $1 OFFSET $2",
+        [safeLimit, safeOffset],
+        (err, result) => {
+          if (err) {
+            reject({ STATUS: err });
+          } else {
+            resolve({
+              STATUS: result,
+              total: countResult.rows[0]?.total || 0,
+              limit: safeLimit,
+              offset: safeOffset,
+            });
+          }
+        }
+      );
     });
   });
 };

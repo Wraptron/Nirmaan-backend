@@ -1,4 +1,9 @@
 const {CreateEventsModel, FetchEventsModel, RequestSpeakerModel, DeleteEventModal, UpdateEventModel} = require('../../../model/Admin/EventsModel');
+const {
+  CACHE_KEYS,
+  getOrSet,
+  invalidateEventCaches,
+} = require('../../../utils/queryCache');
 const { uploadToS3 } = require('../../../utils/s3Upload');
 const CreateEvents = async (req, res) => {
   try {
@@ -32,6 +37,8 @@ const CreateEvents = async (req, res) => {
       description,
     );
 
+    invalidateEventCaches();
+
     res.status(200).json({
       data: result,
     });
@@ -47,7 +54,20 @@ const CreateEvents = async (req, res) => {
 const FetchEvents = async(req, res) => {
     try 
     {
-        const result = await FetchEventsModel();  
+        const rawLimit = req.query.limit;
+        const rawOffset = req.query.offset;
+
+        if (rawLimit !== undefined) {
+            const limit = Math.min(Math.max(parseInt(rawLimit, 10) || 25, 1), 100);
+            const offset = Math.max(parseInt(rawOffset, 10) || 0, 0);
+            const result = await FetchEventsModel({ limit, offset });
+            res.status(200).json(result);
+            return;
+        }
+
+        const result = await getOrSet(CACHE_KEYS.EVENTS_LIST, () =>
+            FetchEventsModel()
+        );
         res.status(200).json(result);
     }
     catch(err)
@@ -61,6 +81,7 @@ const DeleteEvent = async (req, res) => {
   if (id) {
     try {
       const result = await DeleteEventModal(id);
+      invalidateEventCaches();
       res.status(200).send(result);
     } catch (err) {
       res.status(500).send(err);
@@ -104,6 +125,8 @@ const UpdateEvent = async (req, res) => {
       description,
       event_id,
     );
+
+    invalidateEventCaches();
 
     res.status(200).json({
       message: "Event updated successfully",
