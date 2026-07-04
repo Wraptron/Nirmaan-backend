@@ -1,4 +1,5 @@
 const client = require("../utils/conn");
+const { withTransaction } = client;
 var md5 = require("md5");
 const bcrypt = require("bcrypt");
 
@@ -274,10 +275,31 @@ const StartupDataModel = async () => {
   });
 };
 
-const FetchStartupsModel = async () => {
-  return new Promise((resolve, reject) => {
+const FetchStartupsModel = async ({ limit = 25, offset = 0, page = 1 } = {}) => {
+  const selectSql =
+    "SELECT user_id AS startup_id, basic::jsonb->>'profile_image' AS profile_image, basic::jsonb->>'startup_name' AS startup_name, startup_status AS startup_status,  basic::jsonb->>'startup_domain' AS startup_domain, basic::jsonb->>'startup_sector' AS startup_sector, basic::jsonb->>'startup_Community' AS startup_Community, basic::jsonb->>'startup_type' AS startup_type, basic::jsonb->>'startup_technology' AS startup_technology, basic::jsonb->>'startup_cohort' AS startup_cohort, basic::jsonb->>'startup_yog' AS startup_yog, basic::jsonb->>'graduated_to' AS graduated_to, basic::jsonb->>'graduated_to_other' AS graduated_to_other, basic::jsonb->>'program' AS program, official::jsonb->>'official_email_address' AS email_address, official::jsonb->>'official_contact_number' AS official_contact_number,  official::jsonb->>'role_of_faculty' AS role_of_faculty, official::jsonb->>'cin_registration_number' AS cin_registration_number,official::jsonb->>'funding_stage' AS funding_stage,  official::jsonb->>'website_link' AS website_link, official::jsonb->>'dpiit_number' AS dpiit, official::jsonb->>'official_registered' AS register, official::jsonb->>'linkedin_id' AS linkedin, official::jsonb->>'mentor_associated' AS mentor_associated, official::jsonb->>'pia_state' AS pia_state, official::jsonb->>'scheme' AS scheme, founder::jsonb->>'founder_name' AS founder_name, founder::jsonb->>'founder_email' AS founder_email, founder::jsonb->>'founder_number' AS founder_number, founder::jsonb->>'academic_background' AS academic_background,  founder::jsonb->>'founder_gender' AS founder_gender,ip_details::jsonb->>'patent' AS patent,ip_details::jsonb->>'design' AS design,ip_details::jsonb->>'trademark'AS trademark,ip_details::jsonb->>'copyright' AS copyright,description::jsonb->>'logo' AS logo, description::jsonb->>'startup_description' AS startup_description FROM test_startup WHERE isdeleted = 'f'";
+
+  const safeLimit = Math.min(Math.max(parseInt(limit, 10) || 25, 1), 100);
+  const safeOffset = Math.max(parseInt(offset, 10) || 0, 0);
+  const safePage = Math.max(parseInt(page, 10) || 1, 1);
+
+  const countPromise = new Promise((resolve, reject) => {
     client.query(
-      "SELECT user_id AS startup_id, basic::jsonb->>'profile_image' AS profile_image, basic::jsonb->>'startup_name' AS startup_name, startup_status AS startup_status,  basic::jsonb->>'startup_domain' AS startup_domain, basic::jsonb->>'startup_sector' AS startup_sector, basic::jsonb->>'startup_Community' AS startup_Community, basic::jsonb->>'startup_type' AS startup_type, basic::jsonb->>'startup_technology' AS startup_technology, basic::jsonb->>'startup_cohort' AS startup_cohort, basic::jsonb->>'startup_yog' AS startup_yog, basic::jsonb->>'graduated_to' AS graduated_to, basic::jsonb->>'graduated_to_other' AS graduated_to_other, basic::jsonb->>'program' AS program, official::jsonb->>'official_email_address' AS email_address, official::jsonb->>'official_contact_number' AS official_contact_number,  official::jsonb->>'role_of_faculty' AS role_of_faculty, official::jsonb->>'cin_registration_number' AS cin_registration_number,official::jsonb->>'funding_stage' AS funding_stage,  official::jsonb->>'website_link' AS website_link, official::jsonb->>'dpiit_number' AS dpiit, official::jsonb->>'official_registered' AS register, official::jsonb->>'linkedin_id' AS linkedin, official::jsonb->>'mentor_associated' AS mentor_associated, official::jsonb->>'pia_state' AS pia_state, official::jsonb->>'scheme' AS scheme, founder::jsonb->>'founder_name' AS founder_name, founder::jsonb->>'founder_email' AS founder_email, founder::jsonb->>'founder_number' AS founder_number, founder::jsonb->>'academic_background' AS academic_background,  founder::jsonb->>'founder_gender' AS founder_gender,ip_details::jsonb->>'patent' AS patent,ip_details::jsonb->>'design' AS design,ip_details::jsonb->>'trademark'AS trademark,ip_details::jsonb->>'copyright' AS copyright,description::jsonb->>'logo' AS logo, description::jsonb->>'startup_description' AS startup_description FROM test_startup WHERE isdeleted = 'f';",
+      "SELECT COUNT(*)::int AS total FROM test_startup WHERE isdeleted = 'f'",
+      (err, result) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(result.rows[0]?.total || 0);
+        }
+      }
+    );
+  });
+
+  const rowsPromise = new Promise((resolve, reject) => {
+    client.query(
+      `${selectSql} ORDER BY user_id LIMIT $1 OFFSET $2`,
+      [safeLimit, safeOffset],
       (err, result) => {
         if (err) {
           reject(err);
@@ -287,6 +309,18 @@ const FetchStartupsModel = async () => {
       }
     );
   });
+
+  const [total, dataResult] = await Promise.all([countPromise, rowsPromise]);
+
+  return {
+    rows: dataResult.rows,
+    rowCount: dataResult.rowCount,
+    total,
+    page: safePage,
+    limit: safeLimit,
+    offset: safeOffset,
+    totalPages: total > 0 ? Math.ceil(total / safeLimit) : 0,
+  };
 };
 const UpdateStartupStatusModel = async (
   startup_status,
@@ -310,7 +344,46 @@ const IndividualStarupModel = async (id) => {
   const GeneralData = () => {
     return new Promise((resolveQuery2, rejectQuery2) => {
       client.query(
-        `select t.basic, t.official, t.founder, t.description, t.official_email_address, t.startup_status, u.startup_name, u.amount, u.funding_type from test_startup t LEFT JOIN update_funding u ON t.official_email_address = u.startup_name WHERE t.official_email_address=$1`,
+        `SELECT t.user_id AS startup_id, t.user_id, t.startup_status,
+          t.official_email_address,
+          basic::jsonb->>'profile_image' AS profile_image,
+          basic::jsonb->>'startup_name' AS startup_name,
+          basic::jsonb->>'startup_domain' AS startup_domain,
+          basic::jsonb->>'startup_sector' AS startup_sector,
+          basic::jsonb->>'startup_Community' AS startup_community,
+          basic::jsonb->>'startup_type' AS startup_type,
+          basic::jsonb->>'startup_technology' AS startup_technology,
+          basic::jsonb->>'startup_industry' AS startup_industry,
+          basic::jsonb->>'startup_cohort' AS startup_cohort,
+          basic::jsonb->>'startup_yog' AS startup_yog,
+          basic::jsonb->>'graduated_to' AS graduated_to,
+          basic::jsonb->>'graduated_to_other' AS graduated_to_other,
+          basic::jsonb->>'program' AS program,
+          official::jsonb->>'official_email_address' AS email_address,
+          official::jsonb->>'official_contact_number' AS official_contact_number,
+          official::jsonb->>'role_of_faculty' AS role_of_faculty,
+          official::jsonb->>'cin_registration_number' AS cin_registration_number,
+          official::jsonb->>'funding_stage' AS funding_stage,
+          official::jsonb->>'website_link' AS website_link,
+          official::jsonb->>'dpiit_number' AS dpiit,
+          official::jsonb->>'official_registered' AS register,
+          official::jsonb->>'linkedin_id' AS linkedin,
+          official::jsonb->>'mentor_associated' AS mentor_associated,
+          official::jsonb->>'pia_state' AS pia_state,
+          official::jsonb->>'scheme' AS scheme,
+          founder::jsonb->>'founder_name' AS founder_name,
+          founder::jsonb->>'founder_email' AS founder_email,
+          founder::jsonb->>'founder_number' AS founder_number,
+          founder::jsonb->>'academic_background' AS academic_background,
+          founder::jsonb->>'founder_gender' AS founder_gender,
+          ip_details::jsonb->>'patent' AS patent,
+          ip_details::jsonb->>'design' AS design,
+          ip_details::jsonb->>'trademark' AS trademark,
+          ip_details::jsonb->>'copyright' AS copyright,
+          description::jsonb->>'logo' AS logo,
+          description::jsonb->>'startup_description' AS startup_description
+        FROM test_startup t
+        WHERE t.user_id=$1`,
         [id],
         (err, result) => {
           //select t.basic, t.official_email_address, u.startup_name, u.amount, u.funding_type from test_startup t JOIN update_funding u ON t.official_email_address = u.startup_name;
@@ -328,7 +401,7 @@ const IndividualStarupModel = async (id) => {
   const FundingDistributes = () => {
     return new Promise((resolveQuery1, rejectQuery1) => {
       client.query(
-        "select u.funding_type, SUM(CAST(u.amount AS INTEGER)), u.startup_name from update_funding u JOIN test_startup t ON u.startup_name = t.official_email_address WHERE funding_type='Funding Utilized' AND startup_name=$1 GROUP BY u.funding_type, u.startup_name;",
+        "select u.funding_type, SUM(CAST(u.amount AS INTEGER)), u.startup_name from update_funding u JOIN test_startup t ON u.startup_name = t.official_email_address WHERE funding_type='Funding Utilized' AND t.user_id=$1 GROUP BY u.funding_type, u.startup_name;",
         [id],
         (err, result) => {
           if (err) {
@@ -371,31 +444,25 @@ const TopStartupsSectors = (id) => {
   });
 };
 const StartupDeleteData = async (user_id) => {
-  try {
-    await client.query('BEGIN'); // Start transaction
-
-    // Soft delete (Flag)
-    await client.query(
+  return withTransaction(async (tx) => {
+    await tx.query(
       `UPDATE test_startup 
        SET isdeleted = TRUE
        WHERE user_id = $1;`,
       [user_id]
     );
 
-    // Delete related records from user_data
-    await client.query(
+    await tx.query(
       `DELETE FROM user_data 
-       WHERE startup_id = $1;`,  
+       WHERE startup_id = $1;`,
       [user_id]
     );
 
-    await client.query('COMMIT'); // Apply all changes
-    return { success: true, message: 'Startup and related user data deleted successfully.' };
-
-  } catch (err) {
-    await client.query('ROLLBACK'); // Undo changes if error
-    throw err;
-  }
+    return {
+      success: true,
+      message: "Startup and related user data deleted successfully.",
+    };
+  });
 };
 
 const UpdateStartupAboutModel = async (data) => {
@@ -564,7 +631,7 @@ const UpdateStartupPersonalInfoModel = async (data, requester) => {
                   basic,
                   '{startup_name}', to_jsonb($1::text), true
                 ),
-                '{profile_image}', to_jsonb($2::text), true
+                '{profile_image}', to_jsonb(COALESCE($2::text, basic->>'profile_image')), true
               ),
       startup_status = $3,
       official = jsonb_set(
@@ -595,10 +662,13 @@ const UpdateStartupPersonalInfoModel = async (data, requester) => {
   ];
 
   return new Promise((resolve, reject) => {
-    // -------- Role-based Access ----------
-    const isPrivileged = [2].includes(Number(requester?.role));
+    const role = Number(requester?.role);
+    const isAdmin = role === 2;
+    const isOwnStartup =
+      role === 5 &&
+      String(requester?.startup_id) === String(startup_id);
 
-    if (!isPrivileged) {
+    if (!isAdmin && !isOwnStartup) {
       return resolve({
         status: "Unauthorized",
         code: 401,
@@ -951,19 +1021,12 @@ const IPDetailsModel = async (data) => {
   const query = `
    UPDATE test_startup
 SET
-  ip_details = jsonb_set(
-            jsonb_set(
-              jsonb_set(
-                  jsonb_set(
-                    ip_details,
-                    '{patent}', to_jsonb($1::text), true
-                  ),
-                  '{design}', to_jsonb($2::text), true
-                ),
-                '{trademark}', to_jsonb($3::text), true
-              ),
-              '{copyright}', to_jsonb($4::text), true
-            )
+  ip_details = jsonb_build_object(
+    'patent', $1::text,
+    'design', $2::text,
+    'trademark', $3::text,
+    'copyright', $4::text
+  )
 WHERE user_id = $5;
   `;
 

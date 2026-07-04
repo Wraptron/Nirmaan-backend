@@ -3,6 +3,11 @@ const EmailValid = require('../../../validation/EmailValid');
 const {Decrypted} = require('../../../helpers/Encryption');
 const PhoneNumberValid = require('../../../validation/PhoneNumberValid')
 const {AddConnectionModel, ViewConnectionModel, EstablishConnectionModel, DeleteConnectionModel}  = require('../../../model/ConnectionModel');
+const {
+  CACHE_KEYS,
+  getOrSet,
+  invalidateConnectionCaches,
+} = require('../../../utils/queryCache');
 const AddConnections = async(req, res) => {
     const{name, designation, organisation, connect_for, contact_number, email_address} = req.body;
     if(!name || !designation || !organisation || !connect_for || !contact_number || !email_address)
@@ -22,6 +27,7 @@ const AddConnections = async(req, res) => {
         try
         { 
             const result = await AddConnectionModel(name, organisation, connect_for, contact_number, email_address, designation);
+            invalidateConnectionCaches();
             res.status(200).json(result);
         }
         catch(err)
@@ -41,7 +47,9 @@ const AddConnections = async(req, res) => {
 const ViewConnections = async(req, res) => {
     try
     {
-        const result = await ViewConnectionModel();
+        const result = await getOrSet(CACHE_KEYS.CONNECTIONS_LIST, () =>
+            ViewConnectionModel()
+        );
         res.status(200).json(result);
     }
     catch(err)
@@ -75,6 +83,7 @@ const DeleteConnection = async(req,res) => {
         if(email_address)
         {
             const result = await DeleteConnectionModel(email_address);
+            invalidateConnectionCaches();
             res.status(200).json(result);
         } else {
             res.status(400).send('Email address parameter is missing.');

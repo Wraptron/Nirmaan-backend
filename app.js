@@ -6,6 +6,7 @@ const responseTime = require("response-time");
 const bodyParser = require("body-parser");
 const cors = require("cors");
 const multer = require("multer");
+const helmet = require("helmet");
 // Import all route controllers
 const LoginController = require("./routes/route");
 const WorkRequestController = require("./routes/route");
@@ -97,6 +98,15 @@ const fetchMentorSessionRequestsForStartupController = require("./routes/route")
 
 // Initialize Express app
 const app = express();
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+      },
+    },
+  })
+);
 
 // Create HTTP server and Socket.IO instance
 const server = http.createServer(app);
@@ -416,20 +426,24 @@ server.listen(SOCKET_PORT, '0.0.0.0', () => {
 });
 
 // Graceful shutdown
-process.on("SIGTERM", () => {
-  console.log("SIGTERM received, shutting down gracefully");
-  server.close(() => {
-    console.log("Server closed");
-    process.exit(0);
-  });
-});
+const pool = require("./utils/conn");
 
-process.on("SIGINT", () => {
-  console.log("SIGINT received, shutting down gracefully");
-  server.close(() => {
+const shutdown = (signal) => {
+  console.log(`${signal} received, shutting down gracefully`);
+  server.close(async () => {
     console.log("Server closed");
+    try {
+      await pool.end();
+      console.log("Database pool closed");
+    } catch (err) {
+      console.error("Error closing database pool:", err);
+    }
     process.exit(0);
   });
-});
+};
+
+process.on("SIGTERM", () => shutdown("SIGTERM"));
+
+process.on("SIGINT", () => shutdown("SIGINT"));
 
 module.exports = app;

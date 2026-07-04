@@ -21,6 +21,11 @@ const {
   IPDetailsModel,
   DeleteStartupFounderModel,
 } = require("../../../model/StartupModel");
+const {
+  CACHE_KEYS,
+  getOrSet,
+  invalidateStartupCaches,
+} = require("../../../utils/queryCache");
 const EmailValid = require("../../../validation/EmailValid");
 const PhoneNumberValid = require("../../../validation/PhoneNumberValid");
 const generatePassword = require("../../../utils/GeneratePassword");
@@ -152,20 +157,34 @@ if (existingUser) {
   });
 }
     // 1. Add startup
+    const startupStatus = basic.startup_status || "Active";
+    const ipDetails = { patent: "", design: "", trademark: "", copyright: "" };
     const result = await AddStartupModel(
       basic,
       official,
       founder,
       description,
-      official_email_address
+      official_email_address,
+      startupStatus,
+      ipDetails
     );
 
+    if (result?.status === "duplicate_skipped") {
+      return res.status(400).json({
+        error: "A startup with this name already exists",
+      });
+    }
 
     // 2. Generate password
     const generatedPassword = generatePassword();
 
     // 3. Create user in user_data
-    const startup_id = result.rows[0].user_id;
+    const startup_id = result?.rows?.[0]?.user_id;
+    if (!startup_id) {
+      return res.status(500).json({
+        error: "Startup created but startup_id missing from DB response",
+      });
+    }
     const userId = uuidv4();
     await CreateTeamUser(
       official_email_address,
@@ -179,12 +198,22 @@ if (existingUser) {
     // 4. Send credentials email
     await sendStartupCredentials(official_email_address, generatedPassword);
 
+    invalidateStartupCaches();
+
     res.status(200).json({
       status: "Startup created and credentials sent",
       result: result,
     });
   } catch (err) {
-    // console.error("Error in AddStartup:", err);
+    if (
+      err?.code === "23505" &&
+      err?.constraint === "user_data_user_mail_key"
+    ) {
+      return res.status(409).json({
+        error: "Email is already registered",
+      });
+    }
+    console.error("Error in AddStartup:", err);
     res.status(500).json({
       error: err.message || err,
       details: "Server Error: Something went wrong. Please try again.",
@@ -272,15 +301,16 @@ const SyncStartupFromIncubation = async (req, res) => {
       }
     }
 
-    // Email delivery disabled for incubation → Nirmaan sync.
-    // try {
-    //   await sendStartupCredentials(official_email_address, generatedPassword);
-    // } catch (mailErr) {
-    //   console.warn(
-    //     "Sync startup: credentials email failed:",
-    //     mailErr?.message || mailErr
-    //   );
-    // }
+    try {
+      await sendStartupCredentials(official_email_address, generatedPassword);
+    } catch (mailErr) {
+      console.warn(
+        "Sync startup: credentials email failed:",
+        mailErr?.message || mailErr
+      );
+    }
+
+    invalidateStartupCaches();
 
     return res.status(200).json({
       status: "synced",
@@ -296,24 +326,27 @@ const SyncStartupFromIncubation = async (req, res) => {
 
 const FetchStartupDatainNumbers = async (req, res) => {
   try {
-    const result = await StartupDataModel();
-    const startupData = {
-      startup_total: result?.TotalCountStartups?.rows?.[0]?.startup_total || 0,
-      active_startups: result?.ActiveStartups?.rows?.[0]?.active || 0,
-      dropped_startups: result?.DroppedStartups?.rows?.[0]?.program_count || 0,
-      graduated_startups:
-        result?.GraduatedStartups?.rows?.[0]?.program_count || 0,
-      akshar: result?.AksharStartups?.rows?.[0]?.program_count || 0,
-      pratham: result?.PrathamStartups?.rows?.[0]?.program_count || 0,
-      IITMIC: result?.IITMIC?.rows?.[0]?.program_count || 0,
-      PIA: result?.PIA?.rows?.[0]?.program_count || 0,
-      IP: result?.IP?.rows?.[0]?.total_ip_sum || 0,
-      Mentors: {
-        Session_Total: parseInt(
-          result?.TotalMentoringSessions?.rows?.[0]?.session_total || 0
-        ),
-      },
-    };
+    const startupData = await getOrSet(CACHE_KEYS.STARTUP_COUNTS, async () => {
+      const result = await StartupDataModel();
+      return {
+        startup_total: result?.TotalCountStartups?.rows?.[0]?.startup_total || 0,
+        active_startups: result?.ActiveStartups?.rows?.[0]?.active || 0,
+        dropped_startups:
+          result?.DroppedStartups?.rows?.[0]?.program_count || 0,
+        graduated_startups:
+          result?.GraduatedStartups?.rows?.[0]?.program_count || 0,
+        akshar: result?.AksharStartups?.rows?.[0]?.program_count || 0,
+        pratham: result?.PrathamStartups?.rows?.[0]?.program_count || 0,
+        IITMIC: result?.IITMIC?.rows?.[0]?.program_count || 0,
+        PIA: result?.PIA?.rows?.[0]?.program_count || 0,
+        IP: result?.IP?.rows?.[0]?.total_ip_sum || 0,
+        Mentors: {
+          Session_Total: parseInt(
+            result?.TotalMentoringSessions?.rows?.[0]?.session_total || 0
+          ),
+        },
+      };
+    });
 
     res.status(200).json(startupData);
   } catch (err) {
@@ -323,7 +356,22 @@ const FetchStartupDatainNumbers = async (req, res) => {
 };
 const FetchStartupData = async (req, res) => {
   try {
-    const result = await FetchStartupsModel();
+    const DEFAULT_LIMIT = 25;
+    const MAX_LIMIT = 100;
+
+    const page = Math.max(parseInt(req.query.page, 10) || 1, 1);
+    const limit = Math.min(
+      Math.max(parseInt(req.query.limit, 10) || DEFAULT_LIMIT, 1),
+      MAX_LIMIT
+    );
+
+    // Legacy offset param still accepted alongside page/limit.
+    const offset =
+      req.query.offset !== undefined
+        ? Math.max(parseInt(req.query.offset, 10) || 0, 0)
+        : (page - 1) * limit;
+
+    const result = await FetchStartupsModel({ limit, offset, page });
     res.status(200).json(result);
   } catch (err) {
     res.status(500).json(err);
@@ -337,6 +385,7 @@ const UpdateStatus = async (req, res) => {
       startup_status,
       official_email_address
     );
+    invalidateStartupCaches();
     res.status(200).json(result);
   } catch (err) {
     res.status(500).json(err);
@@ -346,19 +395,6 @@ const UpdateStatus = async (req, res) => {
 const IndividualStartups = async (req, res) => {
   const { id } = req.params;
   try {
-    const requester = req.user;
-
-    // Role 2 (admin) can access any startup profile.
-    // Role 5 (startup user) can only access their own startup profile.
-    if (
-      requester?.role === 5 &&
-      String(requester.startup_id) !== String(id)
-    ) {
-      return res.status(403).json({
-        message: "Forbidden: You can only access your own startup profile",
-      });
-    }
-
     const result = await IndividualStarupModel(id);
     const IndStartupData = {
       generalData: result.GeneralData.rows,
@@ -395,6 +431,7 @@ const DeleteStartupData = async (req, res) => {
   if (id) {
     try {
       const result = await StartupDeleteData(id);
+      invalidateStartupCaches();
       res.status(200).json(result);
     } catch (err) {
       // console.error("Delete error:", err);
@@ -411,8 +448,22 @@ const FetchStartupProfile = async (req, res) => {
     return res.status(400).json({ error: "Email is required" });
   }
   try {
-    // You need to implement this model function to fetch by email
-    const result = await IndividualStarupModel(email);
+    const client = require("../../../utils/conn");
+    const dbResult = await new Promise((resolve, reject) => {
+      client.query(
+        `SELECT user_id FROM test_startup WHERE official_email_address=$1`,
+        [email],
+        (err, result) => {
+          if (err) reject(err);
+          else resolve(result);
+        }
+      );
+    });
+    const userId = dbResult.rows[0]?.user_id;
+    if (!userId) {
+      return res.status(404).json({ error: "Startup not found" });
+    }
+    const result = await IndividualStarupModel(userId);
 
     // Map your DB result to the frontend structure
     const profile = {
@@ -487,8 +538,7 @@ const UpdateStartupDetails = async (req, res) => {
     // ---------- STRUCTURE BASIC + OFFICIAL ----------
     const basic = {
       startup_name: startup_name || "",
-      profile_image: profile_image_url || null,
-      background_image: background_image_url || null,
+      profile_image: profile_image_url,
     };
 
     const official = {
@@ -732,7 +782,6 @@ const UpdateStartupAbout = async (req, res) => {
       description,
       startup_status,
     });
-    console.log(req.body);
     res.status(200).json({
       message: "Startup details updated successfully",
       result,
@@ -797,9 +846,11 @@ const UpdateStartupMentorDetails = async (req, res) => {
 
 
 const AddAward = async (req, res) => {
-
   try {
-    const document_url = req.file ? req.file.path : null;
+    let document_url = null;
+    if (req.file) {
+      document_url = await uploadToS3(req.file);
+    }
     const {
       award_name,
       award_org,
@@ -844,10 +895,15 @@ const UpdateAward = async (req, res) => {
       award_org,
       prize_money,
       awarded_date,
-      document_url,
+      document_url: existingDocumentUrl,
       description,
       id,
     } = req.body;
+
+    let document_url = existingDocumentUrl || null;
+    if (req.file) {
+      document_url = await uploadToS3(req.file);
+    }
 
     const result = await UpdateAwardModel(
       award_name,

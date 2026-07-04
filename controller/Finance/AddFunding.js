@@ -16,6 +16,11 @@ const {
   FetchStartupsDetailModel,
   GetStartupProjectBalanceModel,
 } = require("../../model/Finance/AddFuningModel");
+const {
+  CACHE_KEYS,
+  getOrSet,
+  invalidateFundingCaches,
+} = require("../../utils/queryCache");
 
 
 const AddFunding = async (req, res) => {
@@ -128,6 +133,7 @@ const AddFunding = async (req, res) => {
           funding_date
         );
 
+        invalidateFundingCaches();
         return res.status(200).send(result);
       } else if (
 
@@ -148,7 +154,7 @@ const AddFunding = async (req, res) => {
           status
         );
 
-        // ❌ REMOVED project deduction from here (no error logic changed)
+        invalidateFundingCaches();
         return res.status(200).send(result);
       } else {
         return res.status(400).send("Invalid funding type.");
@@ -188,12 +194,14 @@ const FetchFundingData = async (req, res) => {
 
 const FetchFundingDatainNumbers = async (req, res) => {
   try {
-    const result = await FetchFundingTotalNumbers();
-    const startupData = {
-      funding_disbursed: Number(result.disbursed) || 0,
-      funding_utilized: Number(result.utilized) || 0,
-      external_funding: Number(result.external) || 0,
-    };
+    const startupData = await getOrSet(CACHE_KEYS.FUNDING_TOTALS, async () => {
+      const result = await FetchFundingTotalNumbers();
+      return {
+        funding_disbursed: Number(result.disbursed) || 0,
+        funding_utilized: Number(result.utilized) || 0,
+        external_funding: Number(result.external) || 0,
+      };
+    });
     res.status(200).json(startupData);
   } catch (err) {
     // console.error("Error in FetchFundingDatainNumbers:", err.stack || err);
@@ -281,6 +289,7 @@ const UpdateFundingData = async (req, res) => {
         id,
         startup_id
       );
+      invalidateFundingCaches();
       return res.status(200).send(result);
     } else if (
       funding_type === "Funding Disbursed" ||
@@ -299,6 +308,7 @@ const UpdateFundingData = async (req, res) => {
         id,
         startup_id
       );
+      invalidateFundingCaches();
       return res.status(200).send(result);
     } else {
       return res.status(400).send("Invalid funding type.");

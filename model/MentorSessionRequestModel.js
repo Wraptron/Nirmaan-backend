@@ -47,6 +47,54 @@ const fetchStartupNameById = (startupId) => {
   });
 };
 
+const fetchStartupProfileById = (startupId) => {
+  return new Promise((resolve, reject) => {
+    const id = startupId;
+    if (id === null) {
+      resolve({ startup_name: null, founder_name: null });
+      return;
+    }
+    client.query(
+      `SELECT
+         basic::jsonb->>'startup_name' AS startup_name,
+         founder::jsonb->>'founder_name' AS founder_name
+       FROM test_startup
+       WHERE user_id = $1
+       LIMIT 1`,
+      [id],
+      (err, result) => {
+        if (err) {
+          reject(err);
+        } else {
+          const row = result.rows[0] || {};
+          resolve({
+            startup_name: row.startup_name || null,
+            founder_name: row.founder_name || null,
+          });
+        }
+      }
+    );
+  });
+};
+
+const mapSessionModeToMeetingMode = (mode) => {
+  const value = String(mode || "").toLowerCase();
+  if (value === "online") return "Virtual";
+  return "In Person";
+};
+
+const mapDurationToMeetingLabel = (minutes) => {
+  const n = Number(minutes);
+  if (n <= 30) return "30 mins";
+  return "1 hour";
+};
+
+const normalizeMeetingTime = (time) => {
+  const value = String(time || "").trim();
+  if (!value) return value;
+  return value.length === 5 ? `${value}:00` : value;
+};
+
 const insertMentorSessionRequest = (payload) => {
   const {
     startup_id,
@@ -253,6 +301,10 @@ const updateMentorSessionRequestStatus = (id, status) => {
 
 module.exports = {
   fetchStartupNameById,
+  fetchStartupProfileById,
+  mapSessionModeToMeetingMode,
+  mapDurationToMeetingLabel,
+  normalizeMeetingTime,
   insertMentorSessionRequest,
   fetchPendingMentorSessionRequests,
   fetchMentorSessionRequestUpdatesForMentor,

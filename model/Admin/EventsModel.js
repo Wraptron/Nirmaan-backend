@@ -24,19 +24,51 @@ const CreateEventsModel = (  event_type,
     })
 }
 
-const FetchEventsModel = () => {
+const FetchEventsModel = ({ limit, offset } = {}) => {
+    if (limit == null) {
+        return new Promise((resolve, reject) => {
+            client.query('SELECT * FROM events',
+                (err, result) => {
+                    if(err) {
+                        reject(err);
+                    }
+                    else {
+                        resolve(result)
+                    }
+                }
+            )
+        })
+    }
+
+    const safeLimit = Math.min(Math.max(parseInt(limit, 10) || 25, 1), 100);
+    const safeOffset = Math.max(parseInt(offset, 10) || 0, 0);
+
     return new Promise((resolve, reject) => {
-        client.query('SELECT * FROM events',
-            (err, result) => {
-                if(err) {
-                    reject(err);
-                }
-                else {
-                    resolve(result)
-                }
+        client.query('SELECT COUNT(*)::int AS total FROM events', (countErr, countResult) => {
+            if (countErr) {
+                reject(countErr);
+                return;
             }
-        )
-    })
+
+            client.query(
+                'SELECT * FROM events ORDER BY event_id LIMIT $1 OFFSET $2',
+                [safeLimit, safeOffset],
+                (err, result) => {
+                    if (err) {
+                        reject(err);
+                    } else {
+                        resolve({
+                            rows: result.rows,
+                            rowCount: result.rowCount,
+                            total: countResult.rows[0]?.total || 0,
+                            limit: safeLimit,
+                            offset: safeOffset,
+                        });
+                    }
+                }
+            );
+        });
+    });
 }
 const DeleteEventModal = (id) => {
   return new Promise((resolve, reject) => {
