@@ -20,12 +20,13 @@ const {
   notifyMentorshipSessionAccepted,
   notifyMentorshipSessionRejected,
 } = require("../../../utils/notificationFanout");
+const { sendMentorSessionEmail } = require("../../../utils/meetingMailer");
 
 
 
 const createMentorSessionRequest = async (req, res) => {
   try {
-    const { mentor_id, mentor_name, date, time, duration, mode, agenda } =
+    const { mentor_id, mentor_name, date, time, duration, mode, meeting_link, agenda } =
       req.body;
 
     // Auth
@@ -57,6 +58,14 @@ const createMentorSessionRequest = async (req, res) => {
     }
 
     const normalizedMode = normalizeMode(mode);
+    if (
+      normalizedMode === "Online" &&
+      (!meeting_link || !String(meeting_link).trim())
+    ) {
+      return res.status(400).json({
+        message: "Meeting link is required for online sessions.",
+      });
+    }
     const meetingTime = normalizeMeetingTime(time);
 
     // Slot check
@@ -86,6 +95,9 @@ const createMentorSessionRequest = async (req, res) => {
       });
     }
 
+    const sanitizedLink =
+      normalizedMode === "Online" ? String(meeting_link || "").trim() : "";
+
     // Insert
     const row = await insertMentorSessionRequest({
       startup_id: startupId,
@@ -106,7 +118,7 @@ const createMentorSessionRequest = async (req, res) => {
         startup_name,
         founder_name,
         meeting_mode: mapSessionModeToMeetingMode(normalizedMode),
-        meeting_link: "",
+        meeting_link: sanitizedLink,
         meeting_location: "",
         participants: "",
         date,
@@ -121,6 +133,18 @@ const createMentorSessionRequest = async (req, res) => {
     if (sessionRow) {
       await notifyMentorshipSessionAccepted(sessionRow, date, meetingTime);
     }
+
+    sendMentorSessionEmail({
+      mentorId: mentor_id,
+      startupName: startup_name,
+      founderName: founder_name,
+      date,
+      time: meetingTime,
+      duration: mapDurationToMeetingLabel(duration),
+      mode: normalizedMode,
+      meetingLink: sanitizedLink,
+      agenda: agenda || "",
+    }).catch((err) => console.error("Mentor email (non-blocking):", err));
 
     res.status(201).json({
       requestId: String(row.id),

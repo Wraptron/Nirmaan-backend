@@ -26,6 +26,7 @@ const {
   resendForgotPasswordOtp,
   verifyForgotPasswordOtp,
 } = require("../controller/Admin/LoginController/ForgotRequest.js");
+const ChangePassword = require("../controller/Admin/LoginController/ChangePassword.js");
 const {
   Profile,
   ProfilePhoto,
@@ -177,6 +178,7 @@ router.post("/login", authLimiter, LoginController);
 router.post("/auth/refresh", authLimiter, RefreshController);
 router.post("/auth/logout", authLimiter, LogoutController);
 router.post("/send-message", AddMessage);
+router.post("/change-password", Authenticate, ChangePassword);
 router.post("/forgot-password", authLimiter, requestForgotPasswordOtp);
 router.post("/forgot-password/request-otp", authLimiter, requestForgotPasswordOtp);
 router.post("/forgot-password/resend-otp", authLimiter, resendForgotPasswordOtp);

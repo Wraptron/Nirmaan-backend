@@ -39,6 +39,10 @@ const authLimiter = rateLimit({
   legacyHeaders: false,
   message: { status: "Too many attempts, please try again later." },
   skip: () => loadTestMode,
+  keyGenerator: (req) => {
+    const email = req.body?.email || req.body?.user_mail || "";
+    return email.trim().toLowerCase() || req.ip;
+  },
 });
 
 const uploadLimiter = rateLimit({
