@@ -1,7 +1,8 @@
 const rateLimit = require("express-rate-limit");
 
 // Set LOAD_TEST_MODE=true when running k6 so per-IP limits do not mask capacity.
-const loadTestMode = process.env.LOAD_TEST_MODE === "true";
+// const loadTestMode = process.env.LOAD_TEST_MODE === "false";
+const loadTestMode = false;
 
 const AUTH_PATHS = new Set([
   "/login",
