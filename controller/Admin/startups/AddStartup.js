@@ -373,19 +373,6 @@ const UpdateStatus = async (req, res) => {
 const IndividualStartups = async (req, res) => {
   const { id } = req.params;
   try {
-    const requester = req.user;
-
-    // Role 2 (admin) can access any startup profile.
-    // Role 5 (startup user) can only access their own startup profile.
-    if (
-      requester?.role === 5 &&
-      String(requester.startup_id) !== String(id)
-    ) {
-      return res.status(403).json({
-        message: "Forbidden: You can only access your own startup profile",
-      });
-    }
-
     const result = await IndividualStarupModel(id);
     const IndStartupData = {
       generalData: result.GeneralData.rows,
@@ -439,8 +426,22 @@ const FetchStartupProfile = async (req, res) => {
     return res.status(400).json({ error: "Email is required" });
   }
   try {
-    // You need to implement this model function to fetch by email
-    const result = await IndividualStarupModel(email);
+    const client = require("../../../utils/conn");
+    const dbResult = await new Promise((resolve, reject) => {
+      client.query(
+        `SELECT user_id FROM test_startup WHERE official_email_address=$1`,
+        [email],
+        (err, result) => {
+          if (err) reject(err);
+          else resolve(result);
+        }
+      );
+    });
+    const userId = dbResult.rows[0]?.user_id;
+    if (!userId) {
+      return res.status(404).json({ error: "Startup not found" });
+    }
+    const result = await IndividualStarupModel(userId);
 
     // Map your DB result to the frontend structure
     const profile = {
