@@ -982,19 +982,12 @@ const IPDetailsModel = async (data) => {
   const query = `
    UPDATE test_startup
 SET
-  ip_details = jsonb_set(
-            jsonb_set(
-              jsonb_set(
-                  jsonb_set(
-                    ip_details,
-                    '{patent}', to_jsonb($1::text), true
-                  ),
-                  '{design}', to_jsonb($2::text), true
-                ),
-                '{trademark}', to_jsonb($3::text), true
-              ),
-              '{copyright}', to_jsonb($4::text), true
-            )
+  ip_details = jsonb_build_object(
+    'patent', $1::text,
+    'design', $2::text,
+    'trademark', $3::text,
+    'copyright', $4::text
+  )
 WHERE user_id = $5;
   `;
 

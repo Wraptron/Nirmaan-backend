@@ -2,6 +2,8 @@ const { resolveContent } = require("nodemailer/lib/shared");
 const client = require("../utils/conn");
 const { withTransaction } = client;
 const { v4: uuidv4 } = require("uuid");
+const bcrypt = require("bcrypt");
+const md5 = require("md5");
 const AddMentorModel = (
   mentor_name,
   mentor_logo,
@@ -33,7 +35,7 @@ const AddMentorModel = (
    }
 
     client.query(
-      "INSERT INTO mentors(mentor_id, mentor_name,mentor_logo,mento_description, years_of_exp, area_of_expertise, designation, institution, qualification, year_of_passing_out, startup_assoc, contact_num, email_address, linkedIn_id, password, hashkey, user_role) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16,$17)",
+      "INSERT INTO mentors(mentor_id, mentor_name,mentor_logo,mento_description, years_of_exp, area_of_expertise, designation, institution, qualification, year_of_passing_out, startup_assoc, contact_num, email_address, linkedIn_id, password, hashkey, user_role) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16,$17) RETURNING mentor_id",
       [
         mentorId,
         mentor_name,
@@ -575,6 +577,48 @@ const FetchMeetingFeedbackModel = (mentor_id, startup_id) => {
   });
 };
 
+const CheckMentorUserByEmail = async (email) => {
+  return new Promise((resolve, reject) => {
+    client.query(
+      "SELECT 1 FROM user_data WHERE user_mail = $1 LIMIT 1",
+      [email],
+      (err, result) => {
+        if (err) reject(err);
+        else resolve(result.rows.length > 0);
+      }
+    );
+  });
+};
+
+const CreateMentorUser = async (
+  user_mail,
+  user_password,
+  user_name,
+  user_contact,
+  mentor_id
+) => {
+  const hashedPassword = await bcrypt.hash(user_password, 10);
+  return new Promise((resolve, reject) => {
+    client.query(
+      "INSERT INTO user_data(user_mail, user_password, user_hash, user_department, user_role, user_name, user_contact, mentor_id) VALUES($1, $2, $3, $4, $5, $6, $7, $8)",
+      [
+        user_mail,
+        hashedPassword,
+        md5(user_mail),
+        "mentor",
+        "6",
+        user_name,
+        user_contact,
+        mentor_id,
+      ],
+      (err, result) => {
+        if (err) reject(err);
+        else resolve(result);
+      }
+    );
+  });
+};
+
 module.exports = {
   AddMentorModel,
   UpdateMentorModel,
@@ -595,4 +639,6 @@ module.exports = {
   FetchMeetingFeedbackModel,
   DeleteMeetingModal,
   cancelScheduledMeetingByMentorModel,
+  CheckMentorUserByEmail,
+  CreateMentorUser,
 };
