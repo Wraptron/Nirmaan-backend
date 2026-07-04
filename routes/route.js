@@ -192,7 +192,7 @@ router.post("/resume-send", Authenticate, ApprovalRequest);
 router.get("/profile/:mail", Authenticate, Profile);
 router.post("/addstartup/award", uploadLimiter, Authenticate, upload.single("document"), AddAward);
 router.get("/fetchaward", Authenticate, FetchAwardData);
-router.delete("/delete-award/:id", Authenticate, requireRole(2), DeleteAward);
+router.delete("/delete-award/:id", Authenticate, DeleteAward);
 router.put("/updateaward", uploadLimiter, Authenticate, upload.single("document"), UpdateAward);
 router.put("/ipdetails", Authenticate, IPDetails);
 router.delete("/delete-resume/:id", Authenticate, requireRole(2), DeleteResume);
