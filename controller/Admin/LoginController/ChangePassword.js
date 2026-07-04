@@ -33,11 +33,16 @@ const ChangePassword = async (req, res) => {
       return res.status(404).json({ success: false, message: "User not found." });
     }
 
-    const storedPassword = rows[0].user_password || "";
-    const isBcryptHash = storedPassword.startsWith("$2");
-    const passwordMatches = isBcryptHash
-      ? await bcrypt.compare(currentPassword, storedPassword)
-      : storedPassword === currentPassword;
+    const storedPassword = rows[0].user_password;
+
+    if (!storedPassword || !storedPassword.startsWith("$2")) {
+      console.warn("Non-bcrypt password encountered for user:", userMail);
+      return res
+        .status(401)
+        .json({ success: false, message: "Current password is incorrect." });
+    }
+
+    const passwordMatches = await bcrypt.compare(currentPassword, storedPassword);
 
     if (!passwordMatches) {
       return res

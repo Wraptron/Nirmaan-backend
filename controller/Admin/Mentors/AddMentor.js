@@ -89,6 +89,11 @@ const AddMentor = async (req, res) => {
         err?.STATUS?.constraint === "mentors_pkey"
       ) {
         return res.status(409).json({ Error: "Email already registered" });
+      } else if (
+        err?.code === "23505" &&
+        err?.constraint === "user_data_user_mail_key"
+      ) {
+        return res.status(409).json({ Error: "Email is already registered" });
       } else if (err?.STATUS?.code === "22001" || err?.code === "22001") {
         return res
           .status(413)

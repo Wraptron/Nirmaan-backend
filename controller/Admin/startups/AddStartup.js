@@ -157,20 +157,34 @@ if (existingUser) {
   });
 }
     // 1. Add startup
+    const startupStatus = basic.startup_status || "Active";
+    const ipDetails = { patent: "", design: "", trademark: "", copyright: "" };
     const result = await AddStartupModel(
       basic,
       official,
       founder,
       description,
-      official_email_address
+      official_email_address,
+      startupStatus,
+      ipDetails
     );
 
+    if (result?.status === "duplicate_skipped") {
+      return res.status(400).json({
+        error: "A startup with this name already exists",
+      });
+    }
 
     // 2. Generate password
     const generatedPassword = generatePassword();
 
     // 3. Create user in user_data
-    const startup_id = result.rows[0].user_id;
+    const startup_id = result?.rows?.[0]?.user_id;
+    if (!startup_id) {
+      return res.status(500).json({
+        error: "Startup created but startup_id missing from DB response",
+      });
+    }
     const userId = uuidv4();
     await CreateTeamUser(
       official_email_address,
@@ -191,7 +205,15 @@ if (existingUser) {
       result: result,
     });
   } catch (err) {
-    // console.error("Error in AddStartup:", err);
+    if (
+      err?.code === "23505" &&
+      err?.constraint === "user_data_user_mail_key"
+    ) {
+      return res.status(409).json({
+        error: "Email is already registered",
+      });
+    }
+    console.error("Error in AddStartup:", err);
     res.status(500).json({
       error: err.message || err,
       details: "Server Error: Something went wrong. Please try again.",
