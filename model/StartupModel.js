@@ -621,18 +621,24 @@ const UpdateStartupAboutModel = async (data) => {
 // };
 
 const UpdateStartupPersonalInfoModel = async (data, requester) => {
-  const { basic, official, startup_status, startup_id } = data;
+  const { basic, official, startup_status, startup_id, logo } = data;
 
   const query = `
     UPDATE test_startup
     SET
       basic = jsonb_set(
-                jsonb_set(
-                  basic,
-                  '{startup_name}', to_jsonb($1::text), true
-                ),
-                '{profile_image}', to_jsonb(COALESCE($2::text, basic->>'profile_image')), true
+                basic,
+                '{startup_name}', to_jsonb($1::text), true
               ),
+      description = CASE
+        WHEN $2::text IS NOT NULL AND $2::text <> '' THEN jsonb_set(
+          COALESCE(description, '{}'::jsonb),
+          '{logo}',
+          to_jsonb($2::text),
+          true
+        )
+        ELSE description
+      END,
       startup_status = $3,
       official = jsonb_set(
                   jsonb_set(
@@ -652,7 +658,7 @@ const UpdateStartupPersonalInfoModel = async (data, requester) => {
 
   const values = [
     basic.startup_name,
-    basic.profile_image,
+    logo ?? null,
     startup_status,
     official.official_contact_number,
     official.linkedin_id,

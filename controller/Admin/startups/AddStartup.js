@@ -80,9 +80,34 @@ const { uploadToS3 } = require("../../../utils/s3Upload");
 //     }
 // }
 
+const parseSection = (value) => {
+  if (value == null) return {};
+  if (typeof value === "string") {
+    try {
+      return JSON.parse(value);
+    } catch {
+      return {};
+    }
+  }
+  return value;
+};
+
 const AddStartup = async (req, res) => {
   try {
-    const { basic, official, founder, description } = req.body;
+    const basic = parseSection(req.body.basic);
+    const official = parseSection(req.body.official);
+    const founder = parseSection(req.body.founder);
+    const description = parseSection(req.body.description);
+
+    let logo_url = null;
+    if (req.files?.logo?.[0]) {
+      logo_url = await uploadToS3(req.files.logo[0]);
+    }
+
+    if (logo_url) {
+      description.logo = logo_url;
+    }
+
   // Extract fields from basic section
     const {
       startup_name,
@@ -518,14 +543,11 @@ const UpdateStartupDetails = async (req, res) => {
     } = req.body;
 
     // ---------- IMAGE UPLOADS ----------
-    let profile_image_url = null;
+    let logo_url = null;
     let background_image_url = null;
 
-    if (req.files?.profile_image?.[0]) {
-      profile_image_url = await uploadToS3(
-        req.files.profile_image[0],
-        "profile_images"
-      );
+    if (req.files?.logo?.[0]) {
+      logo_url = await uploadToS3(req.files.logo[0]);
     }
 
     if (req.files?.background_image?.[0]) {
@@ -538,7 +560,6 @@ const UpdateStartupDetails = async (req, res) => {
     // ---------- STRUCTURE BASIC + OFFICIAL ----------
     const basic = {
       startup_name: startup_name || "",
-      profile_image: profile_image_url,
     };
 
     const official = {
@@ -550,7 +571,7 @@ const UpdateStartupDetails = async (req, res) => {
 
     // ---------- DB UPDATE ----------
     const result = await UpdateStartupPersonalInfoModel(
-      { basic, official, startup_status, startup_id },
+      { basic, official, startup_status, startup_id, logo: logo_url },
       requester
     );
     // Handle unauthorized
@@ -561,7 +582,7 @@ const UpdateStartupDetails = async (req, res) => {
     return res.status(200).json({
       message: "Startup details updated successfully",
       result,
-      uploaded_images: { profile_image_url, background_image_url },
+      uploaded_images: { logo_url, background_image_url },
     });
 
   } catch (err) {

@@ -144,7 +144,7 @@ router.put(
   "/edit-startupdata/personal-info", Authenticate,
   uploadLimiter,
   upload.fields([
-    { name: "profile_image", maxCount: 1 },
+    { name: "logo", maxCount: 1 },
     { name: "background_image", maxCount: 1 },
   ]),
   UpdateStartupDetails
@@ -258,7 +258,14 @@ router.get("/profile-data/:mail", Authenticate, Profile);
 router.post("/add-sector", Authenticate, requireRole(2), Settings);
 router.get("/view-message", Authenticate, ViewMessage);
 router.post("/add-connections", Authenticate, AddConnections);
-router.post("/add-startup", Authenticate, requireRole(2), AddStartup);
+router.post(
+  "/add-startup",
+  uploadLimiter,
+  Authenticate,
+  requireRole(2),
+  upload.fields([{ name: "logo", maxCount: 1 }]),
+  AddStartup
+);
 router.post("/sync/startup", SyncStartupFromIncubation);
 router.get("/viewconnections", Authenticate, ViewConnections);
 router.post("/post-job", Authenticate, Job);
