@@ -58,8 +58,7 @@ const AddMentor = async (req, res) => {
         startup_associated,
         contact_number,
         email_address,
-        linkedIn_ID,
-        generatedPassword
+        linkedIn_ID
       );
 
       if (result?.status === "duplicate_skipped") {
@@ -99,6 +98,7 @@ const AddMentor = async (req, res) => {
           .status(413)
           .json({ Error: "Description cannot exceed 200 words" });
       }
+      console.log(err);
       return res.status(500).json({ Error: "Failed to Add Mentor" });
     }
   }
