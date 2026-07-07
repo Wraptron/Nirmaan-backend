@@ -61,7 +61,6 @@ const AddMentor = async (req, res) => {
         contact_number,
         email_address,
         linkedIn_ID,
-        generatedPassword,
         tag,
         representing_from
       );
