@@ -9,9 +9,14 @@ const { uploadToS3 } = require("../../../utils/s3Upload");
 const generatePassword = require("../../../utils/GeneratePassword");
 const sendMentorCredentials = require("../../../components/SendMentorCredentials");
 const AddMentor = async (req, res) => {
-  const description = JSON.parse(req.body.description);
-  const professional = JSON.parse(req.body.professional);
-  const contact = JSON.parse(req.body.contact);
+  let description, professional, contact;
+  try {
+    description = JSON.parse(req.body.description);
+    professional = JSON.parse(req.body.professional);
+    contact = JSON.parse(req.body.contact);
+  } catch {
+    return res.status(400).json({ message: "Invalid request body" });
+  }
   const { mentor_name, mentor_description } = description;
   const {
     years_of_experience,

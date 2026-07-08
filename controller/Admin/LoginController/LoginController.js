@@ -27,12 +27,12 @@ const LoginController = async(req, res) => {
                     });
                     return;
             }
-            res.status(200).json({ result: { status: result.status } });
+            res.status(401).json({ message: "Invalid credentials" });
         } 
         catch (err)
         {
-            
-            res.status(500).json({error: 'Internal Server Error', err: err});
+            console.error("Login error:", err);
+            res.status(401).json({ message: "Invalid credentials" });
         }
     }
     else 

@@ -6,7 +6,7 @@ const Profile = async(req, res) => {
             const{mail} = req.params;
             //res.send(mail);
             const result = await ProfileModel(mail);
-            res.send("d");
+            res.send(result);
             //console.log()
         } 
         catch(err)
