@@ -176,28 +176,8 @@ const corsOptions = {
   maxAge: 86400, // 24 hours
   optionsSuccessStatus: 200 // Some legacy browsers choke on 204
 };
-// Apply CORS middleware FIRST
 app.use(cors(corsOptions));
-// Handle preflight requests explicitly
 app.options('*', cors(corsOptions));
-// Additional CORS headers for complex requests
-app.use((req, res, next) => {
-  const origin = req.headers.origin;
-  if (allowedOrigins.includes(origin)) {
-    res.setHeader('Access-Control-Allow-Origin', origin);
-  }
-  res.setHeader('Access-Control-Allow-Credentials', 'true');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH');
-  res.setHeader('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization, Cache-Control, X-HTTP-Method-Override');
-  res.setHeader('Access-Control-Expose-Headers', 'Content-Length, X-Foo, X-Bar');
-  res.setHeader('Access-Control-Max-Age', '86400');
-  // Handle preflight requests
-  if (req.method === 'OPTIONS') {
-    res.sendStatus(200);
-  } else {
-    next();
-  }
-});
 app.use(cookieParser());
 app.use(bodyParser.json({ limit: "50mb" }));
 app.use(bodyParser.urlencoded({ extended: true, limit: "50mb" }));
