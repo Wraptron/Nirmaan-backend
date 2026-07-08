@@ -4,7 +4,7 @@ const {
   FetchStartupsModel,
   UpdateStartupPersonalInfoModel,
   AddAwardModel,
-  FetchAwardModel,
+  FetchAwardByStartupIdModel,
   UpdateAwardModel,
   DeleteAwardModal,
   UpdateStartupAboutModel,
@@ -879,12 +879,16 @@ const AddAward = async (req, res) => {
   }
 };
 
-const FetchAwardData = async (req, res) => {
+const FetchStartupAwards = async (req, res) => {
+  const { id } = req.params;
+  if (!id) {
+    return res.status(400).json({ message: "Invalid startup id" });
+  }
   try {
-    const result = await FetchAwardModel();
+    const result = await FetchAwardByStartupIdModel(id);
     res.status(200).json(result);
   } catch (error) {
-    res.send(error);
+    res.status(500).json({ message: "Internal server error" });
   }
 };
 
@@ -1053,7 +1057,7 @@ module.exports = {
   AddStartup,
   SyncStartupFromIncubation,
   UpdateStartupMentorDetails,
-  FetchAwardData,
+  FetchStartupAwards,
   AddAward,
   UpdateAward,
   DeleteAward,

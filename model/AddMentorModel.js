@@ -185,19 +185,55 @@ const MentorCountData = () => {
   });
 };
 
-const MentorDeleteData = (id) => {
-  return new Promise((resolve, reject) => {
-    client.query(
-      `DELETE FROM mentors WHERE mentor_id=$1`,
-      [id],
-      (err, result) => {
-        if (err) {
-          reject(err);
-        } else {
-          resolve(result);
-        }
-      }
+const MentorDeleteData = async (id) => {
+  const mentorKey = String(id);
+
+  return withTransaction(async (tx) => {
+    await tx.query(
+      `DELETE FROM meeting_feedback WHERE mentor_id::text = $1::text`,
+      [mentorKey]
     );
+    await tx.query(
+      `DELETE FROM schedule_meetings WHERE mentor_reference_id::text = $1::text`,
+      [mentorKey]
+    );
+    await tx.query(
+      `DELETE FROM mentor_session_requests WHERE mentor_id::text = $1::text`,
+      [mentorKey]
+    );
+    await tx.query(
+      `DELETE FROM testimonials WHERE mentor_ref_id::text = $1::text`,
+      [mentorKey]
+    );
+    await tx.query(
+      `DELETE FROM mentor_availability WHERE mentor_id::text = $1::text`,
+      [mentorKey]
+    );
+    await tx.query(
+      `DELETE FROM app_notifications WHERE recipient_mentor_id::text = $1::text`,
+      [mentorKey]
+    );
+    await tx.query(
+      `DELETE FROM user_data WHERE mentor_id::text = $1::text`,
+      [mentorKey]
+    );
+
+    const result = await tx.query(
+      `DELETE FROM mentors WHERE mentor_id::text = $1::text RETURNING *`,
+      [mentorKey]
+    );
+
+    if (!result.rowCount) {
+      const err = new Error("Mentor not found");
+      err.code = "MENTOR_NOT_FOUND";
+      throw err;
+    }
+
+    return {
+      success: true,
+      message: "Mentor and related records deleted successfully.",
+      deleted: result.rows[0],
+    };
   });
 };
 

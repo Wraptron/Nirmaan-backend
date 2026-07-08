@@ -121,16 +121,21 @@ const MentorCount = async (req, res) => {
 };
 const DeleteMentorData = async (req, res) => {
   const id = req.params.id;
-  if (id) {
-    try {
-      const result = await MentorDeleteData(id);
-      invalidateMentorCaches();
-      res.status(200).json(result);
-    } catch (err) {
-      res.send(err);
+  if (!id) {
+    return res.status(400).json({ message: "Params missing" });
+  }
+
+  try {
+    const result = await MentorDeleteData(id);
+    invalidateMentorCaches();
+    res.status(200).json(result);
+  } catch (err) {
+    if (err.code === "MENTOR_NOT_FOUND") {
+      return res.status(404).json({ message: "Mentor not found" });
     }
-  } else {
-    res.send("Params missing");
+    res.status(500).json({
+      error: "Failed to delete mentor: " + err.message,
+    });
   }
 };
 
