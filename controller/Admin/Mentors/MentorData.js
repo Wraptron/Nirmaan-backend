@@ -50,6 +50,18 @@ const UpdateMentor = async (req, res) => {
       mentor_id,
     } = req.body;
 
+    const role = Number(req.user?.role);
+    if (role === 6) {
+      if (!req.user?.mentor_id) {
+        return res.status(403).json({ Error: "Forbidden: Mentor account required." });
+      }
+      if (String(mentor_id) !== String(req.user.mentor_id)) {
+        return res
+          .status(403)
+          .json({ Error: "Forbidden: You can only update your own profile." });
+      }
+    }
+
     const result = await UpdateMentorModel(
       mentor_name,
       mentor_description,
