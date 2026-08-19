@@ -12,6 +12,7 @@ const {
   UpdateFundingDataModel,
   FetchFundingRecordModel,
   FetchFundingIndividualgDetailsModel,
+  FetchFundingAmountByStartupIdModel,
   FetchFundingTotalNumbers,
   FetchStartupsDetailModel,
   GetStartupProjectBalanceModel,
@@ -79,14 +80,6 @@ const AddFunding = async (req, res) => {
             );
         }
       }
-
-      const fundingDetails = await FetchFundingIndividualgDetailsModel();
-      const currentFunding = fundingDetails[startup_id] || {
-        funding_disbursed: 0,
-        funding_utilized: 0,
-        balance: 0,
-        external_funding: 0,
-      };
 
       /* ---------------- FUNDING UTILIZED ---------------- */
       if (funding_type === "Funding Utilized") {
@@ -174,6 +167,19 @@ const FetchFundingAmount = async (req, res) => {
     res.status(500).json({ message: "Internal server error" });
   }
 };
+
+const FetchStartupFunding = async (req, res) => {
+  const { id } = req.params;
+  if (!id) {
+    return res.status(400).json({ message: "Invalid startup id" });
+  }
+  try {
+    const result = await FetchFundingAmountByStartupIdModel(id);
+    res.status(200).json(result);
+  } catch (err) {
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
 const updateFundingNotif = async (req, res) => {
   try {
     const result = await FundingNotificationModel();
@@ -228,13 +234,7 @@ const UpdateFundingData = async (req, res) => {
       return res.status(400).send("Funding ID is required for update.");
     }
 
-    const fundingDetails = await FetchFundingIndividualgDetailsModel();
-    const currentFunding = fundingDetails[startup_id] || {
-      funding_disbursed: 0,
-      funding_utilized: 0,
-      balance: 0,
-      external_funding: 0,
-    };
+    const currentFunding = await FetchFundingAmountByStartupIdModel(startup_id);
 
     // Fetch the existing funding record to get old values
     const oldFunding = await FetchFundingRecordModel(id);
@@ -332,6 +332,7 @@ module.exports = {
   AddFunding,
   updateFundingNotif,
   FetchFundingAmount,
+  FetchStartupFunding,
   FetchFundingData,
   UpdateFundingData,
   FetchFundingDatainNumbers,

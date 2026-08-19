@@ -53,7 +53,7 @@ const {
   UpdateStartupMentorDetails,
   UpdateStartupFounder,
   AddAward,
-  FetchAwardData,
+  FetchStartupAwards,
   IPDetails,
   DeleteFounder,
 } = require("../controller/Admin/startups/AddStartup.js");
@@ -110,6 +110,7 @@ const {
   AddFunding,
   updateFundingNotif,
   FetchFundingAmount,
+  FetchStartupFunding,
   FetchFundingData,
   UpdateFundingData,
   FetchFundingDatainNumbers,
@@ -140,6 +141,8 @@ const { saveAvailability, getAvailability } = require("../controller/Admin/Mento
 router.get("/prof", Authenticate, ProfilePhoto);
 router.put("/update-status", Authenticate, requireRole(2), UpdateStatus);
 router.get("/startup/my-meetings", Authenticate, listStartupMyMeetings);
+router.get("/startup/:id/awards", Authenticate, FetchStartupAwards);
+router.get("/startup/:id/funding", Authenticate, FetchStartupFunding);
 router.get("/startup/:id", Authenticate, IndividualStartups);
 router.put(
   "/edit-startupdata/personal-info", Authenticate,
@@ -193,7 +196,6 @@ router.get("/resume-fetch/:page_data/:page_number", Authenticate, Resumedata);
 router.post("/resume-send", Authenticate, ApprovalRequest);
 router.get("/profile/:mail", Authenticate, Profile);
 router.post("/addstartup/award", uploadLimiter, Authenticate, upload.single("document"), AddAward);
-router.get("/fetchaward", Authenticate, FetchAwardData);
 router.delete("/delete-award/:id", Authenticate, DeleteAward);
 router.put("/updateaward", uploadLimiter, Authenticate, upload.single("document"), UpdateAward);
 router.put("/ipdetails", Authenticate, IPDetails);

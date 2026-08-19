@@ -1,14 +1,15 @@
 const pool = require("../utils/conn");
 const bcrypt = require("bcrypt");
+const crypto = require("crypto");
 const NewPasswordValidation = require("../validation/NewPasswordValidation");
 const ForgotPasswordEmailer = require("../components/ForgotPasswordEmailer");
 
 const OTP_VALIDITY_MS = 5 * 60 * 1000;
 const RESEND_COOLDOWN_MS = 30 * 1000;
 const CLEANUP_INTERVAL_MS = 10 * 60 * 1000;
+const OTP_REQUEST_MESSAGE = "OTP sent to registered email.";
 
-const generateOtp = () =>
-  Math.floor(100000 + Math.random() * 900000).toString();
+const generateOtp = () => crypto.randomInt(100000, 1000000).toString();
 
 const getWaitSeconds = (ms) => Math.max(1, Math.ceil(ms / 1000));
 
@@ -46,6 +47,7 @@ async function getStoredOtp(email) {
 async function saveOtpForEmail(email, otp) {
   await tableReady;
   const now = Date.now();
+  const hashedOtp = await bcrypt.hash(otp, 10);
   await pool.query(
     `INSERT INTO password_reset_otp (email, otp, expires_at, last_sent_at)
      VALUES ($1, $2, $3, $4)
@@ -53,7 +55,7 @@ async function saveOtpForEmail(email, otp) {
        SET otp = EXCLUDED.otp,
            expires_at = EXCLUDED.expires_at,
            last_sent_at = EXCLUDED.last_sent_at`,
-    [email, otp, now + OTP_VALIDITY_MS, now]
+    [email, hashedOtp, now + OTP_VALIDITY_MS, now]
   );
 }
 
@@ -96,6 +98,13 @@ async function updatePasswordByEmail(email, hashedPassword) {
 
 // ─── Public API ───────────────────────────────────────────────────────────────
 
+const otpRequestResponse = () => ({
+  success: true,
+  message: OTP_REQUEST_MESSAGE,
+  expiresInSeconds: OTP_VALIDITY_MS / 1000,
+  resendAvailableInSeconds: RESEND_COOLDOWN_MS / 1000,
+});
+
 const requestOtp = async (email) => {
   const emailLower = String(email || "").trim().toLowerCase();
   if (!emailLower) {
@@ -104,19 +113,14 @@ const requestOtp = async (email) => {
 
   const user = await getUserByEmail(emailLower);
   if (!user) {
-    return { success: false, message: "Email does not exist." };
+    return otpRequestResponse();
   }
 
   const otp = generateOtp();
   await ForgotPasswordEmailer(emailLower, otp);
   await saveOtpForEmail(emailLower, otp);
 
-  return {
-    success: true,
-    message: "OTP sent successfully.",
-    expiresInSeconds: OTP_VALIDITY_MS / 1000,
-    resendAvailableInSeconds: RESEND_COOLDOWN_MS / 1000,
-  };
+  return otpRequestResponse();
 };
 
 const resendOtp = async (email) => {
@@ -127,7 +131,7 @@ const resendOtp = async (email) => {
 
   const user = await getUserByEmail(emailLower);
   if (!user) {
-    return { success: false, message: "Email does not exist." };
+    return otpRequestResponse();
   }
 
   const existing = await getStoredOtp(emailLower);
@@ -149,12 +153,7 @@ const resendOtp = async (email) => {
   await ForgotPasswordEmailer(emailLower, otp);
   await saveOtpForEmail(emailLower, otp);
 
-  return {
-    success: true,
-    message: "OTP resent successfully.",
-    expiresInSeconds: OTP_VALIDITY_MS / 1000,
-    resendAvailableInSeconds: RESEND_COOLDOWN_MS / 1000,
-  };
+  return otpRequestResponse();
 };
 
 const verifyOtpAndResetPassword = async (email, otp, newPassword) => {
@@ -189,7 +188,8 @@ const verifyOtpAndResetPassword = async (email, otp, newPassword) => {
     return { success: false, message: "OTP expired. Please request a new OTP." };
   }
 
-  if (storedOtp.otp !== otpValue) {
+  const otpMatches = await bcrypt.compare(otpValue, storedOtp.otp);
+  if (!otpMatches) {
     return { success: false, message: "Invalid OTP." };
   }
 

@@ -13,10 +13,9 @@ const s3 = new S3Client({
 const uploadToS3 = async (file) => {
   if (!file) return null;
 
-  const bucketName = process.env.AWS_BUCKET_NAME;
-
+  const bucketName = process.env.AWS_S3_BUCKET;
   if (!bucketName) {
-    throw new Error("AWS_BUCKET_NAME is missing");
+    throw new Error("AWS_S3_BUCKET is missing");
   }
 
   // Create the path inside bucket: Startups/profile/1710000-image.jpg

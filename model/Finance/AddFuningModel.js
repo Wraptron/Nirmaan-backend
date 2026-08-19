@@ -67,6 +67,20 @@ const FundingNotificationModel = async () => {
   });
 };
 
+const formatFundingAmountRow = (row) => ({
+  funding_disbursed: parseFloat(row.funding_disbursed) || 0,
+  funding_utilized: parseFloat(row.funding_utilized) || 0,
+  balance: parseFloat(row.balance) || 0,
+  external_funding: parseFloat(row.external_funding) || 0,
+});
+
+const emptyFundingAmount = () => ({
+  funding_disbursed: 0,
+  funding_utilized: 0,
+  balance: 0,
+  external_funding: 0,
+});
+
 const FetchFundingIndividualgDetailsModel = async () => {
   return new Promise((resolve, reject) => {
     const query = `
@@ -88,14 +102,34 @@ const FetchFundingIndividualgDetailsModel = async () => {
       } else {
         const formattedData = {};
         result.rows.forEach((row) => {
-          formattedData[row.startup_id] = {
-            funding_disbursed: parseFloat(row.funding_disbursed) || 0,
-            funding_utilized: parseFloat(row.funding_utilized) || 0,
-            balance: parseFloat(row.balance) || 0,
-            external_funding: parseFloat(row.external_funding) || 0,
-          };
+          formattedData[row.startup_id] = formatFundingAmountRow(row);
         });
         resolve(formattedData);
+      }
+    });
+  });
+};
+
+const FetchFundingAmountByStartupIdModel = async (startupId) => {
+  return new Promise((resolve, reject) => {
+    const query = `
+      SELECT startup_id,
+              SUM(CASE WHEN funding_type = 'Funding Disbursed' THEN amount ELSE 0 END) AS funding_disbursed,
+    SUM(CASE WHEN funding_type = 'Funding Utilized' THEN amount ELSE 0 END) AS funding_utilized,
+    SUM(CASE WHEN funding_type = 'Funding Disbursed' THEN amount ELSE 0 END) -
+    SUM(CASE WHEN funding_type = 'Funding Utilized' THEN amount ELSE 0 END) AS balance,
+     SUM(CASE WHEN funding_type = 'External Funding' THEN amount ELSE 0 END) AS  external_funding
+      FROM update_funding
+      WHERE startup_id = $1
+      GROUP BY startup_id
+    `;
+
+    client.query(query, [startupId], (err, result) => {
+      if (err) {
+        reject(err);
+      } else {
+        const row = result.rows[0];
+        resolve(row ? formatFundingAmountRow(row) : emptyFundingAmount());
       }
     });
   });
@@ -236,6 +270,7 @@ module.exports = {
   AddFundingModel,
   FundingNotificationModel,
   FetchFundingIndividualgDetailsModel,
+  FetchFundingAmountByStartupIdModel,
   FetchFundingModel,
   UpdateFundingDataModel,
   FetchFundingRecordModel,

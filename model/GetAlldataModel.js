@@ -4,6 +4,10 @@ require('dotenv').config({ path: path.resolve(__dirname, '../../.env') });
 
 const GetAlldataModel = async () => {
     try {
+        const bucketName = process.env.AWS_S3_BUCKET;
+        if (!bucketName) {
+            throw new Error("AWS_S3_BUCKET is missing");
+        }
         aws.config.update({
             secretAccessKey: process.env.SECRET_ACCESS_KEY,
             accessKeyId: process.env.AWS_ACCESS_KEY,
@@ -11,7 +15,7 @@ const GetAlldataModel = async () => {
         });
         const s3 = new aws.S3();
         const listObjectsParams = {
-            Bucket: process.env.BUCKET
+            Bucket: bucketName
         };
         const data = await s3.listObjectsV2(listObjectsParams).promise();
         const objectKeys = data.Contents.map(item => item.Key);

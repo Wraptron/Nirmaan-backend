@@ -817,15 +817,19 @@ const AddAwardModel = async (
   });
 };
 
-const FetchAwardModel = () => {
+const FetchAwardByStartupIdModel = (startupId) => {
   return new Promise((resolve, reject) => {
-    client.query("select * from startup_awards", (err, result) => {
-      if (err) {
-        reject(err);
-      } else {
-        resolve(result);
+    client.query(
+      "SELECT * FROM startup_awards WHERE startup_id = $1 ORDER BY id ASC",
+      [startupId],
+      (err, result) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(result);
+        }
       }
-    });
+    );
   });
 };
 
@@ -1061,7 +1065,7 @@ module.exports = {
   CheckUserByEmail,
   UpdateStartupAboutModel,
   AddAwardModel,
-  FetchAwardModel,
+  FetchAwardByStartupIdModel,
   UpdateStartupFounderModel,
   UpdateStartupMentorDetailsModel,
   UpdateStartupPersonalInfoModel,

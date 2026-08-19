@@ -11,9 +11,13 @@ aws.config.update({
 })
 const s3= new aws.S3();
 const AwsModel = async(filename) => {
+    const bucketName = process.env.AWS_S3_BUCKET;
+    if (!bucketName) {
+        throw new Error("AWS_S3_BUCKET is missing");
+    }
     const fileStream = fs.createReadStream(filename.path);
     const uploadParams = {
-        Bucket: process.env.AWS_S3_BUCKET,
+        Bucket: bucketName,
         Key: `Mentor/${filename.originalname}`,
         Body: fileStream,
         //ACL: 'public-read',

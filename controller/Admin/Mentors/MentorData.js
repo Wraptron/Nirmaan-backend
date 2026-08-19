@@ -52,6 +52,18 @@ const UpdateMentor = async (req, res) => {
       representing_from,
     } = req.body;
 
+    const role = Number(req.user?.role);
+    if (role === 6) {
+      if (!req.user?.mentor_id) {
+        return res.status(403).json({ Error: "Forbidden: Mentor account required." });
+      }
+      if (String(mentor_id) !== String(req.user.mentor_id)) {
+        return res
+          .status(403)
+          .json({ Error: "Forbidden: You can only update your own profile." });
+      }
+    }
+
     const result = await UpdateMentorModel(
       mentor_name,
       mentor_description,
@@ -125,16 +137,21 @@ const MentorCount = async (req, res) => {
 };
 const DeleteMentorData = async (req, res) => {
   const id = req.params.id;
-  if (id) {
-    try {
-      const result = await MentorDeleteData(id);
-      invalidateMentorCaches();
-      res.status(200).json(result);
-    } catch (err) {
-      res.send(err);
+  if (!id) {
+    return res.status(400).json({ message: "Params missing" });
+  }
+
+  try {
+    const result = await MentorDeleteData(id);
+    invalidateMentorCaches();
+    res.status(200).json(result);
+  } catch (err) {
+    if (err.code === "MENTOR_NOT_FOUND") {
+      return res.status(404).json({ message: "Mentor not found" });
     }
-  } else {
-    res.send("Params missing");
+    res.status(500).json({
+      error: "Failed to delete mentor: " + err.message,
+    });
   }
 };
 
